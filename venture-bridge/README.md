@@ -51,6 +51,10 @@ and environment variables, deliberately kept apart from the tracker's.
 tracker's header) is a plain browser page that connects to it — it asks
 for the shell's host and a token, then opens a WebSocket to
 `wss://<shell-host>/ws/terminal` and renders the session with xterm.js.
+xterm.js itself is vendored in `frontend/vendor/` (copied from the
+`@xterm/xterm` and `@xterm/addon-fit` npm packages) rather than loaded
+from a CDN, so the terminal isn't at the mercy of a third-party host
+being reachable on the viewer's network.
 
 **This is off by default.** `shell/app.py` refuses every connection
 unless the `TERMINAL_TOKEN` environment variable is set on *that*

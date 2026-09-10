@@ -22,6 +22,24 @@ python -m uvicorn app:app --reload
 Open http://127.0.0.1:8000 — the six projects are seeded automatically
 on first run, in `backend/venture_bridge.db` (SQLite, git-ignored).
 
+## Deploy (Render)
+
+`render.yaml` at the repo root defines a free web service pointed at
+`venture-bridge/backend`.
+
+1. Push this repo to GitHub (already done if you're reading this from there).
+2. In the [Render dashboard](https://dashboard.render.com), click **New +** → **Blueprint**, and pick this repo.
+3. Render reads `render.yaml` and proposes a `venture-bridge` web service — review and click **Apply**.
+4. Once it builds, Render gives you a `https://venture-bridge-xxxx.onrender.com` URL.
+
+**Data persistence caveat:** the free plan has no persistent disk, so
+`venture_bridge.db` resets on every redeploy (and the service spins
+down after 15 minutes idle, waking on the next request with a ~30s
+delay). Fine for trying it out; for data that needs to survive
+redeploys, either attach a paid persistent disk to this service in
+Render's dashboard, or swap SQLite for a hosted Postgres (Render's
+free Postgres tier works well with a small schema change).
+
 ## API
 
 | Method | Path                          | Does                                   |

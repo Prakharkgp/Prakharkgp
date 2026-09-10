@@ -9,3 +9,19 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
+
+  # A deliberately separate service: hosts only the token-gated live
+  # terminal (see venture-bridge/README.md), isolated from the tracker
+  # app's own container, filesystem, and env vars.
+  - type: web
+    name: prakhar-bridge-shell
+    runtime: python
+    plan: free
+    rootDir: venture-bridge/shell
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: TERMINAL_TOKEN
+        sync: false  # set manually in Render's dashboard — never commit this

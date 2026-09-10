@@ -85,12 +85,13 @@
 
 <div id="gate">
   <div class="gate-card">
-    <h1>Connect to the server</h1>
-    <p>This opens a live shell inside the Render container running Prakhar Bridge Board.</p>
+    <h1>Connect to the shell</h1>
+    <p>This opens a live shell on Prakhar Bridge Shell — a separate Render service, deliberately kept apart from the tracker app itself.</p>
+    <input type="text" id="host-input" placeholder="Shell host (e.g. prakhar-bridge-shell.onrender.com)" autocomplete="off">
     <input type="password" id="token-input" placeholder="Terminal token" autocomplete="off">
     <button id="connect-btn">Connect</button>
     <div class="gate-error" id="gate-error"></div>
-    <div class="warn">Anyone with this token gets full command access to this machine. It's kept only in this tab's session storage — never saved or sent anywhere except this connection.</div>
+    <div class="warn">Anyone with this token gets full command access to that machine. Host and token are kept only in this tab's session storage — never saved or sent anywhere except this connection.</div>
   </div>
 </div>
 
@@ -98,9 +99,12 @@
 
 <script>
 (function(){
+  var DEFAULT_SHELL_HOST = 'prakhar-bridge-shell.onrender.com';
+
   var statusEl = document.getElementById('status');
   var gateEl = document.getElementById('gate');
   var termWrapEl = document.getElementById('term-wrap');
+  var hostInput = document.getElementById('host-input');
   var tokenInput = document.getElementById('token-input');
   var connectBtn = document.getElementById('connect-btn');
   var gateError = document.getElementById('gate-error');
@@ -114,13 +118,13 @@
     statusEl.className = 'status' + (cls ? ' ' + cls : '');
   }
 
-  function connect(token){
+  function connect(host, token){
     gateError.textContent = '';
     connectBtn.disabled = true;
     setStatus('connecting…');
 
     var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    ws = new WebSocket(proto + '//' + location.host + '/ws/terminal');
+    ws = new WebSocket(proto + '//' + host + '/ws/terminal');
     ws.binaryType = 'arraybuffer';
 
     var authed = false;
@@ -134,7 +138,10 @@
         var text = typeof ev.data === 'string' ? ev.data : '';
         if(text.indexOf('Connected.') !== -1){
           authed = true;
-          try{ sessionStorage.setItem('pbb_terminal_token', token); }catch(e){}
+          try{
+            sessionStorage.setItem('pbb_terminal_token', token);
+            sessionStorage.setItem('pbb_terminal_host', host);
+          }catch(e){}
           gateEl.style.display = 'none';
           termWrapEl.style.display = 'block';
           initTerm();
@@ -206,18 +213,25 @@
   }
 
   connectBtn.addEventListener('click', function(){
+    var host = hostInput.value.trim() || DEFAULT_SHELL_HOST;
     var token = tokenInput.value.trim();
     if(!token) return;
-    connect(token);
+    connect(host, token);
   });
   tokenInput.addEventListener('keydown', function(e){
     if(e.key === 'Enter') connectBtn.click();
   });
+  hostInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter') connectBtn.click();
+  });
 
   try{
+    hostInput.value = sessionStorage.getItem('pbb_terminal_host') || DEFAULT_SHELL_HOST;
     var saved = sessionStorage.getItem('pbb_terminal_token');
     if(saved) tokenInput.value = saved;
-  }catch(e){}
+  }catch(e){
+    hostInput.value = DEFAULT_SHELL_HOST;
+  }
 })();
 </script>
 </body>

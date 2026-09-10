@@ -1,8 +1,8 @@
-# Venture Bridge
+# Prakhar Bridge Board
 
-A tracker for the status, progress, and access details of a portfolio of
-projects: Yumesorai, Agent Arena, New Age Browser, Tokenization of Gold,
-Anime Micro Drama, and Agentic OS.
+A tracker for the status, progress, and access details of Prakhar's
+portfolio of projects: Yumesorai, Agent Arena, New Age Browser,
+Tokenization of Gold, Anime Micro Drama, and Agentic OS.
 
 - **Backend**: FastAPI + SQLite (`backend/app.py`). Stores each project's
   stage, health, progress, next milestone, team members, GitHub repo,

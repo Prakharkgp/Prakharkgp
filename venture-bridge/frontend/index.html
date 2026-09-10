@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Venture Bridge</title>
+<title>Prakhar Bridge Board</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
@@ -102,7 +102,13 @@
     padding-bottom:20px;
     border-bottom:1px solid var(--border);
   }
-  .brand{ display:flex; flex-direction:column; gap:4px; }
+  .brand{ display:flex; align-items:center; gap:14px; }
+  .brand-photo{
+    width:56px; height:56px; border-radius:50%;
+    object-fit:cover; border:2px solid var(--border);
+    box-shadow:var(--shadow); flex-shrink:0;
+  }
+  .brand-text{ display:flex; flex-direction:column; gap:4px; }
   .brand h1{
     font-family:var(--font-display);
     font-style:italic;
@@ -352,8 +358,11 @@
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <h1>Venture Bridge</h1>
-      <div class="sub">Portfolio of 6 · live status</div>
+      <img class="brand-photo" src="assets/photo-1.png" alt="Prakhar">
+      <div class="brand-text">
+        <h1>Prakhar Bridge Board</h1>
+        <div class="sub">Portfolio of 6 · live status</div>
+      </div>
     </div>
     <div id="sync-note">connecting…</div>
   </header>
@@ -729,7 +738,7 @@
       els.syncNote.textContent = 'backend unreachable';
       els.syncNote.classList.add('warn');
       if(!state.docs.length){
-        els.grid.innerHTML = '<div class="empty">Could not reach the Venture Bridge API. Is the backend running?</div>';
+        els.grid.innerHTML = '<div class="empty">Could not reach the Prakhar Bridge Board API. Is the backend running?</div>';
       }
     });
   }

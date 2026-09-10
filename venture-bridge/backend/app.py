@@ -1,20 +1,35 @@
 """Venture Bridge API — a small FastAPI backend for tracking progress
 across a portfolio of projects, backed by a local SQLite database."""
 
+import asyncio
+import fcntl
+import hmac
 import json
+import os
+import pty
 import sqlite3
+import struct
+import termios
+import time
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "venture_bridge.db"
 FRONTEND_DIR = BASE_DIR.parent / "frontend"
+
+# Live terminal: off unless TERMINAL_TOKEN is set (see README's terminal
+# section before enabling this in a real deployment).
+TERMINAL_TOKEN = os.environ.get("TERMINAL_TOKEN", "")
+TERMINAL_MAX_ATTEMPTS = 5
+TERMINAL_ATTEMPT_WINDOW_S = 300
+_terminal_failed_attempts: dict[str, list[float]] = {}
 
 SEED = [
     {
@@ -240,6 +255,106 @@ def add_log_entry(project_id: str, entry: LogEntryIn):
         conn.commit()
         row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
         return row_to_dict(row)
+
+
+def _terminal_rate_limited(client_host: str) -> bool:
+    now = time.time()
+    attempts = [
+        t for t in _terminal_failed_attempts.get(client_host, [])
+        if now - t < TERMINAL_ATTEMPT_WINDOW_S
+    ]
+    _terminal_failed_attempts[client_host] = attempts
+    return len(attempts) >= TERMINAL_MAX_ATTEMPTS
+
+
+def _terminal_record_failure(client_host: str) -> None:
+    _terminal_failed_attempts.setdefault(client_host, []).append(time.time())
+
+
+@app.websocket("/ws/terminal")
+async def terminal_ws(websocket: WebSocket):
+    """A token-gated shell into this container. Disabled unless
+    TERMINAL_TOKEN is set. Anyone with the token gets full bash access
+    to this service's own filesystem and environment — see the
+    README's terminal section before turning this on anywhere real."""
+    await websocket.accept()
+
+    if not TERMINAL_TOKEN:
+        await websocket.send_text("\r\n\x1b[31mTerminal is disabled: TERMINAL_TOKEN is not set on the server.\x1b[0m\r\n")
+        await websocket.close()
+        return
+
+    client_host = websocket.client.host if websocket.client else "unknown"
+    if _terminal_rate_limited(client_host):
+        await websocket.send_text("\r\n\x1b[31mToo many failed attempts. Try again later.\x1b[0m\r\n")
+        await websocket.close()
+        return
+
+    try:
+        submitted_token = await asyncio.wait_for(websocket.receive_text(), timeout=10)
+    except asyncio.TimeoutError:
+        await websocket.close()
+        return
+
+    if not hmac.compare_digest(submitted_token, TERMINAL_TOKEN):
+        _terminal_record_failure(client_host)
+        await websocket.send_text("\r\n\x1b[31mInvalid token.\x1b[0m\r\n")
+        await websocket.close()
+        return
+
+    await websocket.send_text("\x1b[32mConnected.\x1b[0m\r\n")
+
+    pid, fd = pty.fork()
+    if pid == 0:
+        os.execvp("/bin/bash", ["/bin/bash"])
+        return  # unreachable; execvp replaces this process
+
+    loop = asyncio.get_event_loop()
+
+    def read_pty() -> bytes:
+        try:
+            return os.read(fd, 4096)
+        except OSError:
+            return b""
+
+    async def pty_to_ws():
+        while True:
+            data = await loop.run_in_executor(None, read_pty)
+            if not data:
+                break
+            await websocket.send_bytes(data)
+
+    reader_task = asyncio.create_task(pty_to_ws())
+    try:
+        while True:
+            message = await websocket.receive()
+            if message["type"] == "websocket.disconnect":
+                break
+            text = message.get("text")
+            data = message.get("bytes")
+            if text is not None:
+                if text.startswith("\x00RESIZE:"):
+                    try:
+                        cols, rows = map(int, text[len("\x00RESIZE:"):].split(","))
+                        fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", rows, cols, 0, 0))
+                    except (ValueError, OSError):
+                        pass
+                else:
+                    os.write(fd, text.encode())
+            elif data is not None:
+                os.write(fd, data)
+    except (WebSocketDisconnect, OSError):
+        pass
+    finally:
+        reader_task.cancel()
+        try:
+            os.kill(pid, 9)
+        except ProcessLookupError:
+            pass
+        try:
+            os.close(fd)
+        except OSError:
+            pass
 
 
 app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

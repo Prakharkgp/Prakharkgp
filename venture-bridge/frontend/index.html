@@ -125,6 +125,7 @@
     text-transform:uppercase;
     letter-spacing:.08em;
   }
+  .header-right{ display:flex; align-items:center; gap:12px; }
   #sync-note{
     font-family:var(--font-mono);
     font-size:.72rem;
@@ -364,7 +365,10 @@
         <div class="sub">Portfolio of 6 · live status</div>
       </div>
     </div>
-    <div id="sync-note">connecting…</div>
+    <div class="header-right">
+      <a class="link-chip" href="terminal.html">Terminal</a>
+      <div id="sync-note">connecting…</div>
+    </div>
   </header>
 
   <div class="stats" id="stats" hidden></div>

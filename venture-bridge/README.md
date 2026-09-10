@@ -40,6 +40,37 @@ redeploys, either attach a paid persistent disk to this service in
 Render's dashboard, or swap SQLite for a hosted Postgres (Render's
 free Postgres tier works well with a small schema change).
 
+## Live terminal (read this before enabling it)
+
+`frontend/terminal.html` (linked from the "Terminal" button in the header)
+opens a real bash shell inside whatever container is running this backend,
+streamed to the browser over a WebSocket (`/ws/terminal`) using xterm.js.
+
+**This is off by default.** The endpoint refuses every connection unless
+the `TERMINAL_TOKEN` environment variable is set on the server. With it
+unset, `/ws/terminal` just tells you it's disabled and closes.
+
+If you turn it on:
+
+- **It's full shell access to this exact machine** — same filesystem, same
+  environment variables (which may include other secrets), for whoever
+  holds the token. It is not a separate, sandboxed VM.
+- **It's the same container the web app runs in.** On Render's free tier
+  that container is ephemeral — ends on every redeploy — but while it's
+  up, the token is equivalent to that machine's root password.
+- Set `TERMINAL_TOKEN` as a long random secret (e.g. `openssl rand -hex 32`)
+  in Render's **Environment** tab for this service — never commit it to
+  git, never put it in `render.yaml`.
+- The server does a constant-time token comparison and locks out an IP
+  after 5 failed attempts within 5 minutes. That's a deterrent, not a
+  substitute for a strong token — there's no real rate-limiting or 2FA.
+- Consider restricting the service's **IP Allow List** (in Render's
+  dashboard, under the service's Settings) to your own IP if you want
+  real defense in depth.
+- Rotate the token if you ever suspect it leaked (browser history,
+  screen share, etc.) — just change `TERMINAL_TOKEN` in Render and
+  redeploy.
+
 ## API
 
 | Method | Path                          | Does                                   |
@@ -48,6 +79,7 @@ free Postgres tier works well with a small schema change).
 | GET    | `/api/projects/{id}`          | Get one project                         |
 | PUT    | `/api/projects/{id}`          | Update any subset of its fields         |
 | POST   | `/api/projects/{id}/log`      | Prepend a dated note to its update log  |
+| WS     | `/ws/terminal`                | Live shell; requires `TERMINAL_TOKEN`   |
 
 ## A note on credentials
 

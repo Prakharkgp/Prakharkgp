@@ -42,36 +42,47 @@ free Postgres tier works well with a small schema change).
 
 ## Live terminal (read this before enabling it)
 
-`frontend/terminal.html` (linked from the "Terminal" button in the header)
-opens a real bash shell inside whatever container is running this backend,
-streamed to the browser over a WebSocket (`/ws/terminal`) using xterm.js.
+`shell/` is a **separate, standalone service** — not part of the tracker
+app — whose only job is hosting a token-gated live shell. It's deployed
+as its own Render web service (`prakhar-bridge-shell`, defined alongside
+`venture-bridge` in `render.yaml`) with its own container, filesystem,
+and environment variables, deliberately kept apart from the tracker's.
+`frontend/terminal.html` (linked from the "Terminal" button in the
+tracker's header) is a plain browser page that connects to it — it asks
+for the shell's host and a token, then opens a WebSocket to
+`wss://<shell-host>/ws/terminal` and renders the session with xterm.js.
 
-**This is off by default.** The endpoint refuses every connection unless
-the `TERMINAL_TOKEN` environment variable is set on the server. With it
-unset, `/ws/terminal` just tells you it's disabled and closes.
+**This is off by default.** `shell/app.py` refuses every connection
+unless the `TERMINAL_TOKEN` environment variable is set on *that*
+service. With it unset, `/ws/terminal` just tells you it's disabled
+and closes.
 
 If you turn it on:
 
-- **It's full shell access to this exact machine** — same filesystem, same
-  environment variables (which may include other secrets), for whoever
-  holds the token. It is not a separate, sandboxed VM.
-- **It's the same container the web app runs in.** On Render's free tier
-  that container is ephemeral — ends on every redeploy — but while it's
-  up, the token is equivalent to that machine's root password.
+- **It's full shell access to the shell service's machine** — same
+  filesystem, same environment variables, for whoever holds the token.
+  It's still not a sandboxed VM in the traditional sense (no separate
+  hypervisor, no snapshot/rollback) — it's a second, isolated Render
+  container whose only purpose is being a shell box, so a compromise
+  there doesn't directly expose the tracker app's own service.
+- **It's ephemeral** on Render's free tier — resets on every redeploy of
+  the shell service — but while it's up, the token is equivalent to
+  that machine's root password.
 - Set `TERMINAL_TOKEN` as a long random secret (e.g. `openssl rand -hex 32`)
-  in Render's **Environment** tab for this service — never commit it to
-  git, never put it in `render.yaml`.
+  in Render's **Environment** tab for the `prakhar-bridge-shell` service
+  specifically — never commit it to git, never put it in `render.yaml`
+  (the file only references the variable name, via `sync: false`).
 - The server does a constant-time token comparison and locks out an IP
   after 5 failed attempts within 5 minutes. That's a deterrent, not a
   substitute for a strong token — there's no real rate-limiting or 2FA.
-- Consider restricting the service's **IP Allow List** (in Render's
-  dashboard, under the service's Settings) to your own IP if you want
-  real defense in depth.
+- Consider restricting the shell service's **IP Allow List** (in Render's
+  dashboard, under that service's Settings) to your own IP for real
+  defense in depth.
 - Rotate the token if you ever suspect it leaked (browser history,
-  screen share, etc.) — just change `TERMINAL_TOKEN` in Render and
-  redeploy.
+  screen share, etc.) — change `TERMINAL_TOKEN` on the shell service
+  in Render and redeploy it. The tracker app is unaffected either way.
 
-## API
+## API (tracker app — `backend/app.py`)
 
 | Method | Path                          | Does                                   |
 |--------|-------------------------------|-----------------------------------------|
@@ -79,7 +90,9 @@ If you turn it on:
 | GET    | `/api/projects/{id}`          | Get one project                         |
 | PUT    | `/api/projects/{id}`          | Update any subset of its fields         |
 | POST   | `/api/projects/{id}/log`      | Prepend a dated note to its update log  |
-| WS     | `/ws/terminal`                | Live shell; requires `TERMINAL_TOKEN`   |
+
+The shell service (`shell/app.py`) exposes only `WS /ws/terminal`,
+gated by `TERMINAL_TOKEN` as described above.
 
 ## A note on credentials
 

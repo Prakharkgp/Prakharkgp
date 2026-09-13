@@ -6,8 +6,8 @@ Tokenization of Gold, Anime Micro Drama, and Agentic OS.
 
 - **Backend**: FastAPI + SQLite (`backend/app.py`). Stores each project's
   stage, health, progress, next milestone, team members, GitHub repo,
-  live platform link, server/infra link, a credentials pointer, and a
-  timestamped update log.
+  live platform link, server/infra link, a deck link, a credentials
+  pointer, and a timestamped update log.
 - **Frontend**: a single static page (`frontend/index.html`) served by
   the backend, talking to it over a small JSON API.
 

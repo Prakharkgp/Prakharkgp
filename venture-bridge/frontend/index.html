@@ -440,6 +440,10 @@
       <input type="text" id="p-server" placeholder="https://… or host / connection string">
     </div>
     <div class="field">
+      <label for="p-ppt">Deck link</label>
+      <input type="text" id="p-ppt" placeholder="https://docs.google.com/presentation/…">
+    </div>
+    <div class="field">
       <label for="p-creds">Credentials</label>
       <textarea id="p-creds" rows="2" placeholder="Where to find access, e.g. 1Password → Yumesorai vault"></textarea>
       <div class="hint">Stored in plain text in the local database file — store a pointer to where the credential lives, never the actual password, key, or token.</div>
@@ -490,6 +494,7 @@
     pGithub: document.getElementById('p-github'),
     pLive: document.getElementById('p-live'),
     pServer: document.getElementById('p-server'),
+    pPpt: document.getElementById('p-ppt'),
     pCreds: document.getElementById('p-creds'),
     pSave: document.getElementById('p-save'),
     pSaveStatus: document.getElementById('p-save-status'),
@@ -557,7 +562,7 @@
     var avatars = team.map(function(name){
       return '<span class="avatar" title="'+escapeHtml(name)+'">'+escapeHtml(initials(name))+'</span>';
     }).join('');
-    var links = [linkChip('GitHub', d.githubUrl), linkChip('Live', d.liveUrl), linkChip('Server', d.serverUrl)].join('');
+    var links = [linkChip('GitHub', d.githubUrl), linkChip('Live', d.liveUrl), linkChip('Server', d.serverUrl), linkChip('Deck', d.pptUrl)].join('');
     var metaRow = (avatars || links)
       ? '<div class="card-meta"><div class="avatars">'+avatars+'</div><div class="links">'+links+'</div></div>'
       : '';
@@ -634,6 +639,7 @@
     els.pGithub.value = d.githubUrl || '';
     els.pLive.value = d.liveUrl || '';
     els.pServer.value = d.serverUrl || '';
+    els.pPpt.value = d.pptUrl || '';
     els.pCreds.value = d.credentialsNote || '';
     els.pLogInput.value = '';
     els.pSaveStatus.textContent = '';
@@ -685,6 +691,7 @@
         githubUrl: els.pGithub.value.trim(),
         liveUrl: els.pLive.value.trim(),
         serverUrl: els.pServer.value.trim(),
+        pptUrl: els.pPpt.value.trim(),
         credentialsNote: els.pCreds.value.trim()
       })
     }).then(function(res){

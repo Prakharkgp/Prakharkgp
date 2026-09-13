@@ -36,6 +36,7 @@ SEED = [
         "id": "gold-tokenization", "order": 4, "name": "Tokenization of Gold", "category": "Fintech · RWA",
         "summary": "On-chain tokens backed by physical gold reserves.",
         "milestone": "Map the regulatory path",
+        "ppt_url": "https://docs.google.com/presentation/d/1WYidDrs6urrL9Z1qWk4YdJh0FH9Tx8k-xzaT1n7q-vU/edit",
     },
     {
         "id": "anime-micro-drama", "order": 5, "name": "Anime Micro Drama", "category": "Content · Media",
@@ -58,6 +59,7 @@ FIELD_TO_COLUMN = {
     "githubUrl": "github_url",
     "liveUrl": "live_url",
     "serverUrl": "server_url",
+    "pptUrl": "ppt_url",
     "credentialsNote": "credentials_note",
 }
 
@@ -90,6 +92,7 @@ def init_db():
                 github_url TEXT NOT NULL,
                 live_url TEXT NOT NULL,
                 server_url TEXT NOT NULL,
+                ppt_url TEXT NOT NULL,
                 credentials_note TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
                 log TEXT NOT NULL
@@ -112,13 +115,13 @@ def seed(conn):
             """
             INSERT INTO projects (
                 id, order_num, name, category, stage, health, progress, milestone,
-                summary, team, github_url, live_url, server_url, credentials_note,
+                summary, team, github_url, live_url, server_url, ppt_url, credentials_note,
                 updated_at, log
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 p["id"], p["order"], p["name"], p["category"], "Ideation", "on-track", 10,
-                p["milestone"], p["summary"], json.dumps([]), "", "", "", "",
+                p["milestone"], p["summary"], json.dumps([]), "", "", "", p.get("ppt_url", ""), "",
                 now, starter_log,
             ),
         )
@@ -140,6 +143,7 @@ def row_to_dict(row: sqlite3.Row) -> dict:
         "githubUrl": row["github_url"],
         "liveUrl": row["live_url"],
         "serverUrl": row["server_url"],
+        "pptUrl": row["ppt_url"],
         "credentialsNote": row["credentials_note"],
         "updatedAt": row["updated_at"],
         "log": json.loads(row["log"]),
@@ -156,6 +160,7 @@ class ProjectUpdate(BaseModel):
     githubUrl: Optional[str] = None
     liveUrl: Optional[str] = None
     serverUrl: Optional[str] = None
+    pptUrl: Optional[str] = None
     credentialsNote: Optional[str] = None
 
 

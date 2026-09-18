@@ -1,72 +1,76 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Signal Desk — Client Event Intelligence</title>
+<title>Radar Client — Signal Desk</title>
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="app">
     <header class="topbar">
       <div class="brand">
-        <span class="brand-mark">SD</span>
+        <img src="assets/sg-logo.svg" alt="Société Générale" class="brand-logo" id="brand-logo" />
         <div class="brand-text">
-          <h1>Signal Desk</h1>
-          <p>Client event intelligence for Private Banking &amp; Corporate coverage</p>
+          <h1>Radar Client</h1>
+          <p data-i18n="tagline">Intelligence des événements clients pour la Banque Privée et les Entreprises</p>
+        </div>
+        <div class="lang-switch" id="lang-switch">
+          <button class="lang-btn" data-lang="fr">FR</button>
+          <button class="lang-btn" data-lang="en">EN</button>
         </div>
       </div>
       <nav class="tabs" id="tabs">
-        <button class="tab active" data-tab="dashboard">Signal Directory</button>
-        <button class="tab" data-tab="sources">Sources</button>
-        <button class="tab" data-tab="clients">Clients</button>
-        <button class="tab" data-tab="ai">AI Engine</button>
+        <button class="tab active" data-tab="dashboard" data-i18n="tab_dashboard">Répertoire des signaux</button>
+        <button class="tab" data-tab="sources" data-i18n="tab_sources">Sources</button>
+        <button class="tab" data-tab="clients" data-i18n="tab_clients">Clients</button>
+        <button class="tab" data-tab="ai" data-i18n="tab_ai">Moteur IA</button>
       </nav>
     </header>
 
     <main>
       <!-- DASHBOARD / SIGNAL DIRECTORY -->
       <section id="panel-dashboard" class="panel active">
-        <h2 class="page-title">Signal Directory</h2>
+        <h2 class="page-title" data-i18n="dashboard_title">Répertoire des signaux</h2>
 
         <div class="kpis" id="kpis"></div>
 
         <div class="filter-card">
           <div class="filter-grid">
             <label>
-              <span>Entity / client</span>
-              <input type="text" id="filter-search" placeholder="Search by name or keyword" />
+              <span data-i18n="filter_entity">Entité / client</span>
+              <input type="text" id="filter-search" data-i18n-placeholder="filter_entity_placeholder" placeholder="Rechercher par nom ou mot-clé" />
             </label>
             <label>
-              <span>Category</span>
+              <span data-i18n="filter_category">Catégorie</span>
               <select id="filter-category">
-                <option value="">&lt;&lt; All &gt;&gt;</option>
+                <option value="" data-i18n="filter_all">&lt;&lt; Tous &gt;&gt;</option>
               </select>
             </label>
             <label>
-              <span>Priority</span>
+              <span data-i18n="filter_priority">Priorité</span>
               <select id="filter-priority">
-                <option value="">&lt;&lt; All &gt;&gt;</option>
-                <option>High</option>
-                <option>Medium</option>
-                <option>Low</option>
+                <option value="" data-i18n="filter_all">&lt;&lt; Tous &gt;&gt;</option>
+                <option value="High" data-i18n="priority_high">Élevée</option>
+                <option value="Medium" data-i18n="priority_medium">Moyenne</option>
+                <option value="Low" data-i18n="priority_low">Faible</option>
               </select>
             </label>
             <label>
-              <span>Status</span>
+              <span data-i18n="filter_status">Statut</span>
               <select id="filter-status">
-                <option value="">&lt;&lt; All &gt;&gt;</option>
-                <option>New</option>
-                <option>Under Review</option>
-                <option>Actioned</option>
-                <option>Dismissed</option>
+                <option value="" data-i18n="filter_all">&lt;&lt; Tous &gt;&gt;</option>
+                <option value="New" data-i18n="status_new">Nouveau</option>
+                <option value="Under Review" data-i18n="status_review">En cours d'examen</option>
+                <option value="Actioned" data-i18n="status_actioned">Traité</option>
+                <option value="Dismissed" data-i18n="status_dismissed">Rejeté</option>
               </select>
             </label>
           </div>
           <div class="filter-actions">
-            <button id="btn-search" class="btn btn-primary">Search</button>
-            <button id="btn-reset" class="btn btn-outline">Reset</button>
-            <button id="btn-export" class="btn btn-primary">Export</button>
+            <button id="btn-search" class="btn btn-primary" data-i18n="btn_search">Rechercher</button>
+            <button id="btn-reset" class="btn btn-outline" data-i18n="btn_reset">Réinitialisation</button>
+            <button id="btn-export" class="btn btn-primary" data-i18n="btn_export">Exporter</button>
           </div>
         </div>
 
@@ -74,14 +78,14 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>Category</th>
-                <th>Event type</th>
-                <th>Entity / client</th>
-                <th>Priority</th>
-                <th>Source</th>
-                <th>Status</th>
-                <th>Detected</th>
-                <th>Action</th>
+                <th data-i18n="col_category">Catégorie</th>
+                <th data-i18n="col_event_type">Type d'événement</th>
+                <th data-i18n="col_entity">Entité / client</th>
+                <th data-i18n="col_priority">Priorité</th>
+                <th data-i18n="col_source">Source</th>
+                <th data-i18n="col_status">Statut</th>
+                <th data-i18n="col_detected">Détecté</th>
+                <th data-i18n="col_action">Action</th>
               </tr>
             </thead>
             <tbody id="event-table-body"></tbody>
@@ -93,22 +97,22 @@
 
       <!-- SOURCES -->
       <section id="panel-sources" class="panel">
-        <h2 class="page-title">Source Registry</h2>
-        <p class="page-subtitle">
-          Public registries are simulated in this prototype so the feed and triage
-          workflow can be demoed end to end. Private/commercial sources are mapped
-          to their role in the workflow, ready to be wired in as licensed
-          integrations become available.
+        <h2 class="page-title" data-i18n="sources_title">Registre des sources</h2>
+        <p class="page-subtitle" data-i18n="sources_subtitle">
+          Les registres publics sont simulés dans ce prototype afin de démontrer le
+          flux et le triage de bout en bout. Les sources privées/commerciales sont
+          associées à leur rôle dans le processus, prêtes à être intégrées lorsque
+          les licences seront disponibles.
         </p>
         <div class="table-wrap">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Source</th>
-                <th>Kind</th>
-                <th>Coverage</th>
-                <th>Role</th>
-                <th>Status</th>
+                <th data-i18n="col_source_name">Source</th>
+                <th data-i18n="col_kind">Type</th>
+                <th data-i18n="col_coverage">Couverture</th>
+                <th data-i18n="col_role">Rôle</th>
+                <th data-i18n="col_status">Statut</th>
               </tr>
             </thead>
             <tbody id="sources-table-body"></tbody>
@@ -118,21 +122,21 @@
 
       <!-- CLIENTS -->
       <section id="panel-clients" class="panel">
-        <h2 class="page-title">Clients &amp; Ownership</h2>
-        <p class="page-subtitle">
-          Events on indirectly held entities are linked back to the client through
-          the ownership chain — the same "who owns what" role a source like
-          Moody's Orbis would play in production.
+        <h2 class="page-title" data-i18n="clients_title">Clients &amp; actionnariat</h2>
+        <p class="page-subtitle" data-i18n="clients_subtitle">
+          Les événements sur des entités détenues indirectement sont rattachés au
+          client via la chaîne d'actionnariat — le même rôle que jouerait une
+          source comme Moody's Orbis en production.
         </p>
         <div class="table-wrap">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Client</th>
-                <th>Segment</th>
-                <th>RM owner</th>
-                <th>Linked entities</th>
-                <th>Action</th>
+                <th data-i18n="col_client">Client</th>
+                <th data-i18n="col_segment">Segment</th>
+                <th data-i18n="col_rm">Chargé de relation</th>
+                <th data-i18n="col_linked_entities">Entités liées</th>
+                <th data-i18n="col_action">Action</th>
               </tr>
             </thead>
             <tbody id="clients-table-body"></tbody>
@@ -142,30 +146,30 @@
 
       <!-- AI ENGINE -->
       <section id="panel-ai" class="panel">
-        <h2 class="page-title">AI Enrichment Engine</h2>
-        <p class="page-subtitle">
-          Every signal can be summarized and triaged by an AI layer that sits
-          behind a single interface, so the underlying model can change without
-          touching the product.
+        <h2 class="page-title" data-i18n="ai_title">Moteur d'enrichissement IA</h2>
+        <p class="page-subtitle" data-i18n="ai_subtitle">
+          Chaque signal peut être résumé et trié par une couche d'IA placée derrière
+          une interface unique, afin que le modèle sous-jacent puisse évoluer sans
+          modifier le produit.
         </p>
         <div class="ai-status-card" id="ai-status-card">
           <div class="ai-status-row">
-            <span class="ai-status-label">Active engine</span>
-            <span class="ai-status-value" id="ai-active-provider">Loading…</span>
+            <span class="ai-status-label" data-i18n="ai_active_engine">Moteur actif</span>
+            <span class="ai-status-value" id="ai-active-provider">…</span>
           </div>
           <p class="ai-status-note" id="ai-status-note"></p>
         </div>
 
         <div class="ai-architecture">
-          <h3>How it's wired</h3>
+          <h3 data-i18n="ai_how_title">Fonctionnement</h3>
           <ol>
-            <li><strong>Demo mode (default):</strong> a rule-based engine drafts a one-line summary and a suggested next action from the event's own fields — no external calls, no keys required.</li>
-            <li><strong>Azure AI Foundry (ready, not yet connected):</strong> setting <code>AZURE_AI_FOUNDRY_ENDPOINT</code> and <code>AZURE_AI_FOUNDRY_API_KEY</code> as environment variables on the backend switches every "Analyze" call to a real model deployment — same interface, richer output.</li>
+            <li data-i18n="ai_how_1"><strong>Mode démo (par défaut) :</strong> un moteur à base de règles rédige un résumé en une phrase et une action suggérée à partir des champs de l'événement — aucun appel externe, aucune clé requise.</li>
+            <li data-i18n="ai_how_2"><strong>Azure AI Foundry (prêt, non connecté) :</strong> définir <code>AZURE_AI_FOUNDRY_ENDPOINT</code> et <code>AZURE_AI_FOUNDRY_API_KEY</code> comme variables d'environnement sur le backend fait basculer chaque analyse vers un modèle réel — même interface, résultat plus riche.</li>
           </ol>
           <div class="env-vars">
-            <div class="env-var"><code>AZURE_AI_FOUNDRY_ENDPOINT</code><span>https://&lt;resource&gt;.services.ai.azure.com</span></div>
-            <div class="env-var"><code>AZURE_AI_FOUNDRY_API_KEY</code><span>secret — set in your host's env, never in code</span></div>
-            <div class="env-var"><code>AZURE_AI_FOUNDRY_DEPLOYMENT</code><span>defaults to gpt-4o-mini</span></div>
+            <div class="env-var"><code>AZURE_AI_FOUNDRY_ENDPOINT</code><span data-i18n="ai_env_endpoint">https://&lt;ressource&gt;.services.ai.azure.com</span></div>
+            <div class="env-var"><code>AZURE_AI_FOUNDRY_API_KEY</code><span data-i18n="ai_env_key">secret — à définir dans l'environnement de l'hôte, jamais dans le code</span></div>
+            <div class="env-var"><code>AZURE_AI_FOUNDRY_DEPLOYMENT</code><span data-i18n="ai_env_deployment">par défaut : gpt-4o-mini</span></div>
           </div>
         </div>
       </section>

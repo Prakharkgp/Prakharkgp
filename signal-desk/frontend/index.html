@@ -17,7 +17,7 @@
         </div>
       </div>
       <nav class="tabs" id="tabs">
-        <button class="tab active" data-tab="dashboard">Dashboard</button>
+        <button class="tab active" data-tab="dashboard">Signal Directory</button>
         <button class="tab" data-tab="sources">Sources</button>
         <button class="tab" data-tab="clients">Clients</button>
         <button class="tab" data-tab="ai">AI Engine</button>
@@ -25,81 +25,129 @@
     </header>
 
     <main>
-      <!-- DASHBOARD -->
+      <!-- DASHBOARD / SIGNAL DIRECTORY -->
       <section id="panel-dashboard" class="panel active">
+        <h2 class="page-title">Signal Directory</h2>
+
         <div class="kpis" id="kpis"></div>
 
-        <div class="filters">
-          <label>
-            Category
-            <select id="filter-category">
-              <option value="">All</option>
-            </select>
-          </label>
-          <label>
-            Priority
-            <select id="filter-priority">
-              <option value="">All</option>
-              <option>High</option>
-              <option>Medium</option>
-              <option>Low</option>
-            </select>
-          </label>
-          <label>
-            Status
-            <select id="filter-status">
-              <option value="">All</option>
-              <option>New</option>
-              <option>Under Review</option>
-              <option>Actioned</option>
-              <option>Dismissed</option>
-            </select>
-          </label>
+        <div class="filter-card">
+          <div class="filter-grid">
+            <label>
+              <span>Entity / client</span>
+              <input type="text" id="filter-search" placeholder="Search by name or keyword" />
+            </label>
+            <label>
+              <span>Category</span>
+              <select id="filter-category">
+                <option value="">&lt;&lt; All &gt;&gt;</option>
+              </select>
+            </label>
+            <label>
+              <span>Priority</span>
+              <select id="filter-priority">
+                <option value="">&lt;&lt; All &gt;&gt;</option>
+                <option>High</option>
+                <option>Medium</option>
+                <option>Low</option>
+              </select>
+            </label>
+            <label>
+              <span>Status</span>
+              <select id="filter-status">
+                <option value="">&lt;&lt; All &gt;&gt;</option>
+                <option>New</option>
+                <option>Under Review</option>
+                <option>Actioned</option>
+                <option>Dismissed</option>
+              </select>
+            </label>
+          </div>
+          <div class="filter-actions">
+            <button id="btn-search" class="btn btn-primary">Search</button>
+            <button id="btn-reset" class="btn btn-outline">Reset</button>
+            <button id="btn-export" class="btn btn-primary">Export</button>
+          </div>
         </div>
 
-        <div id="event-feed" class="event-feed"></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Event type</th>
+                <th>Entity / client</th>
+                <th>Priority</th>
+                <th>Source</th>
+                <th>Status</th>
+                <th>Detected</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="event-table-body"></tbody>
+          </table>
+        </div>
+
+        <div class="pagination" id="event-pagination"></div>
       </section>
 
       <!-- SOURCES -->
       <section id="panel-sources" class="panel">
-        <div class="section-intro">
-          <h2>Source registry</h2>
-          <p>
-            Public registries are simulated in this prototype so the feed and triage
-            workflow can be demoed end to end. Private/commercial sources are mapped
-            to their role in the workflow, ready to be wired in as licensed
-            integrations become available.
-          </p>
+        <h2 class="page-title">Source Registry</h2>
+        <p class="page-subtitle">
+          Public registries are simulated in this prototype so the feed and triage
+          workflow can be demoed end to end. Private/commercial sources are mapped
+          to their role in the workflow, ready to be wired in as licensed
+          integrations become available.
+        </p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th>Kind</th>
+                <th>Coverage</th>
+                <th>Role</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="sources-table-body"></tbody>
+          </table>
         </div>
-        <h3 class="group-title">Public sources <span class="tag-simulated">simulated</span></h3>
-        <div id="sources-public" class="source-grid"></div>
-        <h3 class="group-title">Private &amp; commercial sources <span class="tag-planned">planned integration</span></h3>
-        <div id="sources-private" class="source-grid"></div>
       </section>
 
       <!-- CLIENTS -->
       <section id="panel-clients" class="panel">
-        <div class="section-intro">
-          <h2>Clients &amp; ownership</h2>
-          <p>
-            Events on indirectly held entities are linked back to the client through
-            the ownership chain — the same "who owns what" role a source like Moody's
-            Orbis would play in production.
-          </p>
+        <h2 class="page-title">Clients &amp; Ownership</h2>
+        <p class="page-subtitle">
+          Events on indirectly held entities are linked back to the client through
+          the ownership chain — the same "who owns what" role a source like
+          Moody's Orbis would play in production.
+        </p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Segment</th>
+                <th>RM owner</th>
+                <th>Linked entities</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="clients-table-body"></tbody>
+          </table>
         </div>
-        <div id="client-list" class="client-list"></div>
       </section>
 
       <!-- AI ENGINE -->
       <section id="panel-ai" class="panel">
-        <div class="section-intro">
-          <h2>AI enrichment engine</h2>
-          <p>
-            Every signal can be summarized and triaged by an AI layer that sits
-            behind a single interface, so the underlying model can change without
-            touching the product.
-          </p>
-        </div>
+        <h2 class="page-title">AI Enrichment Engine</h2>
+        <p class="page-subtitle">
+          Every signal can be summarized and triaged by an AI layer that sits
+          behind a single interface, so the underlying model can change without
+          touching the product.
+        </p>
         <div class="ai-status-card" id="ai-status-card">
           <div class="ai-status-row">
             <span class="ai-status-label">Active engine</span>
@@ -123,34 +171,6 @@
       </section>
     </main>
   </div>
-
-  <template id="event-card-template">
-    <article class="event-card">
-      <div class="event-card-top">
-        <span class="badge category"></span>
-        <span class="badge priority"></span>
-        <span class="badge source"></span>
-      </div>
-      <h3 class="event-type"></h3>
-      <p class="entity-line"></p>
-      <p class="description"></p>
-      <div class="ai-block" hidden>
-        <div class="ai-block-label">AI summary <span class="ai-provider-badge"></span></div>
-        <p class="ai-summary"></p>
-        <p class="ai-action"></p>
-      </div>
-      <div class="event-card-actions">
-        <select class="status-select">
-          <option>New</option>
-          <option>Under Review</option>
-          <option>Actioned</option>
-          <option>Dismissed</option>
-        </select>
-        <button class="analyze-btn">Analyze with AI</button>
-      </div>
-      <p class="detected-at"></p>
-    </article>
-  </template>
 
   <script src="app.js"></script>
 </body>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Signal Desk — Client Event Intelligence</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">SD</span>
+        <div class="brand-text">
+          <h1>Signal Desk</h1>
+          <p>Client event intelligence for Private Banking &amp; Corporate coverage</p>
+        </div>
+      </div>
+      <nav class="tabs" id="tabs">
+        <button class="tab active" data-tab="dashboard">Dashboard</button>
+        <button class="tab" data-tab="sources">Sources</button>
+        <button class="tab" data-tab="clients">Clients</button>
+        <button class="tab" data-tab="ai">AI Engine</button>
+      </nav>
+    </header>
+
+    <main>
+      <!-- DASHBOARD -->
+      <section id="panel-dashboard" class="panel active">
+        <div class="kpis" id="kpis"></div>
+
+        <div class="filters">
+          <label>
+            Category
+            <select id="filter-category">
+              <option value="">All</option>
+            </select>
+          </label>
+          <label>
+            Priority
+            <select id="filter-priority">
+              <option value="">All</option>
+              <option>High</option>
+              <option>Medium</option>
+              <option>Low</option>
+            </select>
+          </label>
+          <label>
+            Status
+            <select id="filter-status">
+              <option value="">All</option>
+              <option>New</option>
+              <option>Under Review</option>
+              <option>Actioned</option>
+              <option>Dismissed</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="event-feed" class="event-feed"></div>
+      </section>
+
+      <!-- SOURCES -->
+      <section id="panel-sources" class="panel">
+        <div class="section-intro">
+          <h2>Source registry</h2>
+          <p>
+            Public registries are simulated in this prototype so the feed and triage
+            workflow can be demoed end to end. Private/commercial sources are mapped
+            to their role in the workflow, ready to be wired in as licensed
+            integrations become available.
+          </p>
+        </div>
+        <h3 class="group-title">Public sources <span class="tag-simulated">simulated</span></h3>
+        <div id="sources-public" class="source-grid"></div>
+        <h3 class="group-title">Private &amp; commercial sources <span class="tag-planned">planned integration</span></h3>
+        <div id="sources-private" class="source-grid"></div>
+      </section>
+
+      <!-- CLIENTS -->
+      <section id="panel-clients" class="panel">
+        <div class="section-intro">
+          <h2>Clients &amp; ownership</h2>
+          <p>
+            Events on indirectly held entities are linked back to the client through
+            the ownership chain — the same "who owns what" role a source like Moody's
+            Orbis would play in production.
+          </p>
+        </div>
+        <div id="client-list" class="client-list"></div>
+      </section>
+
+      <!-- AI ENGINE -->
+      <section id="panel-ai" class="panel">
+        <div class="section-intro">
+          <h2>AI enrichment engine</h2>
+          <p>
+            Every signal can be summarized and triaged by an AI layer that sits
+            behind a single interface, so the underlying model can change without
+            touching the product.
+          </p>
+        </div>
+        <div class="ai-status-card" id="ai-status-card">
+          <div class="ai-status-row">
+            <span class="ai-status-label">Active engine</span>
+            <span class="ai-status-value" id="ai-active-provider">Loading…</span>
+          </div>
+          <p class="ai-status-note" id="ai-status-note"></p>
+        </div>
+
+        <div class="ai-architecture">
+          <h3>How it's wired</h3>
+          <ol>
+            <li><strong>Demo mode (default):</strong> a rule-based engine drafts a one-line summary and a suggested next action from the event's own fields — no external calls, no keys required.</li>
+            <li><strong>Azure AI Foundry (ready, not yet connected):</strong> setting <code>AZURE_AI_FOUNDRY_ENDPOINT</code> and <code>AZURE_AI_FOUNDRY_API_KEY</code> as environment variables on the backend switches every "Analyze" call to a real model deployment — same interface, richer output.</li>
+          </ol>
+          <div class="env-vars">
+            <div class="env-var"><code>AZURE_AI_FOUNDRY_ENDPOINT</code><span>https://&lt;resource&gt;.services.ai.azure.com</span></div>
+            <div class="env-var"><code>AZURE_AI_FOUNDRY_API_KEY</code><span>secret — set in your host's env, never in code</span></div>
+            <div class="env-var"><code>AZURE_AI_FOUNDRY_DEPLOYMENT</code><span>defaults to gpt-4o-mini</span></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="event-card-template">
+    <article class="event-card">
+      <div class="event-card-top">
+        <span class="badge category"></span>
+        <span class="badge priority"></span>
+        <span class="badge source"></span>
+      </div>
+      <h3 class="event-type"></h3>
+      <p class="entity-line"></p>
+      <p class="description"></p>
+      <div class="ai-block" hidden>
+        <div class="ai-block-label">AI summary <span class="ai-provider-badge"></span></div>
+        <p class="ai-summary"></p>
+        <p class="ai-action"></p>
+      </div>
+      <div class="event-card-actions">
+        <select class="status-select">
+          <option>New</option>
+          <option>Under Review</option>
+          <option>Actioned</option>
+          <option>Dismissed</option>
+        </select>
+        <button class="analyze-btn">Analyze with AI</button>
+      </div>
+      <p class="detected-at"></p>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>

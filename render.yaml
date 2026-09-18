@@ -25,3 +25,24 @@ services:
         value: 3.11.9
       - key: TERMINAL_TOKEN
         sync: false  # set manually in Render's dashboard — never commit this
+
+  # RBS hackathon prototype: client-event monitoring feed (see
+  # signal-desk/README.md). AI analysis defaults to a rule-based demo
+  # engine; setting AZURE_AI_FOUNDRY_ENDPOINT/API_KEY in Render's
+  # dashboard switches it to a live Azure AI Foundry deployment.
+  - type: web
+    name: signal-desk
+    runtime: python
+    plan: free
+    rootDir: signal-desk/backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: AZURE_AI_FOUNDRY_ENDPOINT
+        sync: false  # optional — leave unset to stay in demo mode
+      - key: AZURE_AI_FOUNDRY_API_KEY
+        sync: false  # optional — set only when connecting a real deployment
+      - key: AZURE_AI_FOUNDRY_DEPLOYMENT
+        sync: false  # optional — defaults to gpt-4o-mini if unset

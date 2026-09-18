@@ -1,8 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="120" height="34" viewBox="0 0 120 34">
-  <!-- Placeholder logo mark. Replace this file with the real Société
-       Générale logo asset — the network in this environment cannot
-       fetch external images, so this ships as a stand-in. -->
-  <rect x="0" y="0" width="34" height="34" rx="4" fill="#c0392b" />
-  <text x="17" y="23" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">SG</text>
-  <text x="42" y="21" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#1c1c1e">LOGO PLACEHOLDER</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+  <rect x="0" y="0" width="100" height="58" fill="#e4002b" />
+  <rect x="0" y="58" width="100" height="42" fill="#000000" />
+  <rect x="18" y="54" width="64" height="8" fill="#ffffff" />
 </svg>

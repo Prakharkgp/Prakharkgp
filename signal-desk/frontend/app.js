@@ -40,6 +40,7 @@ const I18N = {
     col_coverage: "Coverage",
     col_role: "Role",
     col_client: "Client",
+    col_type: "Type",
     col_segment: "Segment",
     col_rm: "RM owner",
     col_linked_entities: "Linked entities",
@@ -47,6 +48,11 @@ const I18N = {
     kpi_high: "High priority",
     kpi_new: "Awaiting triage",
     kpi_risk: "Risk & compliance",
+    kpi_opportunities: "Commercial opportunities",
+    client_type_client: "Client",
+    client_type_prospect: "Prospect",
+    clients_kpi_clients: "Existing clients",
+    clients_kpi_prospects: "Prospects",
     cat_commercial: "Commercial Opportunity",
     cat_credit: "Corporate & Credit",
     cat_kyc: "KYC Update",
@@ -132,6 +138,7 @@ const I18N = {
     col_coverage: "Couverture",
     col_role: "Rôle",
     col_client: "Client",
+    col_type: "Type",
     col_segment: "Segment",
     col_rm: "Chargé de relation",
     col_linked_entities: "Entités liées",
@@ -139,6 +146,11 @@ const I18N = {
     kpi_high: "Priorité élevée",
     kpi_new: "En attente de tri",
     kpi_risk: "Risque & conformité",
+    kpi_opportunities: "Opportunités commerciales",
+    client_type_client: "Client",
+    client_type_prospect: "Prospect",
+    clients_kpi_clients: "Clients existants",
+    clients_kpi_prospects: "Prospects",
     cat_commercial: "Opportunité Commerciale",
     cat_credit: "Entreprise & Crédit",
     cat_kyc: "Mise à jour KYC",
@@ -297,19 +309,35 @@ function setupLogoFallback() {
 
 function renderKPIs() {
   const total = state.events.length;
+  const opportunities = state.events.filter((e) => e.category === "Commercial Opportunity").length;
   const high = state.events.filter((e) => e.priority === "High").length;
   const newCount = state.events.filter((e) => e.status === "New").length;
   const risk = state.events.filter((e) => e.category === "Risk & Compliance").length;
 
   const kpis = [
     { value: total, label: t("kpi_total") },
+    { value: opportunities, label: t("kpi_opportunities"), accent: true },
     { value: high, label: t("kpi_high") },
     { value: newCount, label: t("kpi_new") },
     { value: risk, label: t("kpi_risk") },
   ];
 
   document.getElementById("kpis").innerHTML = kpis
-    .map((k) => `<div class="kpi-card"><div class="value">${k.value}</div><div class="label">${k.label}</div></div>`)
+    .map((k) => `<div class="kpi-card${k.accent ? " kpi-accent" : ""}"><div class="value">${k.value}</div><div class="label">${k.label}</div></div>`)
+    .join("");
+}
+
+function renderClientKPIs() {
+  const clients = state.clients.filter((c) => !c.isProspect).length;
+  const prospects = state.clients.filter((c) => c.isProspect).length;
+
+  const kpis = [
+    { value: clients, label: t("clients_kpi_clients") },
+    { value: prospects, label: t("clients_kpi_prospects"), accent: true },
+  ];
+
+  document.getElementById("client-kpis").innerHTML = kpis
+    .map((k) => `<div class="kpi-card${k.accent ? " kpi-accent" : ""}"><div class="value">${k.value}</div><div class="label">${k.label}</div></div>`)
     .join("");
 }
 
@@ -564,7 +592,7 @@ function renderClientDetailRow(client) {
 
   return `
     <tr class="detail-row" data-client-detail-for="${client.id}">
-      <td colspan="5" class="client-details-cell">
+      <td colspan="6" class="client-details-cell">
         <div class="client-events-title">${t("ownership_chain_title")}</div>
         ${chain}
         <div class="client-events-title">${t("linked_signals_title")}</div>
@@ -580,6 +608,7 @@ function renderClients() {
       const row = `
       <tr>
         <td class="source-name">${escapeHtml(c.name)}</td>
+        <td><span class="type-pill ${c.isProspect ? "prospect" : "client"}">${c.isProspect ? t("client_type_prospect") : t("client_type_client")}</span></td>
         <td>${escapeHtml(c.segment)}</td>
         <td>${escapeHtml(c.rmOwner)}</td>
         <td>${c.linkedEntities ? c.linkedEntities.length : 0}</td>
@@ -623,6 +652,7 @@ function renderAll() {
   renderKPIs();
   renderEventTable();
   renderSources();
+  renderClientKPIs();
   renderClients();
   if (state.aiStatus) {
     document.getElementById("ai-active-provider").textContent = t(PROVIDER_KEY[state.aiStatus.activeProvider] || state.aiStatus.activeProvider);

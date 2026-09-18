@@ -53,6 +53,7 @@ def init_db():
                 name TEXT NOT NULL,
                 segment TEXT NOT NULL,
                 rm_owner TEXT NOT NULL,
+                is_prospect INTEGER NOT NULL DEFAULT 0,
                 linked_entities TEXT NOT NULL
             )
             """
@@ -90,8 +91,8 @@ def seed(conn):
         )
     for c in CLIENTS:
         conn.execute(
-            "INSERT INTO clients (id, name, segment, rm_owner, linked_entities) VALUES (?, ?, ?, ?, ?)",
-            (c["id"], c["name"], c["segment"], c["rm_owner"], json.dumps(c["linked_entities"])),
+            "INSERT INTO clients (id, name, segment, rm_owner, is_prospect, linked_entities) VALUES (?, ?, ?, ?, ?, ?)",
+            (c["id"], c["name"], c["segment"], c["rm_owner"], int(c.get("is_prospect", False)), json.dumps(c["linked_entities"])),
         )
     now = datetime.now(timezone.utc)
     for i, e in enumerate(EVENTS):
@@ -146,7 +147,8 @@ def source_row_to_dict(row: sqlite3.Row) -> dict:
 def client_row_to_dict(row: sqlite3.Row) -> dict:
     return {
         "id": row["id"], "name": row["name"], "segment": row["segment"],
-        "rmOwner": row["rm_owner"], "linkedEntities": json.loads(row["linked_entities"]),
+        "rmOwner": row["rm_owner"], "isProspect": bool(row["is_prospect"]),
+        "linkedEntities": json.loads(row["linked_entities"]),
     }
 
 

@@ -121,6 +121,7 @@ CLIENTS = [
         "name": "Antoine Lefevre",
         "segment": "UHNW Individual — Private Banking",
         "rm_owner": "Camille Dubois",
+        "is_prospect": False,
         "linked_entities": [
             {"name": "Lefevre Family Holding SAS", "relation": "40% shareholder", "jurisdiction": "France"},
             {"name": "NovaTech Robotics SAS", "relation": "Indirect, via holding", "jurisdiction": "France"},
@@ -131,6 +132,7 @@ CLIENTS = [
         "name": "Whitfield & Rowe Group plc",
         "segment": "Corporate — Mid-Cap, UK-listed",
         "rm_owner": "James Okafor",
+        "is_prospect": False,
         "linked_entities": [
             {"name": "Whitfield & Rowe Logistics Ltd", "relation": "Wholly-owned subsidiary", "jurisdiction": "United Kingdom"},
         ],
@@ -140,6 +142,7 @@ CLIENTS = [
         "name": "Meridian BioTech Inc.",
         "segment": "Corporate — US-listed",
         "rm_owner": "Sarah Klein",
+        "is_prospect": False,
         "linked_entities": [],
     },
     {
@@ -147,6 +150,7 @@ CLIENTS = [
         "name": "Aurélie Costa",
         "segment": "UHNW Individual — Prospect",
         "rm_owner": "Camille Dubois",
+        "is_prospect": True,
         "linked_entities": [
             {"name": "Costa Ventures Holding", "relation": "Sole shareholder", "jurisdiction": "France"},
         ],
@@ -156,7 +160,18 @@ CLIENTS = [
         "name": "Delacroix Capital SAS",
         "segment": "Corporate — Family Office",
         "rm_owner": "James Okafor",
+        "is_prospect": False,
         "linked_entities": [],
+    },
+    {
+        "id": "meridian-holdings-prospect",
+        "name": "Julien Bertrand",
+        "segment": "Corporate Entrepreneur — Prospect",
+        "rm_owner": "Sarah Klein",
+        "is_prospect": True,
+        "linked_entities": [
+            {"name": "Bertrand Industrials SAS", "relation": "Founder & majority shareholder", "jurisdiction": "France"},
+        ],
     },
 ]
 

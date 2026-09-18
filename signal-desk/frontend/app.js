@@ -502,7 +502,7 @@ function exportCsv() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "radar-client-export.csv";
+  a.download = "veille-commerciale-intelligente-export.csv";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

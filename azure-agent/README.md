@@ -45,11 +45,52 @@ Dockerfile
 requirements.txt
 ```
 
+## A note on what "deployed in Azure AI Foundry" means here
+
+Azure AI Foundry's Agent Service hosts the *agent itself* — its model,
+instructions, tools, and every conversation thread it has. That part
+happens automatically: the first time this app starts up,
+`agent_runtime.py` calls `create_agent()` against your Foundry project,
+and from then on the agent shows up in your project's **Agents**
+playground at [ai.azure.com](https://ai.azure.com) like any agent you'd
+built by hand in the portal, with a real `agent_id` and real threads.
+
+What Foundry does *not* do is run your own custom Python process for
+you — there's no "upload this FastAPI app to Foundry" step. The
+queue/worker/HTTP layer in this repo needs its own always-on compute,
+which is what the Container Apps deployment below provides. So getting
+this running is two separate steps: create the Foundry project (once,
+this section), then deploy the container that talks to it (next
+section).
+
+## Step 0 — create the Azure AI Foundry project and model deployment
+
+If you don't already have one:
+
+1. Go to [ai.azure.com](https://ai.azure.com) → **Create project** (or
+   **New +** → **AI Foundry project**). Give it a name and pick/create
+   a resource group and region.
+2. Once it's created, open **Models + endpoints** in the left nav →
+   **Deploy model** → pick a chat model (e.g. `gpt-4o`) → deploy it.
+   Note the **deployment name** you give it (this is
+   `MODEL_DEPLOYMENT_NAME` below — it doesn't have to match the base
+   model's name).
+3. On the project's **Overview** page, copy the **project endpoint**
+   (looks like `https://<project>.services.ai.azure.com/api/projects/<project-name>`).
+   This is `PROJECT_ENDPOINT` below.
+
+(Portal navigation shifts over time — if a label doesn't match exactly,
+look for "Models + endpoints" / "Deployments" and the project's
+endpoint on its Overview page.)
+
+You don't create the *agent* itself here — leave the Agents tab empty.
+This app creates its own agent via the SDK on startup, using the model
+deployment and endpoint above.
+
 ## Prerequisites
 
-- An [Azure AI Foundry](https://ai.azure.com) project with a chat model
-  deployed (e.g. `gpt-4o`) — note its **project endpoint** and the
-  **deployment name**.
+- The Azure AI Foundry project and model deployment from Step 0 — its
+  **project endpoint** and the model's **deployment name**.
 - The Azure CLI, logged in (`az login`), with access to the
   subscription you want to deploy into.
 
@@ -146,6 +187,13 @@ curl -X POST "https://$FQDN/jobs" \
   -H 'authorization: Bearer <the apiToken you set above>' \
   -d '{"message": "hello"}'
 ```
+
+**5. Confirm it in Foundry.** Open your project at
+[ai.azure.com](https://ai.azure.com) → **Agents** — you should see an
+agent named `long-running-agent` (or whatever `AGENT_NAME` you set),
+created the moment the container app first started. That's the actual
+"deployed in Azure AI Foundry" part; everything above it just gets your
+own code running somewhere that can reach it.
 
 ## Auth
 

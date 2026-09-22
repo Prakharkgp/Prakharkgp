@@ -31,13 +31,29 @@ class Agent:
             toolset.add(FunctionTool(functions=AGENT_FUNCTIONS))
             self._client.enable_auto_function_calls(toolset)
 
-        self._agent = self._client.create_agent(
-            model=settings.model_deployment_name,
-            name=settings.agent_name,
-            instructions=settings.agent_instructions,
-            toolset=toolset if AGENT_FUNCTIONS else None,
+        # Every container restart re-runs this constructor. Without this
+        # lookup, each restart would call create_agent() again and leave
+        # behind a new agent id in the Foundry project every time — so
+        # reuse the existing one by name if it's already there.
+        existing = next(
+            (a for a in self._client.list_agents() if a.name == settings.agent_name), None
         )
-        logger.info("agent ready: %s (%s)", self._agent.name, self._agent.id)
+        if existing is not None:
+            self._agent = self._client.update_agent(
+                existing.id,
+                model=settings.model_deployment_name,
+                instructions=settings.agent_instructions,
+                toolset=toolset if AGENT_FUNCTIONS else None,
+            )
+            logger.info("reusing agent: %s (%s)", self._agent.name, self._agent.id)
+        else:
+            self._agent = self._client.create_agent(
+                model=settings.model_deployment_name,
+                name=settings.agent_name,
+                instructions=settings.agent_instructions,
+                toolset=toolset if AGENT_FUNCTIONS else None,
+            )
+            logger.info("created agent: %s (%s)", self._agent.name, self._agent.id)
 
     def new_thread(self) -> str:
         """Start a fresh conversation and return its thread id. Callers

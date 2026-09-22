@@ -1,0 +1,5 @@
+fastapi==0.115.6
+uvicorn[standard]==0.32.0
+pydantic==2.10.3
+azure-ai-agents==1.1.0
+azure-identity==1.19.0

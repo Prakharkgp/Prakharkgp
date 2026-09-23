@@ -246,6 +246,7 @@ EVENTS = [
         "source_id": "corp-ir",
         "priority": "Medium",
         "description": "Board announces a special dividend following the disposal of a non-core division.",
+        "status": "Actioned",
     },
     {
         "category": "Commercial Opportunity",
@@ -255,6 +256,8 @@ EVENTS = [
         "source_id": "fin-media",
         "priority": "Low",
         "description": "Financial press reports the founder's appointment to the board of a listed peer.",
+        "status": "Dismissed",
+        "decline_reason": "RM assessed limited near-term relevance for the private banking offer — no follow-up planned.",
     },
     {
         "category": "Corporate & Credit",
@@ -291,6 +294,7 @@ EVENTS = [
         "source_id": "orbis",
         "priority": "High",
         "description": "Ownership mapping shows a change in the UBO chain following the NovaTech stake sale — KYC file needs refresh.",
+        "status": "Actioned",
     },
     {
         "category": "KYC Update",

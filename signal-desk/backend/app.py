@@ -114,12 +114,13 @@ def seed(conn):
             INSERT INTO events (
                 category, event_type, entity_name, client_id, source_id, priority,
                 description, status, detected_at, ai_summary, ai_suggested_action,
-                ai_confidence, ai_provider_used
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'New', ?, NULL, NULL, NULL, NULL)
+                ai_confidence, ai_provider_used, decline_reason
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, ?)
             """,
             (
                 e["category"], e["event_type"], e["entity_name"], e["client_id"],
-                e["source_id"], e["priority"], e["description"], detected_at,
+                e["source_id"], e["priority"], e["description"], e.get("status", "New"),
+                detected_at, e.get("decline_reason"),
             ),
         )
     conn.commit()

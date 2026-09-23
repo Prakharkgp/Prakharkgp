@@ -129,7 +129,15 @@ CLIENTS = [
         "rm_owner": "Camille Dubois",
         "is_prospect": False,
         "linked_entities": [
-            {"name": "Lefevre Family Holding SAS", "relation": "40% shareholder", "jurisdiction": "France"},
+            {
+                "name": "Lefevre Family Holding SAS",
+                "relation": "40% shareholder",
+                "jurisdiction": "France",
+                "other_shareholders": [
+                    {"name": "Marine Lefevre", "stake": "30%", "type": "individual"},
+                    {"name": "Atlas Croissance Partners", "stake": "30%", "type": "entity"},
+                ],
+            },
             {"name": "NovaTech Robotics SAS", "relation": "Indirect, via holding", "jurisdiction": "France"},
         ],
     },
@@ -176,7 +184,15 @@ CLIENTS = [
         "rm_owner": "Sarah Klein",
         "is_prospect": True,
         "linked_entities": [
-            {"name": "Bertrand Industrials SAS", "relation": "Founder & majority shareholder", "jurisdiction": "France"},
+            {
+                "name": "Bertrand Industrials SAS",
+                "relation": "Founder & majority shareholder",
+                "jurisdiction": "France",
+                "other_shareholders": [
+                    {"name": "Nathalie Bertrand", "stake": "25%", "type": "individual"},
+                    {"name": "Atlas Growth Fund", "stake": "15%", "type": "entity"},
+                ],
+            },
         ],
     },
 ]

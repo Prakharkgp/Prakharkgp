@@ -128,6 +128,13 @@ const I18N = {
     btn_dashboard: "Dashboard",
     scan_no_gap: "No gap detected — all linked entities are already tracked.",
     gap_added_tag: "Added to the Signal Directory",
+    other_shareholders_label: "Other shareholders",
+    already_client_tag: "Already a client",
+    convert_to_client_btn: "Make this shareholder a client",
+    converting_label: "Converting…",
+    convert_success: (name) => `${name} was added as a new prospect — a commercial opportunity signal was created and analyzed. See the Clients tab.`,
+    convert_error_prefix: "Conversion failed:",
+    convert_already_client: (name) => `${name} is already a tracked client.`,
   },
   fr: {
     tagline: "Intelligence des événements clients pour la Banque Privée et les Entreprises",
@@ -258,6 +265,13 @@ const I18N = {
     btn_dashboard: "Tableau de bord",
     scan_no_gap: "Aucun écart détecté — toutes les entités liées sont déjà suivies.",
     gap_added_tag: "Ajouté au répertoire des signaux",
+    other_shareholders_label: "Autres actionnaires",
+    already_client_tag: "Déjà client",
+    convert_to_client_btn: "Faire de cet actionnaire un client",
+    converting_label: "Conversion en cours…",
+    convert_success: (name) => `${name} a été ajouté comme nouveau prospect — un signal d'opportunité commerciale a été créé et analysé. Voir l'onglet Clients.`,
+    convert_error_prefix: "Échec de la conversion :",
+    convert_already_client: (name) => `${name} est déjà un client suivi.`,
   },
 };
 
@@ -746,10 +760,36 @@ function closeClientModal() {
   state.modalClient = null;
 }
 
+function renderShareholdersBlock(entity) {
+  const holders = entity.other_shareholders || [];
+  if (!holders.length) return "";
+  const rows = holders
+    .map((h) => {
+      const action = h.isClient
+        ? `<span class="already-client-tag">${t("already_client_tag")}</span>`
+        : `<button class="btn btn-outline btn-small convert-shareholder-btn" data-entity="${escapeHtml(entity.name)}" data-shareholder="${escapeHtml(h.name)}">${t("convert_to_client_btn")}</button>`;
+      return `<li class="shareholder-row" data-shareholder-row="${escapeHtml(entity.name)}::${escapeHtml(h.name)}">
+        <span>${escapeHtml(h.name)} <span class="relation">(${escapeHtml(h.stake)})</span></span>
+        ${action}
+      </li>`;
+    })
+    .join("");
+  return `<ul class="other-shareholders">${rows}</ul>`;
+}
+
 function renderClientModalContent(client) {
   const chain = client.linkedEntities.length
     ? `<ul class="ownership-chain">${client.linkedEntities
-        .map((e) => `<li><span>${escapeHtml(e.name)}</span><span class="relation">${escapeHtml(e.relation)} · ${escapeHtml(e.jurisdiction)}</span></li>`)
+        .map(
+          (e) => `<li>
+            <div class="ownership-chain-row"><span>${escapeHtml(e.name)}</span><span class="relation">${escapeHtml(e.relation)} · ${escapeHtml(e.jurisdiction)}</span></div>
+            ${
+              e.other_shareholders && e.other_shareholders.length
+                ? `<div class="other-shareholders-label">${t("other_shareholders_label")}</div>${renderShareholdersBlock(e)}`
+                : ""
+            }
+          </li>`
+        )
         .join("")}</ul>`
     : `<p style="font-size:13px;color:var(--muted);">${t("no_linked_entities")}</p>`;
 
@@ -775,6 +815,7 @@ function renderClientModalContent(client) {
     <div class="client-modal-section">
       <h3>${t("shareholder_structure_title")}</h3>
       ${chain}
+      <p class="shareholder-convert-status" id="shareholder-convert-status"></p>
     </div>
 
     <div class="client-modal-actions">
@@ -793,6 +834,67 @@ function renderClientModalContent(client) {
 
   document.getElementById("explore-opportunity-btn").addEventListener("click", () => toggleExploreOpportunities(client));
   document.getElementById("scan-agent-btn").addEventListener("click", () => scanForMissedOpportunities(client));
+  wireShareholderConvertButtons(client);
+}
+
+function wireShareholderConvertButtons(client) {
+  document.querySelectorAll(".convert-shareholder-btn").forEach((btn) => {
+    btn.addEventListener("click", () => convertShareholderToClient(client, btn));
+  });
+}
+
+async function convertShareholderToClient(client, btn) {
+  const entityName = btn.dataset.entity;
+  const shareholderName = btn.dataset.shareholder;
+  const statusEl = document.getElementById("shareholder-convert-status");
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = t("converting_label");
+  statusEl.textContent = "";
+  statusEl.className = "shareholder-convert-status";
+
+  try {
+    const result = await api(`/api/clients/${client.id}/shareholders/convert`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entityName, shareholderName }),
+    });
+
+    const row = btn.closest(".shareholder-row");
+    if (row) {
+      row.querySelector("button")?.replaceWith(
+        Object.assign(document.createElement("span"), {
+          className: "already-client-tag",
+          textContent: t("already_client_tag"),
+        })
+      );
+    }
+    statusEl.textContent = t("convert_success", shareholderName);
+    statusEl.className = "shareholder-convert-status ok";
+
+    await refreshClients();
+
+    if (result.client && result.client.events && result.client.events.length) {
+      const idx = state.events.findIndex((ev) => ev.id === result.client.events[0].id);
+      if (idx === -1) state.events.push(result.client.events[0]);
+      renderKPIs();
+      renderEventTable();
+    }
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+    statusEl.textContent = e.message && e.message.includes("already a tracked client")
+      ? t("convert_already_client", shareholderName)
+      : `${t("convert_error_prefix")} ${e.message}`;
+    statusEl.className = "shareholder-convert-status error";
+  }
+}
+
+async function refreshClients() {
+  const clients = await api("/api/clients");
+  state.clients = clients;
+  renderClientKPIs();
+  renderClients();
 }
 
 function renderNoOpportunityBanner() {

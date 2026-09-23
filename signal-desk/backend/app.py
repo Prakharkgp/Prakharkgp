@@ -4,6 +4,7 @@ signals surfaced from public registries and (eventually) private
 intelligence sources, linked back to clients and entities."""
 
 import json
+import re
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
@@ -178,6 +179,21 @@ class AIConfigIn(BaseModel):
     deployment: Optional[str] = None
 
 
+class ShareholderConvertIn(BaseModel):
+    entityName: str
+    shareholderName: str
+
+
+def _annotate_other_shareholders(client: dict, conn) -> None:
+    """Mark each linked entity's other shareholders as isClient by
+    cross-checking their name against the current clients table, so a
+    shareholder just converted into a client is reflected immediately."""
+    existing_names = {r["name"].strip().lower() for r in conn.execute("SELECT name FROM clients")}
+    for entity in client["linkedEntities"]:
+        for holder in entity.get("other_shareholders", []):
+            holder["isClient"] = holder["name"].strip().lower() in existing_names
+
+
 app = FastAPI(title="Signal Desk API")
 
 
@@ -303,6 +319,7 @@ def get_client(client_id: str):
             "SELECT * FROM events WHERE client_id = ? ORDER BY detected_at DESC", (client_id,)
         ).fetchall()
         client["events"] = [event_row_to_dict(r, sources_by_id, clients_by_id) for r in events]
+        _annotate_other_shareholders(client, conn)
         return client
 
 
@@ -392,6 +409,116 @@ def scan_client_opportunities(client_id: str):
             "clientName": client["name"],
             "provider": provider.name,
             "gaps": results,
+        }
+
+
+@app.post("/api/clients/{client_id}/shareholders/convert")
+def convert_shareholder_to_prospect(client_id: str, payload: ShareholderConvertIn):
+    """Turns a co-shareholder of one of the client's linked entities — someone
+    with no client record yet — into a tracked prospect. Creates a new client
+    row referencing the shared entity, plus a Commercial Opportunity signal
+    run through the active AI provider, so the new prospect arrives with an
+    analyzed starting point rather than a blank record."""
+    with get_conn() as conn:
+        row = conn.execute("SELECT * FROM clients WHERE id = ?", (client_id,)).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Client not found")
+        client = client_row_to_dict(row)
+
+        entity = next((e for e in client["linkedEntities"] if e["name"] == payload.entityName), None)
+        if entity is None:
+            raise HTTPException(status_code=404, detail="Linked entity not found on this client")
+        holder = next(
+            (h for h in entity.get("other_shareholders", []) if h["name"] == payload.shareholderName), None
+        )
+        if holder is None:
+            raise HTTPException(status_code=404, detail="Shareholder not found on this entity")
+
+        existing = conn.execute(
+            "SELECT id FROM clients WHERE lower(name) = lower(?)", (holder["name"],)
+        ).fetchone()
+        if existing is not None:
+            raise HTTPException(status_code=409, detail=f"{holder['name']} is already a tracked client")
+
+        new_id = re.sub(r"[^a-z0-9]+", "-", holder["name"].lower()).strip("-") or "prospect"
+        suffix = 1
+        candidate_id = new_id
+        while conn.execute("SELECT 1 FROM clients WHERE id = ?", (candidate_id,)).fetchone():
+            suffix += 1
+            candidate_id = f"{new_id}-{suffix}"
+        new_id = candidate_id
+
+        segment = (
+            f"{'Individual' if holder['type'] == 'individual' else 'Corporate'} — "
+            f"Prospect via {client['name']} shareholder network"
+        )
+        new_linked_entities = [
+            {
+                "name": entity["name"],
+                "relation": f"Co-shareholder ({holder['stake']}), alongside {client['name']}",
+                "jurisdiction": entity["jurisdiction"],
+            }
+        ]
+        conn.execute(
+            "INSERT INTO clients (id, name, segment, rm_owner, is_prospect, linked_entities) VALUES (?, ?, ?, ?, 1, ?)",
+            (new_id, holder["name"], segment, client["rmOwner"], json.dumps(new_linked_entities)),
+        )
+        conn.commit()
+
+        provider = _get_active_provider(conn)
+        description = (
+            f"{holder['name']} holds {holder['stake']} of {entity['name']}, alongside existing client "
+            f"{client['name']} — surfaced as a new commercial prospect by the internal cross-check agent."
+        )
+        now = datetime.now(timezone.utc).isoformat()
+        cur = conn.execute(
+            """
+            INSERT INTO events (
+                category, event_type, entity_name, client_id, source_id, priority,
+                description, status, detected_at, ai_summary, ai_suggested_action,
+                ai_confidence, ai_provider_used, decline_reason
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'New', ?, NULL, NULL, NULL, NULL, NULL)
+            """,
+            (
+                "Commercial Opportunity", "New prospect identified via shareholder network", entity["name"],
+                new_id, "internal-crosscheck", "Medium", description, now,
+            ),
+        )
+        new_event_id = cur.lastrowid
+        conn.commit()
+
+        error = None
+        try:
+            analysis = provider.analyze(
+                {
+                    "category": "Commercial Opportunity",
+                    "event_type": "New prospect identified via shareholder network",
+                    "entity_name": entity["name"],
+                    "source_name": "AI Agent — Internal Cross-Check",
+                    "description": description,
+                }
+            )
+            conn.execute(
+                """
+                UPDATE events SET ai_summary = ?, ai_suggested_action = ?, ai_confidence = ?, ai_provider_used = ?
+                WHERE id = ?
+                """,
+                (analysis["summary"], analysis["suggested_action"], analysis["confidence"], provider.name, new_event_id),
+            )
+            conn.commit()
+        except Exception as exc:
+            error = f"{type(exc).__name__}: {exc}"
+
+        new_row = conn.execute("SELECT * FROM clients WHERE id = ?", (new_id,)).fetchone()
+        new_client = client_row_to_dict(new_row)
+        sources_by_id, clients_by_id = _sources_and_clients(conn)
+        event_row = conn.execute("SELECT * FROM events WHERE id = ?", (new_event_id,)).fetchone()
+        new_client["events"] = [event_row_to_dict(event_row, sources_by_id, clients_by_id)]
+
+        return {
+            "client": new_client,
+            "provider": provider.name,
+            "error": error,
         }
 
 

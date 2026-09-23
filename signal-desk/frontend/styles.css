@@ -607,6 +607,50 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
 }
 .agent-step p { margin: 2px 0 0; font-size: 13px; color: var(--text); }
 
+.agent-progress { display: flex; flex-direction: column; gap: 10px; }
+.agent-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.agent-progress-row.done { color: var(--text); }
+.agent-progress-row.active { color: var(--text); font-weight: 600; }
+.agent-progress-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  font-size: 10px;
+}
+.agent-progress-spinner {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  border-top-color: var(--navy);
+  animation: agent-progress-spin 0.8s linear infinite;
+}
+.agent-progress-row:not(.done):not(.active)::before {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+}
+@keyframes agent-progress-spin {
+  to { transform: rotate(360deg); }
+}
+
 .no-opportunity-banner {
   background: #f4f5f7;
   border: 1px dashed var(--border);
@@ -617,8 +661,6 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
   font-size: 14px;
 }
 .no-opportunity-banner strong { display: block; color: var(--text); font-size: 15px; margin-bottom: 4px; }
-
-.scan-loading { font-size: 13px; color: var(--muted); }
 
 .decline-reason-box {
   display: flex;

@@ -111,7 +111,10 @@ const I18N = {
     ai_call_error_prefix: "Analysis failed:",
     shareholder_structure_title: "Shareholder structure",
     explore_opportunity_btn: "Explore commercial opportunity",
-    scan_loading: "Running the agent sequence (online search, internal KYC check, synthesis, proposal)…",
+    scan_loading_title: "Agent sequence running…",
+    progress_step_search: "1/1 Online search",
+    progress_step_kyc: "2/2 Internal KYC data comparison",
+    progress_step_synthesis: "3/3 Synthetic commercial opportunity report",
     no_opportunity_title: "No opportunity for this legal entity",
     no_opportunity_body: "The AI agent cross-checked the shareholder structure against tracked signals and found nothing new.",
     agent_findings_title: "Agent findings",
@@ -260,7 +263,10 @@ const I18N = {
     ai_call_error_prefix: "Échec de l'analyse :",
     shareholder_structure_title: "Structure actionnariale",
     explore_opportunity_btn: "Explorer l'opportunité commerciale",
-    scan_loading: "Exécution de la séquence d'agents (recherche en ligne, vérification KYC interne, synthèse, proposition)…",
+    scan_loading_title: "Séquence d'agents en cours…",
+    progress_step_search: "1/1 Recherche en ligne",
+    progress_step_kyc: "2/2 Comparaison des données KYC internes",
+    progress_step_synthesis: "3/3 Rapport de synthèse d'opportunité commerciale",
     no_opportunity_title: "Aucune opportunité pour cette entité juridique",
     no_opportunity_body: "L'agent IA a comparé la structure actionnariale aux signaux suivis et n'a rien trouvé de nouveau.",
     agent_findings_title: "Résultats de l'agent",
@@ -992,6 +998,22 @@ function renderNoOpportunityBanner() {
     </div>`;
 }
 
+const AGENT_PROGRESS_STEPS = ["progress_step_search", "progress_step_kyc", "progress_step_synthesis"];
+
+function renderAgentProgress(panel, completedCount) {
+  const rows = AGENT_PROGRESS_STEPS.map((key, i) => {
+    const stepNum = i + 1;
+    const isDone = stepNum <= completedCount;
+    const isActive = stepNum === completedCount + 1;
+    const icon = isDone ? '<span class="agent-progress-check">✓</span>' : isActive ? '<span class="agent-progress-spinner"></span>' : "";
+    return `<div class="agent-progress-row${isDone ? " done" : ""}${isActive ? " active" : ""}">
+      ${icon}
+      <span class="agent-progress-label">${escapeHtml(t(key))}</span>
+    </div>`;
+  }).join("");
+  panel.innerHTML = `<div class="client-modal-section"><h3>${t("scan_loading_title")}</h3><div class="agent-progress">${rows}</div></div>`;
+}
+
 function renderAgentFindingCard(g) {
   const body = g.error
     ? `<div class="ge">${t("scan_call_error_prefix")} ${escapeHtml(g.error)}</div>`
@@ -1028,16 +1050,24 @@ async function exploreCommercialOpportunity(client) {
   }
 
   panel.hidden = false;
-  panel.innerHTML = `<p class="scan-loading">${t("scan_loading")}</p>`;
+  renderAgentProgress(panel, 0);
 
   const existingOpportunities = (client.events || []).filter((e) => e.category === "Commercial Opportunity");
-  let scanResult = null;
-  let scanError = null;
-  try {
-    scanResult = await api(`/api/clients/${client.id}/scan-opportunities`, { method: "POST" });
-  } catch (e) {
-    scanError = e.message;
-  }
+
+  const fetchPromise = (async () => {
+    try {
+      return { scanResult: await api(`/api/clients/${client.id}/scan-opportunities`, { method: "POST" }), scanError: null };
+    } catch (e) {
+      return { scanResult: null, scanError: e.message };
+    }
+  })();
+
+  const progressDelays = [500, 1100, 1700];
+  const progressTimers = progressDelays.map(
+    (delay, i) => new Promise((resolve) => setTimeout(() => { renderAgentProgress(panel, i + 1); resolve(); }, delay))
+  );
+
+  const [{ scanResult, scanError }] = await Promise.all([fetchPromise, ...progressTimers]);
 
   if (scanResult && scanResult.found) {
     scanResult.gaps.forEach((g) => {

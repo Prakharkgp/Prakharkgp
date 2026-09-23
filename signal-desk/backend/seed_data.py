@@ -64,6 +64,12 @@ SOURCES = [
         "description": "Reliable financial press — often surfaces events before official registries are updated.",
         "status": "simulated",
     },
+    {
+        "id": "internal-crosscheck", "name": "AI Agent — Internal Cross-Check", "kind": "private",
+        "coverage": "Internal",
+        "description": "Cross-checks a client's shareholder structure against tracked signals to surface potentially missed opportunities.",
+        "status": "simulated",
+    },
     # Private / commercial sources — planned integrations
     {
         "id": "orbis", "name": "Moody's Orbis", "kind": "private",

@@ -311,8 +311,10 @@ def scan_client_opportunities(client_id: str):
     """The 'agent' button: cross-checks the client's known ownership
     structure against the signals already on file, and flags any linked
     entity that has no tracked signal yet — i.e. something the internal
-    referential may have missed. Each gap is run through the active AI
-    provider for a one-line rationale, same as a normal event analysis."""
+    referential may have missed. For each gap, a new signal is created
+    directly in the Signal Directory (source = the internal cross-check
+    agent) and immediately run through the active AI provider — so the
+    agent doesn't just preview a finding, it adds a fully-analyzed line."""
     with get_conn() as conn:
         row = conn.execute("SELECT * FROM clients WHERE id = ?", (client_id,)).fetchone()
         if row is None:
@@ -329,42 +331,60 @@ def scan_client_opportunities(client_id: str):
             return {"found": False, "clientId": client_id, "clientName": client["name"]}
 
         provider = _get_active_provider(conn)
+        sources_by_id, clients_by_id = _sources_and_clients(conn)
+        now = datetime.now(timezone.utc).isoformat()
         results = []
+
         for gap in gaps[:3]:
+            description = (
+                f"{gap['name']} is linked to {client['name']} "
+                f"({gap['relation']}, {gap['jurisdiction']}) but had no signal on file — "
+                "added automatically by the internal referential cross-check agent."
+            )
+            cur = conn.execute(
+                """
+                INSERT INTO events (
+                    category, event_type, entity_name, client_id, source_id, priority,
+                    description, status, detected_at, ai_summary, ai_suggested_action,
+                    ai_confidence, ai_provider_used, decline_reason
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'New', ?, NULL, NULL, NULL, NULL, NULL)
+                """,
+                (
+                    "Commercial Opportunity", "Potential missed opportunity", gap["name"],
+                    client_id, "internal-crosscheck", "Medium", description, now,
+                ),
+            )
+            new_event_id = cur.lastrowid
+            conn.commit()
+
+            error = None
             try:
                 analysis = provider.analyze(
                     {
                         "category": "Commercial Opportunity",
                         "event_type": "Potential missed opportunity",
                         "entity_name": gap["name"],
-                        "source_name": "Internal referential cross-check",
-                        "description": (
-                            f"{gap['name']} is linked to {client['name']} "
-                            f"({gap['relation']}, {gap['jurisdiction']}) but has no signal on file yet."
-                        ),
+                        "source_name": "AI Agent — Internal Cross-Check",
+                        "description": description,
                     }
                 )
-                results.append(
-                    {
-                        "entityName": gap["name"],
-                        "relation": gap["relation"],
-                        "jurisdiction": gap["jurisdiction"],
-                        "summary": analysis["summary"],
-                        "suggestedAction": analysis["suggested_action"],
-                        "error": None,
-                    }
+                conn.execute(
+                    """
+                    UPDATE events SET ai_summary = ?, ai_suggested_action = ?, ai_confidence = ?, ai_provider_used = ?
+                    WHERE id = ?
+                    """,
+                    (analysis["summary"], analysis["suggested_action"], analysis["confidence"], provider.name, new_event_id),
                 )
+                conn.commit()
             except Exception as exc:
-                results.append(
-                    {
-                        "entityName": gap["name"],
-                        "relation": gap["relation"],
-                        "jurisdiction": gap["jurisdiction"],
-                        "summary": None,
-                        "suggestedAction": None,
-                        "error": f"{type(exc).__name__}: {exc}",
-                    }
-                )
+                error = f"{type(exc).__name__}: {exc}"
+
+            new_row = conn.execute("SELECT * FROM events WHERE id = ?", (new_event_id,)).fetchone()
+            event = event_row_to_dict(new_row, sources_by_id, clients_by_id)
+            event["relation"] = gap["relation"]
+            event["jurisdiction"] = gap["jurisdiction"]
+            event["error"] = error
+            results.append(event)
 
         return {
             "found": True,

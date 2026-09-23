@@ -521,6 +521,18 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
 .opportunity-row .ot, .gap-row .ot { font-weight: 700; margin-bottom: 2px; }
 .opportunity-row .om, .gap-row .om { color: var(--muted); font-size: 12px; }
 .gap-row .ga { margin-top: 6px; font-weight: 600; color: var(--navy); }
+.gap-added-tag {
+  display: inline-block;
+  margin: 4px 0 6px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: #eaf3e6;
+  color: var(--green);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
 .gap-row .ge { color: var(--red); font-size: 12px; margin-top: 4px; }
 
 .no-opportunity-banner {

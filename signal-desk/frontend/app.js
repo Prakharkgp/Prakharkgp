@@ -126,6 +126,8 @@ const I18N = {
     btn_cancel: "Cancel",
     scan_call_error_prefix: "Check failed:",
     btn_dashboard: "Dashboard",
+    scan_no_gap: "No gap detected — all linked entities are already tracked.",
+    gap_added_tag: "Added to the Signal Directory",
   },
   fr: {
     tagline: "Intelligence des événements clients pour la Banque Privée et les Entreprises",
@@ -254,6 +256,8 @@ const I18N = {
     btn_cancel: "Annuler",
     scan_call_error_prefix: "Échec de la vérification :",
     btn_dashboard: "Tableau de bord",
+    scan_no_gap: "Aucun écart détecté — toutes les entités liées sont déjà suivies.",
+    gap_added_tag: "Ajouté au répertoire des signaux",
   },
 };
 
@@ -791,6 +795,14 @@ function renderClientModalContent(client) {
   document.getElementById("scan-agent-btn").addEventListener("click", () => scanForMissedOpportunities(client));
 }
 
+function renderNoOpportunityBanner() {
+  return `
+    <div class="no-opportunity-banner">
+      <strong>${t("no_opportunity_title")}</strong>
+      ${t("no_opportunity_body")}
+    </div>`;
+}
+
 function toggleExploreOpportunities(client) {
   const panel = document.getElementById("explore-opportunity-panel");
   if (!panel.hidden) {
@@ -807,7 +819,7 @@ function toggleExploreOpportunities(client) {
           </div>`
         )
         .join("")
-    : `<p style="font-size:13px;color:var(--muted);">${t("client_opportunities_empty")}</p>`;
+    : renderNoOpportunityBanner();
 
   panel.innerHTML = `<div class="client-modal-section"><h3>${t("client_opportunities_title")}</h3>${list}</div>`;
   panel.hidden = false;
@@ -822,21 +834,26 @@ async function scanForMissedOpportunities(client) {
     const result = await api(`/api/clients/${client.id}/scan-opportunities`, { method: "POST" });
 
     if (!result.found) {
-      panel.innerHTML = `
-        <div class="no-opportunity-banner">
-          <strong>${t("no_opportunity_title")}</strong>
-          ${t("no_opportunity_body")}
-        </div>`;
+      panel.innerHTML = `<p style="font-size:13px;color:var(--muted);">${t("scan_no_gap")}</p>`;
       return;
     }
+
+    result.gaps.forEach((g) => {
+      const idx = state.events.findIndex((ev) => ev.id === g.id);
+      if (idx === -1) state.events.push(g);
+      else state.events[idx] = g;
+    });
+    renderKPIs();
+    renderEventTable();
 
     const gapsHtml = result.gaps
       .map((g) => {
         const body = g.error
           ? `<div class="ge">${t("scan_call_error_prefix")} ${escapeHtml(g.error)}</div>`
-          : `<div class="om">${escapeHtml(g.summary)}</div><div class="ga">${escapeHtml(g.suggestedAction)}</div>`;
+          : `<div class="om">${escapeHtml(g.aiSummary)}</div><div class="ga">${escapeHtml(g.aiSuggestedAction)}</div>`;
         return `<div class="gap-row">
           <div class="ot">${escapeHtml(g.entityName)} — ${escapeHtml(g.relation)} · ${escapeHtml(g.jurisdiction)}</div>
+          <div class="gap-added-tag">${t("gap_added_tag")}</div>
           ${body}
         </div>`;
       })

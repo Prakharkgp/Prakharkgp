@@ -87,9 +87,9 @@ const I18N = {
       "<strong>Demo mode (default):</strong> a rule-based engine drafts a one-line summary and a suggested next action from the event's own fields — no external calls, no keys required.",
     ai_how_2:
       "<strong>Azure AI Foundry (ready, not yet connected):</strong> setting <code>AZURE_AI_FOUNDRY_ENDPOINT</code> and <code>AZURE_AI_FOUNDRY_API_KEY</code> as environment variables on the backend switches every “Analyze” call to a real model deployment — same interface, richer output.",
-    ai_env_endpoint: "https://&lt;resource&gt;.services.ai.azure.com",
+    ai_env_endpoint: "https://&lt;resource&gt;.services.ai.azure.com/openai/v1",
     ai_env_key: "secret — set in your host's env, never in code",
-    ai_env_deployment: "defaults to gpt-4o-mini",
+    ai_env_deployment: "e.g. gpt-5.4-mini",
     ai_note_demo:
       "Set AZURE_AI_FOUNDRY_ENDPOINT and AZURE_AI_FOUNDRY_API_KEY as environment variables to switch from the demo engine to a live Azure AI Foundry model deployment — no code change required.",
     ai_note_azure: "This deployment is running on a live Azure AI Foundry model.",
@@ -185,9 +185,9 @@ const I18N = {
       "<strong>Mode démo (par défaut) :</strong> un moteur à base de règles rédige un résumé en une phrase et une action suggérée à partir des champs de l'événement — aucun appel externe, aucune clé requise.",
     ai_how_2:
       "<strong>Azure AI Foundry (prêt, non connecté) :</strong> définir <code>AZURE_AI_FOUNDRY_ENDPOINT</code> et <code>AZURE_AI_FOUNDRY_API_KEY</code> comme variables d'environnement sur le backend fait basculer chaque analyse vers un modèle réel — même interface, résultat plus riche.",
-    ai_env_endpoint: "https://&lt;ressource&gt;.services.ai.azure.com",
+    ai_env_endpoint: "https://&lt;ressource&gt;.services.ai.azure.com/openai/v1",
     ai_env_key: "secret — à définir dans l'environnement de l'hôte, jamais dans le code",
-    ai_env_deployment: "par défaut : gpt-4o-mini",
+    ai_env_deployment: "ex. : gpt-5.4-mini",
     ai_note_demo:
       "Définissez AZURE_AI_FOUNDRY_ENDPOINT et AZURE_AI_FOUNDRY_API_KEY comme variables d'environnement pour passer du moteur de démonstration à un modèle Azure AI Foundry réel — aucune modification de code requise.",
     ai_note_azure: "Ce déploiement fonctionne actuellement avec un modèle Azure AI Foundry réel.",

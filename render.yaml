@@ -45,4 +45,4 @@ services:
       - key: AZURE_AI_FOUNDRY_API_KEY
         sync: false  # optional — set only when connecting a real deployment
       - key: AZURE_AI_FOUNDRY_DEPLOYMENT
-        sync: false  # optional — defaults to gpt-4o-mini if unset
+        sync: false  # optional — defaults to gpt-5.4-mini if unset

@@ -15,7 +15,7 @@ not a code change.
 import os
 from abc import ABC, abstractmethod
 
-import httpx
+from openai import OpenAI
 
 
 class AIProvider(ABC):
@@ -50,52 +50,52 @@ class MockAIProvider(AIProvider):
 
 
 class AzureFoundryProvider(AIProvider):
-    """Calls a chat-completions-style model deployment on Azure AI Foundry.
+    """Calls a model deployment on Azure AI Foundry through its
+    OpenAI-compatible Responses API, using the official `openai` SDK.
 
     Configure via environment variables:
-      AZURE_AI_FOUNDRY_ENDPOINT    e.g. https://<resource>.services.ai.azure.com
+      AZURE_AI_FOUNDRY_ENDPOINT    the resource's OpenAI-compatible base URL,
+                                    e.g. https://<resource>.services.ai.azure.com/openai/v1
       AZURE_AI_FOUNDRY_API_KEY
-      AZURE_AI_FOUNDRY_DEPLOYMENT  defaults to "gpt-4o-mini"
+      AZURE_AI_FOUNDRY_DEPLOYMENT  the deployment name, e.g. "gpt-5.4-mini"
     """
 
     name = "Azure AI Foundry"
 
     def __init__(self, endpoint: str, api_key: str, deployment: str):
-        self.endpoint = endpoint.rstrip("/")
-        self.api_key = api_key
+        self.client = OpenAI(base_url=endpoint, api_key=api_key)
         self.deployment = deployment
 
     def analyze(self, event: dict) -> dict:
-        url = (
-            f"{self.endpoint}/openai/deployments/{self.deployment}"
-            "/chat/completions?api-version=2024-06-01"
-        )
         prompt = (
-            "You are a private-banking signal analyst. In one sentence, summarize "
-            "this event for a relationship manager and suggest one next action.\n\n"
+            "You are a private-banking signal analyst. Reply with exactly two "
+            "lines and no other text:\n"
+            "Summary: <one-sentence summary of the event for a relationship manager>\n"
+            "Suggested action: <one short recommended next action>\n\n"
             f"Category: {event.get('category')}\n"
             f"Type: {event.get('event_type')}\n"
             f"Entity: {event.get('entity_name')}\n"
             f"Source: {event.get('source_name')}\n"
             f"Details: {event.get('description')}\n"
         )
-        headers = {"api-key": self.api_key, "Content-Type": "application/json"}
-        payload = {
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.2,
-            "max_tokens": 200,
-        }
-        with httpx.Client(timeout=15) as client:
-            resp = client.post(url, headers=headers, json=payload)
-            resp.raise_for_status()
-            content = resp.json()["choices"][0]["message"]["content"]
-        return {"summary": content.strip(), "suggested_action": "", "confidence": 0.9}
+        response = self.client.responses.create(model=self.deployment, input=prompt)
+        text = (response.output_text or "").strip()
+
+        summary, suggested_action = text, ""
+        for line in text.splitlines():
+            stripped = line.strip()
+            if stripped.lower().startswith("summary:"):
+                summary = stripped[len("summary:"):].strip()
+            elif stripped.lower().startswith("suggested action:"):
+                suggested_action = stripped[len("suggested action:"):].strip()
+
+        return {"summary": summary, "suggested_action": suggested_action, "confidence": 0.9}
 
 
 def get_provider() -> AIProvider:
     endpoint = os.getenv("AZURE_AI_FOUNDRY_ENDPOINT", "").strip()
     api_key = os.getenv("AZURE_AI_FOUNDRY_API_KEY", "").strip()
-    deployment = os.getenv("AZURE_AI_FOUNDRY_DEPLOYMENT", "gpt-4o-mini").strip()
+    deployment = os.getenv("AZURE_AI_FOUNDRY_DEPLOYMENT", "gpt-5.4-mini").strip()
     if endpoint and api_key:
         return AzureFoundryProvider(endpoint, api_key, deployment)
     return MockAIProvider()

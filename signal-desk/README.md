@@ -55,13 +55,16 @@ environment (never commit them):
 
 | Variable | Purpose |
 |---|---|
-| `AZURE_AI_FOUNDRY_ENDPOINT` | Your Foundry resource endpoint, e.g. `https://<resource>.services.ai.azure.com` |
+| `AZURE_AI_FOUNDRY_ENDPOINT` | Your Foundry resource's OpenAI-compatible base URL, e.g. `https://<resource>.services.ai.azure.com/openai/v1` |
 | `AZURE_AI_FOUNDRY_API_KEY` | API key for that deployment |
-| `AZURE_AI_FOUNDRY_DEPLOYMENT` | Deployment/model name (defaults to `gpt-4o-mini`) |
+| `AZURE_AI_FOUNDRY_DEPLOYMENT` | Deployment name, e.g. `gpt-5.4-mini` |
 
 `get_provider()` in `backend/ai_provider.py` picks `AzureFoundryProvider`
 automatically once both the endpoint and key are set — otherwise it falls
 back to `MockAIProvider`, so the app always works out of the box.
+`AzureFoundryProvider` calls the deployment through the official `openai`
+Python SDK's Responses API (`client.responses.create(...)`), pointed at
+the Foundry endpoint via `base_url`.
 
 ## API
 

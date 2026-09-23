@@ -322,4 +322,106 @@ EVENTS = [
         "priority": "High",
         "description": "Name-matching alert against the EU consolidated sanctions list; requires manual disambiguation before linking to any client.",
     },
+    # The events below are real, publicly documented corporate events (not
+    # linked to any fictional client) — included so the AI Engine has
+    # genuine, verifiable substance to analyze rather than only fictional
+    # scenarios. Client linkage for these would come from a real ownership
+    # database (e.g. Orbis) in production; here they surface as unlinked
+    # screening hits, same as a broad market/registry scan would produce.
+    {
+        "category": "Commercial Opportunity",
+        "event_type": "IPO / listing / delisting",
+        "entity_name": "Arm Holdings plc",
+        "client_id": None,
+        "source_id": "sec-edgar",
+        "priority": "High",
+        "description": (
+            "Arm Holdings completed its IPO on the Nasdaq in September 2023, backed by "
+            "SoftBank — one of the largest technology listings in recent years."
+        ),
+    },
+    {
+        "category": "Commercial Opportunity",
+        "event_type": "Business or shareholding sale",
+        "entity_name": "VMware, Inc.",
+        "client_id": None,
+        "source_id": "sec-edgar",
+        "priority": "High",
+        "description": (
+            "Broadcom completed its acquisition of VMware in November 2023, one of the "
+            "largest technology M&A transactions on record."
+        ),
+    },
+    {
+        "category": "Commercial Opportunity",
+        "event_type": "Appointment to a key position (CEO, CFO, Board member, etc.)",
+        "entity_name": "X Corp. (formerly Twitter)",
+        "client_id": None,
+        "source_id": "fin-media",
+        "priority": "Low",
+        "description": "Linda Yaccarino was appointed CEO of X (formerly Twitter) in 2023, succeeding Elon Musk as day-to-day chief executive.",
+    },
+    {
+        "category": "Corporate & Credit",
+        "event_type": "Major acquisition",
+        "entity_name": "Seagen Inc.",
+        "client_id": None,
+        "source_id": "sec-edgar",
+        "priority": "High",
+        "description": "Pfizer completed its acquisition of Seagen in December 2023, expanding its oncology portfolio.",
+    },
+    {
+        "category": "Corporate & Credit",
+        "event_type": "Significant change in revenue, earnings, or leverage",
+        "entity_name": "NVIDIA Corporation",
+        "client_id": None,
+        "source_id": "sec-edgar",
+        "priority": "Medium",
+        "description": "NVIDIA reported record quarterly revenue driven by surging demand for AI data-center chips, sharply increasing its market valuation.",
+    },
+    {
+        "category": "Corporate & Credit",
+        "event_type": "Financial deterioration or insolvency proceedings",
+        "entity_name": "WeWork Inc.",
+        "client_id": None,
+        "source_id": "fin-media",
+        "priority": "High",
+        "description": "WeWork filed for Chapter 11 bankruptcy protection in the United States in November 2023 after years of financial losses.",
+    },
+    {
+        "category": "KYC Update",
+        "event_type": "Change of shareholder or UBO",
+        "entity_name": "X Corp. (formerly Twitter)",
+        "client_id": None,
+        "source_id": "sec-edgar",
+        "priority": "Medium",
+        "description": "Elon Musk completed his acquisition of Twitter in October 2022, taking the company private as its sole owner.",
+    },
+    {
+        "category": "KYC Update",
+        "event_type": "New executive appointment",
+        "entity_name": "The Walt Disney Company",
+        "client_id": None,
+        "source_id": "fin-media",
+        "priority": "Low",
+        "description": "Bob Iger returned as CEO of Disney in November 2022, succeeding Bob Chapek.",
+    },
+    {
+        "category": "Risk & Compliance",
+        "event_type": "Regulatory enforcement actions",
+        "entity_name": "Binance Holdings Ltd.",
+        "client_id": None,
+        "source_id": "fin-media",
+        "priority": "High",
+        "description": "Binance and its founder agreed to a settlement exceeding $4 billion with US authorities in November 2023 over anti-money-laundering and sanctions violations.",
+    },
+    {
+        "category": "Risk & Compliance",
+        "event_type": "Insolvency/liquidation",
+        "entity_name": "FTX Trading Ltd.",
+        "client_id": None,
+        "source_id": "fin-media",
+        "priority": "High",
+        "description": "FTX filed for Chapter 11 bankruptcy in November 2022 amid a liquidity crisis and allegations of misuse of customer funds.",
+    },
 ]

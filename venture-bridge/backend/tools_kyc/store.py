@@ -1,0 +1,221 @@
+"""Accès aux données internes (fichiers data/test_*.json aujourd'hui, Containers Azure Blob demain)."""
+import json
+import re
+from pathlib import Path
+from typing import Any
+
+# backend/tools_kyc/store.py -> racine du projet à parents[2].
+DATA_DIRECTORY = Path(__file__).resolve().parents[2] / "data"
+
+"""Data BE : (Name : Marie-Cécile HERNAEZ / ID : 301238693)
+"""
+
+{
+  "result": {
+    "statusId": 0,
+    "statusText": null,
+    "personData": {
+      "identification": {
+        "personKey": "301238693",
+        "openDate": "2024-03-06",
+        "personTypeKey": "person_natural",
+        "personTypeValue": "Natural person",
+        "personStatusKey": "activ",
+        "personStatusValue": "Client",
+        "titleKey": "ps$mrs",
+        "titleValue": "Madame",
+        "lastName": "Hernaez",
+        "firstName": "Marie-Cécile",
+        "middleName": null,
+        "fullName": "Madame Marie-Cécile Hernaez",
+        "birthDate": "1999-10-20",
+        "birthPlace": "Quimper",
+        "birthCountryKey": "FRA",
+        "birthCountryValue": "France",
+        "nationalityKey": "FRA",
+        "nationalityValue": "France",
+        "otherNationalities": [
+          { "countryKey": "DEU", "countryValue": "Germany" }
+        ],
+        "genderKey": "female",
+        "genderValue": "female",
+        "maritalStatusKey": "married",
+        "maritalStatusValue": "Married",
+        "maritalStatusFrom": "2021-10-19",
+        "matrimonialRegimeKey": "ps$sep_property",
+        "matrimonialRegimeValue": "Separation of property",
+        "legallyIncapacitated": true,
+        "countryOfDomicileKey": "FRA",
+        "countryOfDomicileValue": "France",
+        "taxResidenceKey": "FRA",
+        "taxResidenceValue": "France",
+        "alias": "JOHN DOE",
+        "passportId": "6545AD31",
+        "nationalInsuranceNumber": "JHSDF65435",
+        "birthname": null,
+        "expatriate": true,
+        "closeDate": null,
+        "numberOfDependants": "3",
+        "deathDate": null,
+        "deathAnnouncementDate": null,
+        "sourceOfDeathAnnouncement": null,
+        "keyNote": "Test Key note",
+        "minor": false,
+        "languageKey": "e",
+        "languageValue": "English",
+        "otherLanguages": [],
+        "registrationDate": null,
+        "registrationCountryKey": null,
+        "registrationCountryValue": null,
+        "legalFormKey": null,
+        "legalFormValue": null,
+        "globalVisibilityKey": null,
+        "globalVisibilityValue": null,
+        "nationalIdentificationNumber": "44444419",
+        "nationalIdentificationNumberTypeKey": "ps$nni_id",
+        "nationalIdentificationNumberTypeValue": "Identity card number",
+        "lei": null,
+        "leiEndDate": null,
+        "giin": "75327458",
+        "registeredCompanyNumber": "78343",
+        "marketSegmentKey": null,
+        "marketSegmentValue": null,
+        "nonCoreJustification": null,
+        "amlStructureTypeKey": null,
+        "amlStructureTypeValue": null,
+        "typeVehicleKey": null,
+        "typeVehicleValue": null,
+        "gdprStatusKey": "ps$gdpr_not_elig",
+        "gdprStatusValue": "Not eligible (01)",
+        "personLegacyKey": null,
+        "localStructureTypeKey": null,
+        "localStructureTypeValue": null,
+        "fimEmployeeKey": "ps$auth_sign_n",
+        "fimEmployeeValue": "No (2)",
+        "remark": [
+          { "remarkTypeKey": "ps$person_rem", "remarkTypeValue": "Person Remark", "remarkSubTypeKey": "ps$adv_justify", "remarkSubTypeValue": "Details for Adverse news", "remarkText": "Oh il est méchant il parait ", "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)", "remarkValidTo": null, "remarkCreationDate": "2024-02-14T13:11:29Z" },
+          { "remarkTypeKey": "ps$person_rem", "remarkTypeValue": "Person Remark", "remarkSubTypeKey": "ps$pos_res_det", "remarkSubTypeValue": "Details of positive results", "remarkText": "Positive attitude", "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)", "remarkValidTo": null, "remarkCreationDate": "2024-02-14T13:11:28Z" },
+          { "remarkTypeKey": "ps$person_rem", "remarkTypeValue": "Person Remark", "remarkSubTypeKey": "ps$pers_insider_det", "remarkSubTypeValue": "Insider Details", "remarkText": "Initié depuis longtemps", "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)", "remarkValidTo": null, "remarkCreationDate": "2024-02-14T13:11:27Z" },
+          { "remarkTypeKey": "ps$person_rem", "remarkTypeValue": "Person Remark", "remarkSubTypeKey": "ps$pep_rel_det", "remarkSubTypeValue": "Relationship details for PEP/SPO relative", "remarkText": "Cousin de la reine", "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)", "remarkValidTo": null, "remarkCreationDate": "2024-02-14T13:11:26Z" },
+          { "remarkTypeKey": "ps$person_rem", "remarkTypeValue": "Person Remark", "remarkSubTypeKey": "ps$pep_act_desc", "remarkSubTypeValue": "PEP/SPO function and activity (past/current)", "remarkText": "Chef du monde", "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)", "remarkValidTo": null, "remarkCreationDate": "2024-02-14T13:11:25Z" },
+          { "remarkTypeKey": "ps$person_rem", "remarkTypeValue": "Person Remark", "remarkSubTypeKey": "ps$des_src_wlth", "remarkSubTypeValue": "Comment on source of wealth", "remarkText": "Wealth is originally from donation", "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)", "remarkValidTo": null, "remarkCreationDate": "2024-02-14T13:11:24Z" },
+          { "remarkTypeKey": "ps$person_rem", "remarkTypeValue": "Person Remark", "remarkSubTypeKey": "ps$othr_bus_pot", "remarkSubTypeValue": "Comment on Potential for other business lines", "remarkText": "Big potential goodwill", "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)", "remarkValidTo": null, "remarkCreationDate": "2024-02-14T13:11:23Z" },
+          { "remarkTypeKey": "ps$person_rem", "remarkTypeValue": "Person Remark", "remarkSubTypeKey": "ps$activity_det", "remarkSubTypeValue": "Resume/Details on business activity", "remarkText": "Cowboy", "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)", "remarkValidTo": null, "remarkCreationDate": "2024-02-14T13:11:22Z" },
+          { "remarkTypeKey": "ps$person_rem", "remarkTypeValue": "Person Remark", "remarkSubTypeKey": "ps$xpln_no_ctct", "remarkSubTypeValue": "Explain 'do not contact'", "remarkText": "Il ne veut pas être contacté", "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)", "remarkValidTo": null, "remarkCreationDate": "2024-02-14T13:11:21Z" },
+          { "remarkTypeKey": "ps$pers_note", "remarkTypeValue": "Key Note", "remarkSubTypeKey": null, "remarkSubTypeValue": null, "remarkText": "Test Key note", "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)", "remarkValidTo": null, "remarkCreationDate": "2024-02-14T13:11:20Z" }
+        ],
+        "birthDepartmentKey": "FR010",
+        "birthDepartmentValue": "AUBE",
+        "hasOtherNationalities": true,
+        "taxNomad": false,
+        "identityDocumentTypeKey": "ps$passport_id",
+        "identityDocumentTypeValue": "Passport number",
+        "identityDocumentNumber": "459",
+        "hasActivityKey": null,
+        "italianWithholdingTaxServiceKey": null,
+        "italianWithholdingTaxServiceValue": null,
+        "identityDocumentDeliveredBy": null,
+        "identityDocumentIssueDate": null,
+        "identityDocumentDueDate": null,
+        "uifSubGroup": null,
+        "uifCategory": null,
+        "uifAtecoCode": null,
+        "uifSector": null,
+        "birthDepartmentItalyKey": null,
+        "birthDepartmentItalyValue": null,
+        "purgeExtension": false,
+        "purgeDate": null,
+        "purgeComment": null,
+        "rctCode": null
+      },
+      "businessActivity": null,
+      "address": null,
+      "documents": [],
+      "contactDetails": null,
+      "tax": null,
+      "commercial": null,
+      "aml": null,
+      "riskFactors": null,
+      "wealthDetails": null,
+      "mifid": {
+        "dateLastQuestionnaire": "2023-07-12",
+        "clientCategoryKey": "ps$pers_mifid_cat_retail",
+        "clientCategoryValue": "Retail (01)",
+        "investorProfileKey": "ps$mifid_risk_3",
+        "investorProfileValue": "2",
+        "capacityToWithstandLossKey": "ps$pers_loss_capa_1",
+        "capacityToWithstandLossValue": "No loss of capital (01)",
+        "sustainableAnnualLossKey": "ps$5y_25_perc",
+        "sustainableAnnualLossValue": "2% - 5%",
+        "assetClass": [
+          { "assetClassKey": "ps$mifid_dyn_mkt", "assetClassValue": "Cash investment / Monetary funds", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$mifid_inv_grd", "assetClassValue": "Bonds & bond funds", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$mifid_complex", "assetClassValue": "Complex bonds & bond funds", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$mifid_convert", "assetClassValue": "Convertible bonds & bond funds", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$mifid_hgh_yld", "assetClassValue": "High-yield / emerging bonds & bond funds", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$pers_mifid_cat_eq", "assetClassValue": "Equities and equity or mixed funds", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$mifid_emerge", "assetClassValue": "Emerging-country equities & equity funds", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$mifid_strup_w", "assetClassValue": "100% capital guaranteed struct. Products", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$mifid_strup_n", "assetClassValue": "not 100% capital guar. struct. Products", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$mifid_alt_inv", "assetClassValue": "Alternative investment products", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$mifid_priv_eq", "assetClassValue": "Private equity products", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$mifid_prec", "assetClassValue": "Physical precious metals", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$mifid_commod", "assetClassValue": "Products indexed on metals & other commo", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$pers_mifid_cat_fx", "assetClassValue": "Forward foreign exchange", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$mifid_deriv", "assetClassValue": "Derivatives", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$mifid_proprty", "assetClassValue": "Real estate funds or company", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$mifid_abs", "assetClassValue": "Asset-backed securities (ABS)", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null },
+          { "assetClassKey": "ps$mifid_crpd", "assetClassValue": "Crypto Data", "hasKnowledgeKey": null, "hasKnowledgeValue": null, "hasExperienceKey": null, "hasExperienceValue": null, "knowledgeProfileKey": null, "knowledgeProfileValue": null, "knowledgeExperienceProfileKey": null, "knowledgeExperienceProfileValue": null }
+        ],
+        "objectives": [
+          { "objectivesKey": "ps$objctv_cap_pres", "objectivesValue": "Capital preservation" }
+        ],
+        "specificObjectives": [
+          { "specificObjectivesKey": "ps$spec_obj_esg", "specificObjectivesValue": "Environmental Investment" }
+        ],
+        "portionAnnualFinancialIncomeKey": "ps$mifid_financial_port_4",
+        "portionAnnualFinancialIncomeValue": "41-70% (04)",
+        "professionalTreasuryKey": null,
+        "professionalTreasuryValue": null,
+        "educationEconomyFinanceKey": null,
+        "educationEconomyFinanceValue": null,
+        "mifidQuestionnaire": [
+          { "mifidQuestionnaireId": 13117398, "mifidQuestionnaireStatusKey": "open", "mifidQuestionnaireStatusValue": "Open", "personKey": "301238693", "taskSubTypeKey": "ps$midif_nat", "taskSubTypeValue": "!Natural Person", "responsibleKey": "00002225", "mifidVersion": "V2" }
+        ]
+      },
+      "esg": null,
+      "relations": null,
+      "kycDocs": {
+        "kycMemoDoc": [
+          { "kycId": 12762714, "kycStatusKey": "done", "kycStatusValue": "Done", "userKey": "00002225", "bpKeys": [], "taskSubTypeKey": "ps$kyc_memo_onb", "taskSubTypeValue": "Onboarding", "openDate": "2024-03-06", "archiveDate": "2024-03-13" },
+          { "kycId": 12762697, "kycStatusKey": "open", "kycStatusValue": "Open", "userKey": "00002225", "bpKeys": [], "taskSubTypeKey": "ps$kyc_memo_onb", "taskSubTypeValue": "Onboarding", "openDate": "2024-03-06", "archiveDate": "2024-03-13" },
+          {
+            "kycId": 12899820,
+            "kycStatusKey": "open",
+            "kycStatusValue": "Open",
+            "userKey": "00002511",
+            "bpKeys": [
+              { "bpKey": "1532378", "bpName": "DOMAINE DE CHEZELLES BP" }
+            ],
+            "taskSubTypeKey": "ps$kyc_memo_pcr",
+            "taskSubTypeValue": "Review",
+            "openDate": "2024-06-18",
+            "archiveDate": "2024-06-18"
+          },
+          { "kycId": 12940667, "kycStatusKey": "kyc_compl", "kycStatusValue": "Compliance Approval", "userKey": "00002225", "bpKeys": [], "taskSubTypeKey": "ps$kyc_memo_adhoc", "taskSubTypeValue": "ADHOC", "openDate": "2024-07-10", "archiveDate": "2024-07-17" },
+          { "kycId": 12940665, "kycStatusKey": "open", "kycStatusValue": "Open", "userKey": "00002225", "bpKeys": [], "taskSubTypeKey": "ps$kyc_memo_onb", "taskSubTypeValue": "Onboarding", "openDate": "2024-07-10", "archiveDate": "2024-07-17" },
+          { "kycId": 12969404, "kycStatusKey": "open", "kycStatusValue": "Open", "userKey": "00002225", "bpKeys": [], "taskSubTypeKey": "ps$kyc_memo_adhoc", "taskSubTypeValue": "ADHOC", "openDate": "2025-03-25", "archiveDate": "2025-03-25" },
+          { "kycId": 12969401, "kycStatusKey": "open", "kycStatusValue": "Open", "userKey": "00002225", "bpKeys": [], "taskSubTypeKey": "ps$kyc_memo_onb", "taskSubTypeValue": "Onboarding", "openDate": "2025-03-25", "archiveDate": "2025-03-25" },
+          { "kycId": 12969402, "kycStatusKey": "kyc_compl", "kycStatusValue": "Compliance Approval", "userKey": "00002225", "bpKeys": [], "taskSubTypeKey": "ps$kyc_memo_adhoc", "taskSubTypeValue": "ADHOC", "openDate": "2025-03-25", "archiveDate": "2025-03-25" },
+          { "kycId": 13006373, "kycStatusKey": "open", "kycStatusValue": "Open", "userKey": "00002225", "bpKeys": [], "taskSubTypeKey": "ps$kyc_memo_adhoc", "taskSubTypeValue": "ADHOC", "openDate": "2025-04-10", "archiveDate": "2025-04-10" },
+          { "kycId": 13013659, "kycStatusKey": "kyc_crm", "kycStatusValue": "Sent back to CRM", "userKey": "00002225", "bpKeys": [], "taskSubTypeKey": "ps$kyc_memo_adhoc", "taskSubTypeValue": "ADHOC", "openDate": "2025-04-14", "archiveDate": "2025-04-14" },
+          { "kycId": 13094669, "kycStatusKey": "discarded", "kycStatusValue": "Discarded", "userKey": "00002225", "bpKeys": [], "taskSubTypeKey": "ps$kyc_memo_onb", "taskSubTypeValue": "Onboarding", "openDate": "2025-05-12", "archiveDate": "2025-05-13" },
+          { "kycId": 13117395, "kycStatusKey": "open", "kycStatusValue": "Open", "userKey": "00002225", "bpKeys": [], "taskSubTypeKey": "ps$kyc_memo_adhoc", "taskSubTypeValue": "ADHOC", "openDate": "2025-06-03", "archiveDate": "2025-06-03" },
+          { "kycId": 13117396, "kycStatusKey": "open", "kycStatusValue": "Open", "userKey": "00002225", "bpKeys": [], "taskSubTypeKey": "ps$kyc_memo_adhoc", "taskSubTypeValue": "ADHOC", "openDate": "2025-06-03", "archiveDate": "2025-06-03" }
+        ]
+      },
+      "orderGiverPortfolios": null
+    }
+  },
+  "bu": "luxembourg"
+}

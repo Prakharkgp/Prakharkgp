@@ -86,7 +86,7 @@ const I18N = {
     ai_how_1:
       "<strong>Demo mode (default):</strong> a rule-based engine drafts a one-line summary and a suggested next action from the event's own fields — no external calls, no keys required.",
     ai_how_2:
-      "<strong>Azure AI Foundry (ready, not yet connected):</strong> setting <code>AZURE_AI_FOUNDRY_ENDPOINT</code> and <code>AZURE_AI_FOUNDRY_API_KEY</code> as environment variables on the backend switches every “Analyze” call to a real model deployment — same interface, richer output.",
+      "<strong>Azure AI Foundry:</strong> fill in the endpoint, deployment, and API key above (or set <code>AZURE_AI_FOUNDRY_ENDPOINT</code>/<code>AZURE_AI_FOUNDRY_API_KEY</code>/<code>AZURE_AI_FOUNDRY_DEPLOYMENT</code> as environment variables) to switch every “Analyze” call to a real model deployment — same interface, richer output.",
     ai_env_endpoint: "https://&lt;resource&gt;.services.ai.azure.com/openai/v1",
     ai_env_key: "secret — set in your host's env, never in code",
     ai_env_deployment: "e.g. gpt-5.4-mini",
@@ -96,6 +96,18 @@ const I18N = {
     provider_mock: "Rule-based demo engine",
     provider_azure: "Azure AI Foundry",
     no_match: "No signals match these filters.",
+    ai_config_title: "Azure AI Foundry connection",
+    ai_config_subtitle: "Set these values directly here — no access to the hosting dashboard needed.",
+    ai_field_endpoint: "Endpoint",
+    ai_field_deployment: "Deployment",
+    ai_field_api_key: "API key",
+    btn_save: "Save",
+    btn_clear: "Reset",
+    ai_config_key_set: "An API key is already saved. Leave blank to keep it, or enter a new one to replace it.",
+    ai_config_key_unset: "No API key saved yet — the demo engine will keep running until one is set.",
+    ai_config_saved: "Saved. The Analyze button now uses this configuration.",
+    ai_config_cleared: "Cleared. Reverted to environment variables (if any) or the demo engine.",
+    ai_config_error: "Couldn't save — please try again.",
   },
   fr: {
     tagline: "Intelligence des événements clients pour la Banque Privée et les Entreprises",
@@ -184,7 +196,7 @@ const I18N = {
     ai_how_1:
       "<strong>Mode démo (par défaut) :</strong> un moteur à base de règles rédige un résumé en une phrase et une action suggérée à partir des champs de l'événement — aucun appel externe, aucune clé requise.",
     ai_how_2:
-      "<strong>Azure AI Foundry (prêt, non connecté) :</strong> définir <code>AZURE_AI_FOUNDRY_ENDPOINT</code> et <code>AZURE_AI_FOUNDRY_API_KEY</code> comme variables d'environnement sur le backend fait basculer chaque analyse vers un modèle réel — même interface, résultat plus riche.",
+      "<strong>Azure AI Foundry :</strong> renseignez le point de terminaison, le déploiement et la clé API ci-dessus (ou définissez <code>AZURE_AI_FOUNDRY_ENDPOINT</code>/<code>AZURE_AI_FOUNDRY_API_KEY</code>/<code>AZURE_AI_FOUNDRY_DEPLOYMENT</code> comme variables d'environnement) pour faire basculer chaque analyse vers un modèle réel — même interface, résultat plus riche.",
     ai_env_endpoint: "https://&lt;ressource&gt;.services.ai.azure.com/openai/v1",
     ai_env_key: "secret — à définir dans l'environnement de l'hôte, jamais dans le code",
     ai_env_deployment: "ex. : gpt-5.4-mini",
@@ -194,6 +206,18 @@ const I18N = {
     provider_mock: "Moteur de démonstration à base de règles",
     provider_azure: "Azure AI Foundry",
     no_match: "Aucun signal ne correspond à ces filtres.",
+    ai_config_title: "Connexion Azure AI Foundry",
+    ai_config_subtitle: "Renseignez ces valeurs directement ici — aucun accès au tableau de bord d'hébergement n'est nécessaire.",
+    ai_field_endpoint: "Point de terminaison",
+    ai_field_deployment: "Déploiement",
+    ai_field_api_key: "Clé API",
+    btn_save: "Enregistrer",
+    btn_clear: "Réinitialiser",
+    ai_config_key_set: "Une clé API est déjà enregistrée. Laissez vide pour la conserver, ou saisissez-en une nouvelle pour la remplacer.",
+    ai_config_key_unset: "Aucune clé API enregistrée pour l'instant — le moteur de démonstration continuera de fonctionner jusqu'à ce qu'une clé soit définie.",
+    ai_config_saved: "Enregistré. Le bouton Analyser utilise désormais cette configuration.",
+    ai_config_cleared: "Réinitialisé. Retour aux variables d'environnement (le cas échéant) ou au moteur de démonstration.",
+    ai_config_error: "Impossible d'enregistrer — veuillez réessayer.",
   },
 };
 
@@ -647,6 +671,59 @@ async function renderAIStatus() {
     : t("ai_note_demo");
 }
 
+function renderAIConfigHint() {
+  const hintEl = document.getElementById("ai-config-key-hint");
+  if (!hintEl || !state.aiConfig) return;
+  hintEl.textContent = state.aiConfig.hasApiKey ? t("ai_config_key_set") : t("ai_config_key_unset");
+}
+
+async function loadAIConfig() {
+  const config = await api("/api/ai/config");
+  state.aiConfig = config;
+  document.getElementById("ai-config-endpoint").value = config.endpoint || "";
+  document.getElementById("ai-config-deployment").value = config.deployment || "";
+  document.getElementById("ai-config-api-key").value = "";
+  renderAIConfigHint();
+}
+
+function setupAIConfigForm() {
+  document.getElementById("ai-config-save").addEventListener("click", async () => {
+    const statusEl = document.getElementById("ai-config-status");
+    const endpoint = document.getElementById("ai-config-endpoint").value.trim();
+    const deployment = document.getElementById("ai-config-deployment").value.trim();
+    const apiKey = document.getElementById("ai-config-api-key").value.trim();
+    try {
+      const updated = await api("/api/ai/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ endpoint, deployment, apiKey: apiKey || undefined }),
+      });
+      state.aiConfig = updated;
+      document.getElementById("ai-config-api-key").value = "";
+      renderAIConfigHint();
+      statusEl.textContent = t("ai_config_saved");
+      statusEl.className = "ai-config-status ok";
+      await renderAIStatus();
+    } catch (e) {
+      statusEl.textContent = t("ai_config_error");
+      statusEl.className = "ai-config-status error";
+    }
+  });
+
+  document.getElementById("ai-config-clear").addEventListener("click", async () => {
+    const statusEl = document.getElementById("ai-config-status");
+    await api("/api/ai/config", { method: "DELETE" });
+    state.aiConfig = { endpoint: "", deployment: "", hasApiKey: false };
+    document.getElementById("ai-config-endpoint").value = "";
+    document.getElementById("ai-config-deployment").value = "";
+    document.getElementById("ai-config-api-key").value = "";
+    renderAIConfigHint();
+    statusEl.textContent = t("ai_config_cleared");
+    statusEl.className = "ai-config-status ok";
+    await renderAIStatus();
+  });
+}
+
 function renderAll() {
   populateCategoryFilter();
   renderKPIs();
@@ -654,6 +731,7 @@ function renderAll() {
   renderSources();
   renderClientKPIs();
   renderClients();
+  renderAIConfigHint();
   if (state.aiStatus) {
     document.getElementById("ai-active-provider").textContent = t(PROVIDER_KEY[state.aiStatus.activeProvider] || state.aiStatus.activeProvider);
     document.getElementById("ai-status-note").textContent = state.aiStatus.azureFoundryConfigured
@@ -668,6 +746,7 @@ async function init() {
   setupLangSwitch();
   setupFilterActions();
   setupLogoFallback();
+  setupAIConfigForm();
   applyStaticTranslations();
 
   const [meta, events, sources, clients] = await Promise.all([
@@ -684,6 +763,7 @@ async function init() {
 
   renderAll();
   renderAIStatus();
+  loadAIConfig();
 }
 
 init();

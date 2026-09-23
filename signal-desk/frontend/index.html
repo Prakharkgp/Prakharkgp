@@ -164,11 +164,36 @@
           <p class="ai-status-note" id="ai-status-note"></p>
         </div>
 
+        <div class="ai-config-card">
+          <h3 data-i18n="ai_config_title">Connexion Azure AI Foundry</h3>
+          <p class="ai-config-subtitle" data-i18n="ai_config_subtitle">Renseignez ces valeurs directement ici — aucun accès au tableau de bord d'hébergement n'est nécessaire.</p>
+          <div class="filter-grid">
+            <label>
+              <span data-i18n="ai_field_endpoint">Point de terminaison</span>
+              <input type="text" id="ai-config-endpoint" placeholder="https://<ressource>.services.ai.azure.com/openai/v1" />
+            </label>
+            <label>
+              <span data-i18n="ai_field_deployment">Déploiement</span>
+              <input type="text" id="ai-config-deployment" placeholder="gpt-5.4-mini" />
+            </label>
+            <label>
+              <span data-i18n="ai_field_api_key">Clé API</span>
+              <input type="password" id="ai-config-api-key" placeholder="" autocomplete="off" />
+            </label>
+          </div>
+          <p class="ai-config-hint" id="ai-config-key-hint"></p>
+          <div class="filter-actions">
+            <button id="ai-config-save" class="btn btn-primary" data-i18n="btn_save">Enregistrer</button>
+            <button id="ai-config-clear" class="btn btn-outline" data-i18n="btn_clear">Réinitialiser</button>
+          </div>
+          <p class="ai-config-status" id="ai-config-status"></p>
+        </div>
+
         <div class="ai-architecture">
           <h3 data-i18n="ai_how_title">Fonctionnement</h3>
           <ol>
             <li data-i18n="ai_how_1"><strong>Mode démo (par défaut) :</strong> un moteur à base de règles rédige un résumé en une phrase et une action suggérée à partir des champs de l'événement — aucun appel externe, aucune clé requise.</li>
-            <li data-i18n="ai_how_2"><strong>Azure AI Foundry (prêt, non connecté) :</strong> définir <code>AZURE_AI_FOUNDRY_ENDPOINT</code> et <code>AZURE_AI_FOUNDRY_API_KEY</code> comme variables d'environnement sur le backend fait basculer chaque analyse vers un modèle réel — même interface, résultat plus riche.</li>
+            <li data-i18n="ai_how_2"><strong>Azure AI Foundry :</strong> renseignez le point de terminaison, le déploiement et la clé API ci-dessus (ou définissez <code>AZURE_AI_FOUNDRY_ENDPOINT</code>/<code>AZURE_AI_FOUNDRY_API_KEY</code>/<code>AZURE_AI_FOUNDRY_DEPLOYMENT</code> comme variables d'environnement) pour faire basculer chaque analyse vers un modèle réel — même interface, résultat plus riche.</li>
           </ol>
           <div class="env-vars">
             <div class="env-var"><code>AZURE_AI_FOUNDRY_ENDPOINT</code><span data-i18n="ai_env_endpoint">https://&lt;ressource&gt;.services.ai.azure.com/openai/v1</span></div>

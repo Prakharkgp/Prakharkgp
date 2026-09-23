@@ -92,10 +92,13 @@ class AzureFoundryProvider(AIProvider):
         return {"summary": summary, "suggested_action": suggested_action, "confidence": 0.9}
 
 
-def get_provider() -> AIProvider:
-    endpoint = os.getenv("AZURE_AI_FOUNDRY_ENDPOINT", "").strip()
-    api_key = os.getenv("AZURE_AI_FOUNDRY_API_KEY", "").strip()
-    deployment = os.getenv("AZURE_AI_FOUNDRY_DEPLOYMENT", "gpt-5.4-mini").strip()
+def get_provider(endpoint: str = "", api_key: str = "", deployment: str = "") -> AIProvider:
+    """Pick the active provider. Explicit args (from the saved UI config) take
+    priority over the matching environment variable, so the AI Engine tab's
+    settings form overrides env vars without needing a redeploy."""
+    endpoint = (endpoint or os.getenv("AZURE_AI_FOUNDRY_ENDPOINT", "")).strip()
+    api_key = (api_key or os.getenv("AZURE_AI_FOUNDRY_API_KEY", "")).strip()
+    deployment = (deployment or os.getenv("AZURE_AI_FOUNDRY_DEPLOYMENT", "")).strip() or "gpt-5.4-mini"
     if endpoint and api_key:
         return AzureFoundryProvider(endpoint, api_key, deployment)
     return MockAIProvider()

@@ -78,6 +78,16 @@ def init_db():
             )
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS ai_config (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                endpoint TEXT NOT NULL DEFAULT '',
+                api_key TEXT NOT NULL DEFAULT '',
+                deployment TEXT NOT NULL DEFAULT ''
+            )
+            """
+        )
         conn.commit()
         if conn.execute("SELECT COUNT(*) FROM sources").fetchone()[0] == 0:
             seed(conn)
@@ -161,6 +171,7 @@ VALID_STATUSES = {"New", "Under Review", "Actioned", "Dismissed"}
 
 class AIConfigIn(BaseModel):
     endpoint: Optional[str] = None
+    apiKey: Optional[str] = None
     deployment: Optional[str] = None
 
 
@@ -176,6 +187,17 @@ def _sources_and_clients(conn):
     sources_by_id = {r["id"]: source_row_to_dict(r) for r in conn.execute("SELECT * FROM sources")}
     clients_by_id = {r["id"]: client_row_to_dict(r) for r in conn.execute("SELECT * FROM clients")}
     return sources_by_id, clients_by_id
+
+
+def _get_ai_config_row(conn):
+    return conn.execute("SELECT * FROM ai_config WHERE id = 1").fetchone()
+
+
+def _get_active_provider(conn):
+    row = _get_ai_config_row(conn)
+    if row is None:
+        return get_provider()
+    return get_provider(row["endpoint"], row["api_key"], row["deployment"])
 
 
 @app.get("/api/meta")
@@ -222,7 +244,7 @@ def analyze_event(event_id: int):
             raise HTTPException(status_code=404, detail="Event not found")
         event = event_row_to_dict(row, sources_by_id, clients_by_id)
 
-        provider = get_provider()
+        provider = _get_active_provider(conn)
         result = provider.analyze(
             {
                 "category": event["category"],
@@ -273,7 +295,8 @@ def get_client(client_id: str):
 
 @app.get("/api/ai/status")
 def ai_status():
-    provider = get_provider()
+    with get_conn() as conn:
+        provider = _get_active_provider(conn)
     return {
         "activeProvider": provider.name,
         "azureFoundryConfigured": provider.name == "Azure AI Foundry",
@@ -283,6 +306,47 @@ def ai_status():
             "deployment — no code change required."
         ),
     }
+
+
+@app.get("/api/ai/config")
+def get_ai_config():
+    with get_conn() as conn:
+        row = _get_ai_config_row(conn)
+        if row is None:
+            return {"endpoint": "", "deployment": "", "hasApiKey": False}
+        return {
+            "endpoint": row["endpoint"],
+            "deployment": row["deployment"],
+            "hasApiKey": bool(row["api_key"]),
+        }
+
+
+@app.put("/api/ai/config")
+def update_ai_config(payload: AIConfigIn):
+    with get_conn() as conn:
+        row = _get_ai_config_row(conn)
+        endpoint = payload.endpoint if payload.endpoint is not None else (row["endpoint"] if row else "")
+        deployment = payload.deployment if payload.deployment is not None else (row["deployment"] if row else "")
+        api_key = payload.apiKey if payload.apiKey else (row["api_key"] if row else "")
+
+        conn.execute(
+            """
+            INSERT INTO ai_config (id, endpoint, api_key, deployment) VALUES (1, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET endpoint = excluded.endpoint, api_key = excluded.api_key,
+                deployment = excluded.deployment
+            """,
+            (endpoint.strip(), api_key.strip(), deployment.strip()),
+        )
+        conn.commit()
+        return {"endpoint": endpoint.strip(), "deployment": deployment.strip(), "hasApiKey": bool(api_key.strip())}
+
+
+@app.delete("/api/ai/config")
+def clear_ai_config():
+    with get_conn() as conn:
+        conn.execute("DELETE FROM ai_config WHERE id = 1")
+        conn.commit()
+    return {"endpoint": "", "deployment": "", "hasApiKey": False}
 
 
 app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

@@ -133,6 +133,7 @@ CLIENTS = [
                 "name": "Lefevre Family Holding SAS",
                 "relation": "40% shareholder",
                 "jurisdiction": "France",
+                "client_stake_percent": 40,
                 "other_shareholders": [
                     {"name": "Marine Lefevre", "stake": "30%", "type": "individual"},
                     {"name": "Atlas Croissance Partners", "stake": "30%", "type": "entity"},
@@ -148,7 +149,7 @@ CLIENTS = [
         "rm_owner": "James Okafor",
         "is_prospect": False,
         "linked_entities": [
-            {"name": "Whitfield & Rowe Logistics Ltd", "relation": "Wholly-owned subsidiary", "jurisdiction": "United Kingdom"},
+            {"name": "Whitfield & Rowe Logistics Ltd", "relation": "Wholly-owned subsidiary", "jurisdiction": "United Kingdom", "client_stake_percent": 100},
         ],
     },
     {
@@ -166,7 +167,7 @@ CLIENTS = [
         "rm_owner": "Camille Dubois",
         "is_prospect": True,
         "linked_entities": [
-            {"name": "Costa Ventures Holding", "relation": "Sole shareholder", "jurisdiction": "France"},
+            {"name": "Costa Ventures Holding", "relation": "Sole shareholder", "jurisdiction": "France", "client_stake_percent": 100},
         ],
     },
     {
@@ -186,8 +187,9 @@ CLIENTS = [
         "linked_entities": [
             {
                 "name": "Bertrand Industrials SAS",
-                "relation": "Founder & majority shareholder",
+                "relation": "60% shareholder (Founder)",
                 "jurisdiction": "France",
+                "client_stake_percent": 60,
                 "other_shareholders": [
                     {"name": "Nathalie Bertrand", "stake": "25%", "type": "individual"},
                     {"name": "Atlas Growth Fund", "stake": "15%", "type": "entity"},

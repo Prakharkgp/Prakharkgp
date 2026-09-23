@@ -452,11 +452,13 @@ def convert_shareholder_to_prospect(client_id: str, payload: ShareholderConvertI
             f"{'Individual' if holder['type'] == 'individual' else 'Corporate'} — "
             f"Prospect via {client['name']} shareholder network"
         )
+        stake_match = re.search(r"[\d.]+", holder["stake"])
         new_linked_entities = [
             {
                 "name": entity["name"],
                 "relation": f"Co-shareholder ({holder['stake']}), alongside {client['name']}",
                 "jurisdiction": entity["jurisdiction"],
+                "client_stake_percent": float(stake_match.group()) if stake_match else None,
             }
         ]
         conn.execute(

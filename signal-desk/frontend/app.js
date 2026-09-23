@@ -135,6 +135,8 @@ const I18N = {
     convert_success: (name) => `${name} was added as a new prospect — a commercial opportunity signal was created and analyzed. See the Clients tab.`,
     convert_error_prefix: "Conversion failed:",
     convert_already_client: (name) => `${name} is already a tracked client.`,
+    this_client_label: "this client",
+    unidentified_stake: "Unidentified shareholders",
   },
   fr: {
     tagline: "Intelligence des événements clients pour la Banque Privée et les Entreprises",
@@ -272,6 +274,8 @@ const I18N = {
     convert_success: (name) => `${name} a été ajouté comme nouveau prospect — un signal d'opportunité commerciale a été créé et analysé. Voir l'onglet Clients.`,
     convert_error_prefix: "Échec de la conversion :",
     convert_already_client: (name) => `${name} est déjà un client suivi.`,
+    this_client_label: "ce client",
+    unidentified_stake: "Actionnaires non identifiés",
   },
 };
 
@@ -760,6 +764,51 @@ function closeClientModal() {
   state.modalClient = null;
 }
 
+function renderOwnershipBreakdown(client, entity) {
+  const segments = [];
+  if (typeof entity.client_stake_percent === "number") {
+    segments.push({ name: client.name, percent: entity.client_stake_percent, isClient: true });
+  }
+  (entity.other_shareholders || []).forEach((h) => {
+    const pct = parseFloat(h.stake);
+    if (!isNaN(pct)) segments.push({ name: h.name, percent: pct, isClient: false });
+  });
+  if (!segments.length) return "";
+
+  const palette = ["#2c2c54", "#6c7a89", "#a9b4bd", "#4b6584"];
+  let paletteIdx = 0;
+  segments.forEach((s) => {
+    s.color = s.isClient ? "var(--red)" : palette[paletteIdx++ % palette.length];
+  });
+
+  const known = segments.reduce((sum, s) => sum + s.percent, 0);
+  const remainder = Math.max(0, Math.round((100 - known) * 10) / 10);
+  if (remainder > 0.5) {
+    segments.push({ name: t("unidentified_stake"), percent: remainder, isUnknown: true, color: "var(--border)" });
+  }
+
+  const bar = segments
+    .map(
+      (s) =>
+        `<span class="ownership-bar-segment${s.isUnknown ? " ownership-bar-unknown" : ""}" style="flex-basis:${s.percent}%;background:${s.color}" title="${escapeHtml(s.name)} — ${s.percent}%"></span>`
+    )
+    .join("");
+
+  const legend = segments
+    .map(
+      (s) =>
+        `<li class="ownership-legend-row"><span class="legend-dot" style="background:${s.color}"></span>${escapeHtml(s.name)}${
+          s.isClient ? ` <em>(${t("this_client_label")})</em>` : ""
+        }<span class="legend-percent">${s.percent}%</span></li>`
+    )
+    .join("");
+
+  return `<div class="ownership-breakdown">
+    <div class="ownership-bar">${bar}</div>
+    <ul class="ownership-legend">${legend}</ul>
+  </div>`;
+}
+
 function renderShareholdersBlock(entity) {
   const holders = entity.other_shareholders || [];
   if (!holders.length) return "";
@@ -783,6 +832,7 @@ function renderClientModalContent(client) {
         .map(
           (e) => `<li>
             <div class="ownership-chain-row"><span>${escapeHtml(e.name)}</span><span class="relation">${escapeHtml(e.relation)} · ${escapeHtml(e.jurisdiction)}</span></div>
+            ${renderOwnershipBreakdown(client, e)}
             ${
               e.other_shareholders && e.other_shareholders.length
                 ? `<div class="other-shareholders-label">${t("other_shareholders_label")}</div>${renderShareholdersBlock(e)}`

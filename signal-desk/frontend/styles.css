@@ -387,6 +387,25 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
 .ownership-chain-row { display: flex; justify-content: space-between; }
 .ownership-chain .relation { color: var(--muted); }
 
+.ownership-breakdown { margin: 8px 0 4px; }
+.ownership-bar {
+  display: flex;
+  width: 100%;
+  height: 10px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--border);
+}
+.ownership-bar-segment { display: block; min-width: 2px; }
+.ownership-bar-unknown {
+  background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.6) 0, rgba(255,255,255,0.6) 3px, transparent 3px, transparent 6px);
+}
+.ownership-legend { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.ownership-legend-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text); }
+.ownership-legend-row em { color: var(--muted); font-style: normal; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.legend-percent { font-weight: 700; color: var(--muted); }
+
 .other-shareholders-label {
   font-size: 11px;
   font-weight: 700;

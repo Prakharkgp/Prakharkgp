@@ -1,0 +1,40 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables & secrets
+.env
+*.pem
+*.key
+
+# Developer Container local states
+.devcontainer/.env
+.devcontainer/build.log
+
+# IDE & Editor settings
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*~
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Azure & Deployment artifacts
+.azure/
+*.user
+bin/
+obj/
+infra/main.json

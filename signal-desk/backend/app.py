@@ -194,6 +194,17 @@ def _annotate_other_shareholders(client: dict, conn) -> None:
             holder["isClient"] = holder["name"].strip().lower() in existing_names
 
 
+def _potential_prospect_count(client: dict) -> int:
+    """How many co-shareholders across this client's linked entities have
+    no client record yet — i.e. convertible opportunity prospects."""
+    return sum(
+        1
+        for entity in client["linkedEntities"]
+        for holder in entity.get("other_shareholders", [])
+        if not holder.get("isClient")
+    )
+
+
 app = FastAPI(title="Signal Desk API")
 
 
@@ -304,7 +315,11 @@ def list_sources():
 @app.get("/api/clients")
 def list_clients():
     with get_conn() as conn:
-        return [client_row_to_dict(r) for r in conn.execute("SELECT * FROM clients ORDER BY name")]
+        clients = [client_row_to_dict(r) for r in conn.execute("SELECT * FROM clients ORDER BY name")]
+        for client in clients:
+            _annotate_other_shareholders(client, conn)
+            client["potentialProspectCount"] = _potential_prospect_count(client)
+        return clients
 
 
 @app.get("/api/clients/{client_id}")
@@ -320,6 +335,7 @@ def get_client(client_id: str):
         ).fetchall()
         client["events"] = [event_row_to_dict(r, sources_by_id, clients_by_id) for r in events]
         _annotate_other_shareholders(client, conn)
+        client["potentialProspectCount"] = _potential_prospect_count(client)
         return client
 
 

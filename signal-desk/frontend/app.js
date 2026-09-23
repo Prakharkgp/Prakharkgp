@@ -108,6 +108,7 @@ const I18N = {
     ai_config_saved: "Saved. The Analyze button now uses this configuration.",
     ai_config_cleared: "Cleared. Reverted to environment variables (if any) or the demo engine.",
     ai_config_error: "Couldn't save — please try again.",
+    ai_call_error_prefix: "Analysis failed:",
   },
   fr: {
     tagline: "Intelligence des événements clients pour la Banque Privée et les Entreprises",
@@ -218,6 +219,7 @@ const I18N = {
     ai_config_saved: "Enregistré. Le bouton Analyser utilise désormais cette configuration.",
     ai_config_cleared: "Réinitialisé. Retour aux variables d'environnement (le cas échéant) ou au moteur de démonstration.",
     ai_config_error: "Impossible d'enregistrer — veuillez réessayer.",
+    ai_call_error_prefix: "Échec de l'analyse :",
   },
 };
 
@@ -276,7 +278,16 @@ function t(key, ...args) {
 
 async function api(path, options) {
   const res = await fetch(path, options);
-  if (!res.ok) throw new Error(`${path} failed: ${res.status}`);
+  if (!res.ok) {
+    let detail = `${path} failed: ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body && body.detail) detail = body.detail;
+    } catch (e) {
+      // response body wasn't JSON — keep the generic message
+    }
+    throw new Error(detail);
+  }
   return res.json();
 }
 
@@ -407,11 +418,17 @@ function renderEventDetailRow(event) {
       </div>`
     : "";
 
+  const errorMessage = state.analyzeErrors && state.analyzeErrors[event.id];
+  const errorHtml = errorMessage
+    ? `<p class="ai-error">${t("ai_call_error_prefix")} ${escapeHtml(errorMessage)}</p>`
+    : "";
+
   return `
     <tr class="detail-row" data-detail-for="${event.id}">
       <td colspan="8">
         <p class="detail-desc">${escapeHtml(event.description)}</p>
         ${aiHtml}
+        ${errorHtml}
         <div class="detail-actions">
           <button class="btn-navy analyze-btn" data-id="${event.id}">${event.aiSummary ? t("btn_reanalyze") : t("btn_analyze")}</button>
           <select class="status-select" data-id="${event.id}">
@@ -477,10 +494,15 @@ function attachEventTableHandlers() {
       const id = Number(btn.dataset.id);
       btn.disabled = true;
       btn.textContent = t("btn_analyzing");
+      state.analyzeErrors = state.analyzeErrors || {};
+      delete state.analyzeErrors[id];
       try {
         const updated = await api(`/api/events/${id}/analyze`, { method: "POST" });
         const idx = state.events.findIndex((ev) => ev.id === updated.id);
         state.events[idx] = updated;
+        renderEventTable();
+      } catch (e) {
+        state.analyzeErrors[id] = e.message;
         renderEventTable();
       } finally {
         btn.disabled = false;

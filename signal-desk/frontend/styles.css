@@ -307,6 +307,17 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
 .ai-summary { margin: 0 0 6px; font-size: 13px; }
 .ai-action { margin: 0; font-size: 13px; font-weight: 700; color: var(--text); }
 
+.ai-error {
+  background: #fdece9;
+  border: 1px solid #f3c9c2;
+  border-left: 3px solid var(--red);
+  border-radius: 3px;
+  padding: 10px 14px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--red);
+}
+
 .detail-actions { display: flex; align-items: center; gap: 10px; }
 
 .status-select {

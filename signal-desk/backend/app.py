@@ -245,15 +245,21 @@ def analyze_event(event_id: int):
         event = event_row_to_dict(row, sources_by_id, clients_by_id)
 
         provider = _get_active_provider(conn)
-        result = provider.analyze(
-            {
-                "category": event["category"],
-                "event_type": event["eventType"],
-                "entity_name": event["entityName"],
-                "source_name": event["sourceName"],
-                "description": event["description"],
-            }
-        )
+        try:
+            result = provider.analyze(
+                {
+                    "category": event["category"],
+                    "event_type": event["eventType"],
+                    "entity_name": event["entityName"],
+                    "source_name": event["sourceName"],
+                    "description": event["description"],
+                }
+            )
+        except Exception as exc:
+            raise HTTPException(
+                status_code=502,
+                detail=f"{provider.name} call failed: {type(exc).__name__}: {exc}",
+            ) from exc
         conn.execute(
             """
             UPDATE events SET ai_summary = ?, ai_suggested_action = ?, ai_confidence = ?, ai_provider_used = ?

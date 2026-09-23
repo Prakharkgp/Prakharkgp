@@ -597,6 +597,15 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
   letter-spacing: 0.03em;
 }
 .gap-row .ge { color: var(--red); font-size: 12px; margin-top: 4px; }
+.agent-step { margin-top: 8px; }
+.agent-step-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--navy);
+}
+.agent-step p { margin: 2px 0 0; font-size: 13px; color: var(--text); }
 
 .no-opportunity-banner {
   background: #f4f5f7;

@@ -111,10 +111,10 @@ const I18N = {
     ai_call_error_prefix: "Analysis failed:",
     shareholder_structure_title: "Shareholder structure",
     explore_opportunity_btn: "Explore commercial opportunity",
-    scan_agent_btn: "Check with AI agent",
-    scan_loading: "Checking internal referential…",
+    scan_loading: "Running the agent sequence (online search, internal KYC check, synthesis, proposal)…",
     no_opportunity_title: "No opportunity for this legal entity",
     no_opportunity_body: "The AI agent cross-checked the shareholder structure against tracked signals and found nothing new.",
+    agent_findings_title: "Agent findings",
     gap_found_intro: "The agent found linked entities with no signal on file yet:",
     client_opportunities_title: "Commercial opportunity signals",
     client_opportunities_empty: "No commercial opportunity signals on file for this client.",
@@ -126,8 +126,13 @@ const I18N = {
     btn_cancel: "Cancel",
     scan_call_error_prefix: "Check failed:",
     btn_dashboard: "Signals",
-    scan_no_gap: "No gap detected — all linked entities are already tracked.",
     gap_added_tag: "Added to the Signal Directory",
+    step_search_online: "1. Online search",
+    step_search_online_placeholder: "No additional public source reachable from this demo environment.",
+    step_kyc_check: "2. Internal KYC data check",
+    step_kyc_check_result: (relation, jurisdiction) => `No signal on file for this entity yet (${relation}, ${jurisdiction}) — internal referential updated.`,
+    step_synthesis: "3. Synthetic summary",
+    step_commercial_proposal: "4. Commercial proposal",
     other_shareholders_label: "Other shareholders",
     already_client_tag: "Already a client",
     convert_to_client_btn: "Make this shareholder a client",
@@ -255,10 +260,10 @@ const I18N = {
     ai_call_error_prefix: "Échec de l'analyse :",
     shareholder_structure_title: "Structure actionnariale",
     explore_opportunity_btn: "Explorer l'opportunité commerciale",
-    scan_agent_btn: "Vérifier avec l'agent IA",
-    scan_loading: "Vérification du référentiel interne…",
+    scan_loading: "Exécution de la séquence d'agents (recherche en ligne, vérification KYC interne, synthèse, proposition)…",
     no_opportunity_title: "Aucune opportunité pour cette entité juridique",
     no_opportunity_body: "L'agent IA a comparé la structure actionnariale aux signaux suivis et n'a rien trouvé de nouveau.",
+    agent_findings_title: "Résultats de l'agent",
     gap_found_intro: "L'agent a trouvé des entités liées sans signal enregistré :",
     client_opportunities_title: "Signaux d'opportunité commerciale",
     client_opportunities_empty: "Aucun signal d'opportunité commerciale enregistré pour ce client.",
@@ -270,8 +275,13 @@ const I18N = {
     btn_cancel: "Annuler",
     scan_call_error_prefix: "Échec de la vérification :",
     btn_dashboard: "Veille",
-    scan_no_gap: "Aucun écart détecté — toutes les entités liées sont déjà suivies.",
     gap_added_tag: "Ajouté au répertoire des signaux",
+    step_search_online: "1. Recherche en ligne",
+    step_search_online_placeholder: "Aucune source publique supplémentaire accessible depuis cet environnement de démonstration.",
+    step_kyc_check: "2. Vérification KYC interne",
+    step_kyc_check_result: (relation, jurisdiction) => `Aucun signal enregistré pour cette entité (${relation}, ${jurisdiction}) — référentiel interne mis à jour.`,
+    step_synthesis: "3. Synthèse",
+    step_commercial_proposal: "4. Proposition commerciale",
     other_shareholders_label: "Autres actionnaires",
     already_client_tag: "Déjà client",
     convert_to_client_btn: "Faire de cet actionnaire un client",
@@ -900,11 +910,9 @@ function renderClientModalContent(client) {
 
     <div class="client-modal-actions">
       <button class="btn btn-primary" id="explore-opportunity-btn">${t("explore_opportunity_btn")}</button>
-      <button class="btn btn-outline" id="scan-agent-btn">${t("scan_agent_btn")}</button>
     </div>
 
     <div id="explore-opportunity-panel" hidden></div>
-    <div id="scan-result-panel" hidden></div>
 
     <div class="client-modal-section">
       <h3>${t("linked_signals_title")}</h3>
@@ -912,8 +920,7 @@ function renderClientModalContent(client) {
     </div>
   `;
 
-  document.getElementById("explore-opportunity-btn").addEventListener("click", () => toggleExploreOpportunities(client));
-  document.getElementById("scan-agent-btn").addEventListener("click", () => scanForMissedOpportunities(client));
+  document.getElementById("explore-opportunity-btn").addEventListener("click", () => exploreCommercialOpportunity(client));
   wireShareholderConvertButtons(client);
 }
 
@@ -985,15 +992,74 @@ function renderNoOpportunityBanner() {
     </div>`;
 }
 
-function toggleExploreOpportunities(client) {
+function renderAgentFindingCard(g) {
+  const body = g.error
+    ? `<div class="ge">${t("scan_call_error_prefix")} ${escapeHtml(g.error)}</div>`
+    : `
+      <div class="agent-step">
+        <div class="agent-step-label">${t("step_search_online")}</div>
+        <p>${escapeHtml(t("step_search_online_placeholder"))}</p>
+      </div>
+      <div class="agent-step">
+        <div class="agent-step-label">${t("step_kyc_check")}</div>
+        <p>${escapeHtml(t("step_kyc_check_result", g.relation, g.jurisdiction))}</p>
+      </div>
+      <div class="agent-step">
+        <div class="agent-step-label">${t("step_synthesis")}</div>
+        <p>${escapeHtml(g.aiSummary)}</p>
+      </div>
+      <div class="agent-step">
+        <div class="agent-step-label">${t("step_commercial_proposal")}</div>
+        <p>${escapeHtml(g.aiSuggestedAction)}</p>
+      </div>`;
+  return `<div class="gap-row">
+    <div class="ot">${escapeHtml(g.entityName)} — ${escapeHtml(g.relation)} · ${escapeHtml(g.jurisdiction)}</div>
+    <div class="gap-added-tag">${t("gap_added_tag")}</div>
+    ${body}
+  </div>`;
+}
+
+async function exploreCommercialOpportunity(client) {
   const panel = document.getElementById("explore-opportunity-panel");
-  if (!panel.hidden) {
+
+  if (!panel.hidden && panel.dataset.loaded === "true") {
     panel.hidden = true;
     return;
   }
-  const opportunities = (client.events || []).filter((e) => e.category === "Commercial Opportunity");
-  const list = opportunities.length
-    ? opportunities
+
+  panel.hidden = false;
+  panel.innerHTML = `<p class="scan-loading">${t("scan_loading")}</p>`;
+
+  const existingOpportunities = (client.events || []).filter((e) => e.category === "Commercial Opportunity");
+  let scanResult = null;
+  let scanError = null;
+  try {
+    scanResult = await api(`/api/clients/${client.id}/scan-opportunities`, { method: "POST" });
+  } catch (e) {
+    scanError = e.message;
+  }
+
+  if (scanResult && scanResult.found) {
+    scanResult.gaps.forEach((g) => {
+      const idx = state.events.findIndex((ev) => ev.id === g.id);
+      if (idx === -1) state.events.push(g);
+      else state.events[idx] = g;
+    });
+    renderKPIs();
+    renderEventTable();
+  }
+
+  const hasNewGaps = !!(scanResult && scanResult.found && scanResult.gaps.length);
+  const hasExisting = existingOpportunities.length > 0;
+
+  if (!hasExisting && !hasNewGaps && !scanError) {
+    panel.innerHTML = `<div class="client-modal-section"><h3>${t("client_opportunities_title")}</h3>${renderNoOpportunityBanner()}</div>`;
+    panel.dataset.loaded = "true";
+    return;
+  }
+
+  const existingHtml = hasExisting
+    ? existingOpportunities
         .map(
           (e) => `<div class="opportunity-row">
             <div class="ot">${escapeHtml(e.eventType)} — ${escapeHtml(e.entityName)}</div>
@@ -1001,55 +1067,28 @@ function toggleExploreOpportunities(client) {
           </div>`
         )
         .join("")
-    : renderNoOpportunityBanner();
+    : `<p style="font-size:13px;color:var(--muted);">${t("client_opportunities_empty")}</p>`;
 
-  panel.innerHTML = `<div class="client-modal-section"><h3>${t("client_opportunities_title")}</h3>${list}</div>`;
-  panel.hidden = false;
-}
+  const gapsHtml = hasNewGaps ? scanResult.gaps.map(renderAgentFindingCard).join("") : "";
+  const errorHtml = scanError ? `<p class="ai-error">${t("scan_call_error_prefix")} ${escapeHtml(scanError)}</p>` : "";
 
-async function scanForMissedOpportunities(client) {
-  const panel = document.getElementById("scan-result-panel");
-  panel.hidden = false;
-  panel.innerHTML = `<p class="scan-loading">${t("scan_loading")}</p>`;
-
-  try {
-    const result = await api(`/api/clients/${client.id}/scan-opportunities`, { method: "POST" });
-
-    if (!result.found) {
-      panel.innerHTML = `<p style="font-size:13px;color:var(--muted);">${t("scan_no_gap")}</p>`;
-      return;
+  panel.innerHTML = `
+    <div class="client-modal-section">
+      <h3>${t("client_opportunities_title")}</h3>
+      ${existingHtml}
+    </div>
+    ${
+      hasNewGaps
+        ? `<div class="client-modal-section">
+      <h3>${t("agent_findings_title")}</h3>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 10px;">${t("gap_found_intro")}</p>
+      ${gapsHtml}
+    </div>`
+        : ""
     }
-
-    result.gaps.forEach((g) => {
-      const idx = state.events.findIndex((ev) => ev.id === g.id);
-      if (idx === -1) state.events.push(g);
-      else state.events[idx] = g;
-    });
-    renderKPIs();
-    renderEventTable();
-
-    const gapsHtml = result.gaps
-      .map((g) => {
-        const body = g.error
-          ? `<div class="ge">${t("scan_call_error_prefix")} ${escapeHtml(g.error)}</div>`
-          : `<div class="om">${escapeHtml(g.aiSummary)}</div><div class="ga">${escapeHtml(g.aiSuggestedAction)}</div>`;
-        return `<div class="gap-row">
-          <div class="ot">${escapeHtml(g.entityName)} — ${escapeHtml(g.relation)} · ${escapeHtml(g.jurisdiction)}</div>
-          <div class="gap-added-tag">${t("gap_added_tag")}</div>
-          ${body}
-        </div>`;
-      })
-      .join("");
-
-    panel.innerHTML = `
-      <div class="client-modal-section">
-        <h3>${t("scan_agent_btn")}</h3>
-        <p style="font-size:13px;color:var(--muted);margin:0 0 10px;">${t("gap_found_intro")}</p>
-        ${gapsHtml}
-      </div>`;
-  } catch (e) {
-    panel.innerHTML = `<p class="ai-error">${t("scan_call_error_prefix")} ${escapeHtml(e.message)}</p>`;
-  }
+    ${errorHtml}
+  `;
+  panel.dataset.loaded = "true";
 }
 
 async function renderAIStatus() {

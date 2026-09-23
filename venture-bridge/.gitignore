@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 backend/venture_bridge.db
 .venv/
+
+
+.env

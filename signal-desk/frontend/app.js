@@ -125,7 +125,7 @@ const I18N = {
     btn_confirm: "Confirm",
     btn_cancel: "Cancel",
     scan_call_error_prefix: "Check failed:",
-    btn_dashboard: "Dashboard",
+    btn_dashboard: "Signals",
     scan_no_gap: "No gap detected — all linked entities are already tracked.",
     gap_added_tag: "Added to the Signal Directory",
     other_shareholders_label: "Other shareholders",
@@ -141,6 +141,7 @@ const I18N = {
     opportunity_prospects_count: (n) => `${n} prospect${n > 1 ? "s" : ""}`,
     opportunity_prospects_hint: "Co-shareholders not yet tracked as clients — open the dashboard to convert them.",
     clients_kpi_opportunity_prospects: "Opportunity prospects identified",
+    crm_review_date_prefix: "CRM review:",
   },
   fr: {
     tagline: "Intelligence des événements clients pour la Banque Privée et les Entreprises",
@@ -268,7 +269,7 @@ const I18N = {
     btn_confirm: "Confirmer",
     btn_cancel: "Annuler",
     scan_call_error_prefix: "Échec de la vérification :",
-    btn_dashboard: "Tableau de bord",
+    btn_dashboard: "Veille",
     scan_no_gap: "Aucun écart détecté — toutes les entités liées sont déjà suivies.",
     gap_added_tag: "Ajouté au répertoire des signaux",
     other_shareholders_label: "Autres actionnaires",
@@ -284,6 +285,7 @@ const I18N = {
     opportunity_prospects_count: (n) => `${n} prospect${n > 1 ? "s" : ""}`,
     opportunity_prospects_hint: "Co-actionnaires pas encore suivis comme clients — ouvrez le tableau de bord pour les convertir.",
     clients_kpi_opportunity_prospects: "Prospects opportunité identifiés",
+    crm_review_date_prefix: "Revue CRM :",
   },
 };
 
@@ -858,14 +860,27 @@ function renderClientModalContent(client) {
         .join("")}</ul>`
     : `<p style="font-size:13px;color:var(--muted);">${t("no_linked_entities")}</p>`;
 
+  const LEGACY_STATUSES = new Set(["Actioned", "Dismissed"]);
   const signals = client.events && client.events.length
     ? client.events
         .map((e) => {
-          const decline = e.declineReason
-            ? `<div class="om" style="color:var(--red);">${t("decline_reason_prefix")} ${escapeHtml(e.declineReason)}</div>`
-            : "";
+          const dateStr = new Date(e.detectedAt).toLocaleDateString(state.lang === "fr" ? "fr-FR" : "en-US");
+
+          if (LEGACY_STATUSES.has(e.status)) {
+            const reason = e.declineReason
+              ? `<div class="om" style="color:var(--red);">${t("decline_reason_prefix")} ${escapeHtml(e.declineReason)}</div>`
+              : "";
+            return `<div class="client-event-row client-event-row-legacy">
+              <div class="legacy-review-line">
+                <span class="legacy-review-date">${escapeHtml(t("crm_review_date_prefix"))} ${dateStr}</span>
+                <span class="pill ${STATUS_CLASS[e.status] || ""}">${escapeHtml(t(STATUS_KEY[e.status] || e.status))}</span>
+              </div>
+              ${reason}
+            </div>`;
+          }
+
           return `<div class="client-event-row"><strong>${escapeHtml(e.eventType)}</strong> — ${escapeHtml(e.entityName)}
-            <div class="ct">${escapeHtml(t(CATEGORY_KEY[e.category] || e.category))} · ${escapeHtml(t("signal_line", t(PRIORITY_KEY[e.priority] || e.priority), e.sourceName))}</div>${decline}</div>`;
+            <div class="ct">${escapeHtml(t(CATEGORY_KEY[e.category] || e.category))} · ${escapeHtml(t("signal_line", t(PRIORITY_KEY[e.priority] || e.priority), e.sourceName))}</div></div>`;
         })
         .join("")
     : `<p style="font-size:13px;color:var(--muted);">${t("no_signals_recorded")}</p>`;

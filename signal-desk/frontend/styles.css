@@ -452,6 +452,9 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
 .client-event-row { font-size: 13px; padding: 6px 0; border-bottom: 1px dashed var(--border); }
 .client-event-row:last-child { border-bottom: none; }
 .client-event-row .ct { color: var(--muted); font-size: 12px; }
+.client-event-row-legacy { color: var(--muted); }
+.legacy-review-line { display: flex; align-items: center; gap: 10px; }
+.legacy-review-date { font-size: 12px; }
 
 /* AI Engine panel */
 .ai-status-card {

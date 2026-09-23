@@ -109,6 +109,23 @@ const I18N = {
     ai_config_cleared: "Cleared. Reverted to environment variables (if any) or the demo engine.",
     ai_config_error: "Couldn't save — please try again.",
     ai_call_error_prefix: "Analysis failed:",
+    shareholder_structure_title: "Shareholder structure",
+    explore_opportunity_btn: "Explore commercial opportunity",
+    scan_agent_btn: "Check with AI agent",
+    scan_loading: "Checking internal referential…",
+    no_opportunity_title: "No opportunity for this legal entity",
+    no_opportunity_body: "The AI agent cross-checked the shareholder structure against tracked signals and found nothing new.",
+    gap_found_intro: "The agent found linked entities with no signal on file yet:",
+    client_opportunities_title: "Commercial opportunity signals",
+    client_opportunities_empty: "No commercial opportunity signals on file for this client.",
+    linked_signals_empty_short: "No linked signals.",
+    decline_reason_label: "Reason for not pursuing this opportunity",
+    decline_reason_placeholder: "e.g. client not interested, insufficient fit…",
+    decline_reason_prefix: "Decline reason:",
+    btn_confirm: "Confirm",
+    btn_cancel: "Cancel",
+    scan_call_error_prefix: "Check failed:",
+    btn_dashboard: "Dashboard",
   },
   fr: {
     tagline: "Intelligence des événements clients pour la Banque Privée et les Entreprises",
@@ -220,6 +237,23 @@ const I18N = {
     ai_config_cleared: "Réinitialisé. Retour aux variables d'environnement (le cas échéant) ou au moteur de démonstration.",
     ai_config_error: "Impossible d'enregistrer — veuillez réessayer.",
     ai_call_error_prefix: "Échec de l'analyse :",
+    shareholder_structure_title: "Structure actionnariale",
+    explore_opportunity_btn: "Explorer l'opportunité commerciale",
+    scan_agent_btn: "Vérifier avec l'agent IA",
+    scan_loading: "Vérification du référentiel interne…",
+    no_opportunity_title: "Aucune opportunité pour cette entité juridique",
+    no_opportunity_body: "L'agent IA a comparé la structure actionnariale aux signaux suivis et n'a rien trouvé de nouveau.",
+    gap_found_intro: "L'agent a trouvé des entités liées sans signal enregistré :",
+    client_opportunities_title: "Signaux d'opportunité commerciale",
+    client_opportunities_empty: "Aucun signal d'opportunité commerciale enregistré pour ce client.",
+    linked_signals_empty_short: "Aucun signal lié.",
+    decline_reason_label: "Motif de non-poursuite de cette opportunité",
+    decline_reason_placeholder: "ex. : client non intéressé, profil non adapté…",
+    decline_reason_prefix: "Motif du rejet :",
+    btn_confirm: "Confirmer",
+    btn_cancel: "Annuler",
+    scan_call_error_prefix: "Échec de la vérification :",
+    btn_dashboard: "Tableau de bord",
   },
 };
 
@@ -232,7 +266,7 @@ const state = {
   page: 1,
   pageSize: 10,
   expandedEventId: null,
-  expandedClientId: null,
+  modalClient: null,
   lang: localStorage.getItem("sd_lang") || "fr",
 };
 
@@ -295,6 +329,16 @@ function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str ?? "";
   return div.innerHTML;
+}
+
+function setupClientModal() {
+  document.getElementById("client-modal-close").addEventListener("click", closeClientModal);
+  document.getElementById("client-modal-overlay").addEventListener("click", (e) => {
+    if (e.target.id === "client-modal-overlay") closeClientModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeClientModal();
+  });
 }
 
 function setupTabs() {
@@ -423,6 +467,10 @@ function renderEventDetailRow(event) {
     ? `<p class="ai-error">${t("ai_call_error_prefix")} ${escapeHtml(errorMessage)}</p>`
     : "";
 
+  const declineReasonHtml = event.declineReason
+    ? `<p class="decline-reason-note">${t("decline_reason_prefix")} ${escapeHtml(event.declineReason)}</p>`
+    : "";
+
   return `
     <tr class="detail-row" data-detail-for="${event.id}">
       <td colspan="8">
@@ -438,6 +486,8 @@ function renderEventDetailRow(event) {
             <option value="Dismissed"${event.status === "Dismissed" ? " selected" : ""}>${t("status_dismissed")}</option>
           </select>
         </div>
+        <div class="decline-reason-slot" data-id="${event.id}"></div>
+        ${declineReasonHtml}
       </td>
     </tr>`;
 }
@@ -511,12 +561,51 @@ function attachEventTableHandlers() {
   });
 
   document.querySelectorAll(".status-select").forEach((select) => {
+    select.dataset.prevValue = select.value;
     select.addEventListener("change", async (e) => {
       const id = Number(select.dataset.id);
+      const newStatus = e.target.value;
+
+      if (newStatus === "Dismissed") {
+        const slot = document.querySelector(`.decline-reason-slot[data-id="${id}"]`);
+        if (slot) {
+          slot.innerHTML = `
+            <div class="decline-reason-box">
+              <input type="text" class="decline-reason-input" placeholder="${t("decline_reason_placeholder")}" />
+              <button class="btn-navy decline-reason-confirm">${t("btn_confirm")}</button>
+              <button class="btn btn-outline decline-reason-cancel" style="padding:5px 12px;font-size:12px;">${t("btn_cancel")}</button>
+            </div>`;
+          slot.querySelector(".decline-reason-input").focus();
+
+          slot.querySelector(".decline-reason-cancel").addEventListener("click", () => {
+            select.value = select.dataset.prevValue;
+            slot.innerHTML = "";
+          });
+
+          const confirmReason = async () => {
+            const reason = slot.querySelector(".decline-reason-input").value.trim();
+            const updated = await api(`/api/events/${id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: newStatus, reason }),
+            });
+            const idx = state.events.findIndex((ev) => ev.id === updated.id);
+            state.events[idx] = updated;
+            renderKPIs();
+            renderEventTable();
+          };
+          slot.querySelector(".decline-reason-confirm").addEventListener("click", confirmReason);
+          slot.querySelector(".decline-reason-input").addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter") confirmReason();
+          });
+        }
+        return;
+      }
+
       const updated = await api(`/api/events/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: e.target.value }),
+        body: JSON.stringify({ status: newStatus }),
       });
       const idx = state.events.findIndex((ev) => ev.id === updated.id);
       state.events[idx] = updated;
@@ -620,68 +709,148 @@ function renderSources() {
     .join("");
 }
 
-function renderClientDetailRow(client) {
-  const chain = client.linkedEntities.length
-    ? `<ul class="ownership-chain">${client.linkedEntities
-        .map((e) => `<li><span>${escapeHtml(e.name)}</span><span class="relation">${escapeHtml(e.relation)} · ${escapeHtml(e.jurisdiction)}</span></li>`)
-        .join("")}</ul>`
-    : `<p style="font-size:13px;color:var(--muted);">${t("no_linked_entities")}</p>`;
-
-  const events = client.events && client.events.length
-    ? client.events
-        .map(
-          (e) => `<div class="client-event-row"><strong>${escapeHtml(e.eventType)}</strong> — ${escapeHtml(e.entityName)}
-            <div class="ct">${escapeHtml(t(CATEGORY_KEY[e.category] || e.category))} · ${escapeHtml(t("signal_line", t(PRIORITY_KEY[e.priority] || e.priority), e.sourceName))}</div></div>`
-        )
-        .join("")
-    : `<p style="font-size:13px;color:var(--muted);">${t("no_signals_recorded")}</p>`;
-
-  return `
-    <tr class="detail-row" data-client-detail-for="${client.id}">
-      <td colspan="6" class="client-details-cell">
-        <div class="client-events-title">${t("ownership_chain_title")}</div>
-        ${chain}
-        <div class="client-events-title">${t("linked_signals_title")}</div>
-        ${events}
-      </td>
-    </tr>`;
-}
-
 function renderClients() {
   const tbody = document.getElementById("clients-table-body");
   tbody.innerHTML = state.clients
-    .map((c) => {
-      const row = `
+    .map(
+      (c) => `
       <tr>
         <td class="source-name">${escapeHtml(c.name)}</td>
         <td><span class="type-pill ${c.isProspect ? "prospect" : "client"}">${c.isProspect ? t("client_type_prospect") : t("client_type_client")}</span></td>
         <td>${escapeHtml(c.segment)}</td>
         <td>${escapeHtml(c.rmOwner)}</td>
         <td>${c.linkedEntities ? c.linkedEntities.length : 0}</td>
-        <td><button class="btn-navy client-view-btn" data-id="${c.id}">${state.expandedClientId === c.id ? t("btn_hide") : t("btn_view")}</button></td>
-      </tr>`;
-      const detail = state.expandedClientId === c.id && state.loadedClientDetail && state.loadedClientDetail.id === c.id
-        ? renderClientDetailRow(state.loadedClientDetail)
-        : "";
-      return row + detail;
-    })
+        <td><button class="btn-navy client-view-btn" data-id="${c.id}">${t("btn_dashboard")}</button></td>
+      </tr>`
+    )
     .join("");
 
   document.querySelectorAll(".client-view-btn").forEach((btn) => {
-    btn.addEventListener("click", () => toggleClient(btn.dataset.id));
+    btn.addEventListener("click", () => openClientModal(btn.dataset.id));
   });
 }
 
-async function toggleClient(clientId) {
-  if (state.expandedClientId === clientId) {
-    state.expandedClientId = null;
-    renderClients();
+async function openClientModal(clientId) {
+  const client = await api(`/api/clients/${clientId}`);
+  state.modalClient = client;
+  renderClientModalContent(client);
+  document.getElementById("client-modal-overlay").hidden = false;
+}
+
+function closeClientModal() {
+  document.getElementById("client-modal-overlay").hidden = true;
+  state.modalClient = null;
+}
+
+function renderClientModalContent(client) {
+  const chain = client.linkedEntities.length
+    ? `<ul class="ownership-chain">${client.linkedEntities
+        .map((e) => `<li><span>${escapeHtml(e.name)}</span><span class="relation">${escapeHtml(e.relation)} · ${escapeHtml(e.jurisdiction)}</span></li>`)
+        .join("")}</ul>`
+    : `<p style="font-size:13px;color:var(--muted);">${t("no_linked_entities")}</p>`;
+
+  const signals = client.events && client.events.length
+    ? client.events
+        .map((e) => {
+          const decline = e.declineReason
+            ? `<div class="om" style="color:var(--red);">${t("decline_reason_prefix")} ${escapeHtml(e.declineReason)}</div>`
+            : "";
+          return `<div class="client-event-row"><strong>${escapeHtml(e.eventType)}</strong> — ${escapeHtml(e.entityName)}
+            <div class="ct">${escapeHtml(t(CATEGORY_KEY[e.category] || e.category))} · ${escapeHtml(t("signal_line", t(PRIORITY_KEY[e.priority] || e.priority), e.sourceName))}</div>${decline}</div>`;
+        })
+        .join("")
+    : `<p style="font-size:13px;color:var(--muted);">${t("no_signals_recorded")}</p>`;
+
+  document.getElementById("client-modal-content").innerHTML = `
+    <div class="client-modal-header">
+      <h2>${escapeHtml(client.name)}</h2>
+      <div class="segment">${escapeHtml(client.segment)}</div>
+      <div class="rm">RM: ${escapeHtml(client.rmOwner)}</div>
+    </div>
+
+    <div class="client-modal-section">
+      <h3>${t("shareholder_structure_title")}</h3>
+      ${chain}
+    </div>
+
+    <div class="client-modal-actions">
+      <button class="btn btn-primary" id="explore-opportunity-btn">${t("explore_opportunity_btn")}</button>
+      <button class="btn btn-outline" id="scan-agent-btn">${t("scan_agent_btn")}</button>
+    </div>
+
+    <div id="explore-opportunity-panel" hidden></div>
+    <div id="scan-result-panel" hidden></div>
+
+    <div class="client-modal-section">
+      <h3>${t("linked_signals_title")}</h3>
+      ${signals}
+    </div>
+  `;
+
+  document.getElementById("explore-opportunity-btn").addEventListener("click", () => toggleExploreOpportunities(client));
+  document.getElementById("scan-agent-btn").addEventListener("click", () => scanForMissedOpportunities(client));
+}
+
+function toggleExploreOpportunities(client) {
+  const panel = document.getElementById("explore-opportunity-panel");
+  if (!panel.hidden) {
+    panel.hidden = true;
     return;
   }
-  const client = await api(`/api/clients/${clientId}`);
-  state.expandedClientId = clientId;
-  state.loadedClientDetail = client;
-  renderClients();
+  const opportunities = (client.events || []).filter((e) => e.category === "Commercial Opportunity");
+  const list = opportunities.length
+    ? opportunities
+        .map(
+          (e) => `<div class="opportunity-row">
+            <div class="ot">${escapeHtml(e.eventType)} — ${escapeHtml(e.entityName)}</div>
+            <div class="om">${escapeHtml(e.description)}</div>
+          </div>`
+        )
+        .join("")
+    : `<p style="font-size:13px;color:var(--muted);">${t("client_opportunities_empty")}</p>`;
+
+  panel.innerHTML = `<div class="client-modal-section"><h3>${t("client_opportunities_title")}</h3>${list}</div>`;
+  panel.hidden = false;
+}
+
+async function scanForMissedOpportunities(client) {
+  const panel = document.getElementById("scan-result-panel");
+  panel.hidden = false;
+  panel.innerHTML = `<p class="scan-loading">${t("scan_loading")}</p>`;
+
+  try {
+    const result = await api(`/api/clients/${client.id}/scan-opportunities`, { method: "POST" });
+
+    if (!result.found) {
+      panel.innerHTML = `
+        <div class="no-opportunity-banner">
+          <strong>${t("no_opportunity_title")}</strong>
+          ${t("no_opportunity_body")}
+        </div>`;
+      return;
+    }
+
+    const gapsHtml = result.gaps
+      .map((g) => {
+        const body = g.error
+          ? `<div class="ge">${t("scan_call_error_prefix")} ${escapeHtml(g.error)}</div>`
+          : `<div class="om">${escapeHtml(g.summary)}</div><div class="ga">${escapeHtml(g.suggestedAction)}</div>`;
+        return `<div class="gap-row">
+          <div class="ot">${escapeHtml(g.entityName)} — ${escapeHtml(g.relation)} · ${escapeHtml(g.jurisdiction)}</div>
+          ${body}
+        </div>`;
+      })
+      .join("");
+
+    panel.innerHTML = `
+      <div class="client-modal-section">
+        <h3>${t("scan_agent_btn")}</h3>
+        <p style="font-size:13px;color:var(--muted);margin:0 0 10px;">${t("gap_found_intro")}</p>
+        ${gapsHtml}
+      </div>`;
+  } catch (e) {
+    panel.innerHTML = `<p class="ai-error">${t("scan_call_error_prefix")} ${escapeHtml(e.message)}</p>`;
+  }
 }
 
 async function renderAIStatus() {
@@ -769,6 +938,7 @@ async function init() {
   setupFilterActions();
   setupLogoFallback();
   setupAIConfigForm();
+  setupClientModal();
   applyStaticTranslations();
 
   const [meta, events, sources, clients] = await Promise.all([

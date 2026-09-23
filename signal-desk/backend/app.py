@@ -74,7 +74,8 @@ def init_db():
                 ai_summary TEXT,
                 ai_suggested_action TEXT,
                 ai_confidence REAL,
-                ai_provider_used TEXT
+                ai_provider_used TEXT,
+                decline_reason TEXT
             )
             """
         )
@@ -144,6 +145,7 @@ def event_row_to_dict(row: sqlite3.Row, sources_by_id: dict, clients_by_id: dict
         "aiSuggestedAction": row["ai_suggested_action"],
         "aiConfidence": row["ai_confidence"],
         "aiProviderUsed": row["ai_provider_used"],
+        "declineReason": row["decline_reason"],
     }
 
 
@@ -164,6 +166,7 @@ def client_row_to_dict(row: sqlite3.Row) -> dict:
 
 class StatusUpdate(BaseModel):
     status: str
+    reason: Optional[str] = None
 
 
 VALID_STATUSES = {"New", "Under Review", "Actioned", "Dismissed"}
@@ -228,7 +231,11 @@ def update_event_status(event_id: int, payload: StatusUpdate):
         row = conn.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
         if row is None:
             raise HTTPException(status_code=404, detail="Event not found")
-        conn.execute("UPDATE events SET status = ? WHERE id = ?", (payload.status, event_id))
+        reason = payload.reason.strip() if payload.reason else None
+        conn.execute(
+            "UPDATE events SET status = ?, decline_reason = ? WHERE id = ?",
+            (payload.status, reason, event_id),
+        )
         conn.commit()
         sources_by_id, clients_by_id = _sources_and_clients(conn)
         row = conn.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
@@ -297,6 +304,75 @@ def get_client(client_id: str):
         ).fetchall()
         client["events"] = [event_row_to_dict(r, sources_by_id, clients_by_id) for r in events]
         return client
+
+
+@app.post("/api/clients/{client_id}/scan-opportunities")
+def scan_client_opportunities(client_id: str):
+    """The 'agent' button: cross-checks the client's known ownership
+    structure against the signals already on file, and flags any linked
+    entity that has no tracked signal yet — i.e. something the internal
+    referential may have missed. Each gap is run through the active AI
+    provider for a one-line rationale, same as a normal event analysis."""
+    with get_conn() as conn:
+        row = conn.execute("SELECT * FROM clients WHERE id = ?", (client_id,)).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Client not found")
+        client = client_row_to_dict(row)
+
+        tracked_entities = {
+            r["entity_name"]
+            for r in conn.execute("SELECT entity_name FROM events WHERE client_id = ?", (client_id,))
+        }
+        gaps = [e for e in client["linkedEntities"] if e["name"] not in tracked_entities]
+
+        if not gaps:
+            return {"found": False, "clientId": client_id, "clientName": client["name"]}
+
+        provider = _get_active_provider(conn)
+        results = []
+        for gap in gaps[:3]:
+            try:
+                analysis = provider.analyze(
+                    {
+                        "category": "Commercial Opportunity",
+                        "event_type": "Potential missed opportunity",
+                        "entity_name": gap["name"],
+                        "source_name": "Internal referential cross-check",
+                        "description": (
+                            f"{gap['name']} is linked to {client['name']} "
+                            f"({gap['relation']}, {gap['jurisdiction']}) but has no signal on file yet."
+                        ),
+                    }
+                )
+                results.append(
+                    {
+                        "entityName": gap["name"],
+                        "relation": gap["relation"],
+                        "jurisdiction": gap["jurisdiction"],
+                        "summary": analysis["summary"],
+                        "suggestedAction": analysis["suggested_action"],
+                        "error": None,
+                    }
+                )
+            except Exception as exc:
+                results.append(
+                    {
+                        "entityName": gap["name"],
+                        "relation": gap["relation"],
+                        "jurisdiction": gap["jurisdiction"],
+                        "summary": None,
+                        "suggestedAction": None,
+                        "error": f"{type(exc).__name__}: {exc}",
+                    }
+                )
+
+        return {
+            "found": True,
+            "clientId": client_id,
+            "clientName": client["name"],
+            "provider": provider.name,
+            "gaps": results,
+        }
 
 
 @app.get("/api/ai/status")

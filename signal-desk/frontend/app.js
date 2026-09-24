@@ -23,9 +23,6 @@ const I18N = {
     btn_export: "Export",
     btn_view: "View",
     btn_hide: "Hide",
-    btn_analyze: "Analyze with AI",
-    btn_reanalyze: "Re-analyze",
-    btn_analyzing: "Analyzing…",
     col_category: "Category",
     col_event_type: "Event type",
     col_entity: "Entity / client",
@@ -104,7 +101,6 @@ const I18N = {
     ai_config_saved: "Saved. The Analyze button now uses this configuration.",
     ai_config_cleared: "Cleared. Reverted to environment variables (if any) or the demo engine.",
     ai_config_error: "Couldn't save — please try again.",
-    ai_call_error_prefix: "Analysis failed:",
     shareholder_structure_title: "Shareholder structure",
     explore_opportunity_btn: "Explore commercial opportunity",
     scan_loading_title: "Agent sequence running…",
@@ -178,9 +174,6 @@ const I18N = {
     btn_export: "Exporter",
     btn_view: "Visualiser",
     btn_hide: "Masquer",
-    btn_analyze: "Analyser avec l'IA",
-    btn_reanalyze: "Réanalyser",
-    btn_analyzing: "Analyse en cours…",
     col_category: "Catégorie",
     col_event_type: "Type d'événement",
     col_entity: "Entité / client",
@@ -200,7 +193,7 @@ const I18N = {
     col_linked_entities: "Entités liées",
     kpi_total: "Signaux totaux",
     kpi_high: "Priorité élevée",
-    kpi_pending: "En attente",
+    kpi_pending: "En cours d'examen",
     kpi_opportunities: "Opportunités commerciales",
     client_type_client: "Client",
     client_type_prospect: "Prospect",
@@ -259,7 +252,6 @@ const I18N = {
     ai_config_saved: "Enregistré. Le bouton Analyser utilise désormais cette configuration.",
     ai_config_cleared: "Réinitialisé. Retour aux variables d'environnement (le cas échéant) ou au moteur de démonstration.",
     ai_config_error: "Impossible d'enregistrer — veuillez réessayer.",
-    ai_call_error_prefix: "Échec de l'analyse :",
     shareholder_structure_title: "Structure actionnariale",
     explore_opportunity_btn: "Explorer l'opportunité commerciale",
     scan_loading_title: "Séquence d'agents en cours…",
@@ -514,11 +506,6 @@ function renderEventDetailRow(event) {
       </div>`
     : "";
 
-  const errorMessage = state.analyzeErrors && state.analyzeErrors[event.id];
-  const errorHtml = errorMessage
-    ? `<p class="ai-error">${t("ai_call_error_prefix")} ${escapeHtml(errorMessage)}</p>`
-    : "";
-
   const declineReasonHtml = event.declineReason
     ? `<p class="decline-reason-note${event.status === "Actioned" ? " actioned" : ""}">${statusCommentPrefix(event.status)} ${escapeHtml(event.declineReason)}</p>`
     : "";
@@ -528,9 +515,7 @@ function renderEventDetailRow(event) {
       <td colspan="8">
         <p class="detail-desc">${escapeHtml(event.description)}</p>
         ${aiHtml}
-        ${errorHtml}
         <div class="detail-actions">
-          <button class="btn-navy analyze-btn" data-id="${event.id}">${event.aiSummary ? t("btn_reanalyze") : t("btn_analyze")}</button>
           <select class="status-select" data-id="${event.id}">
             <option value="Under Review"${event.status === "Under Review" ? " selected" : ""}>${t("status_review")}</option>
             <option value="Actioned"${event.status === "Actioned" ? " selected" : ""}>${t("status_actioned")}</option>
@@ -587,27 +572,6 @@ function attachEventTableHandlers() {
       const id = Number(btn.dataset.id);
       state.expandedEventId = state.expandedEventId === id ? null : id;
       renderEventTable();
-    });
-  });
-
-  document.querySelectorAll(".analyze-btn").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = Number(btn.dataset.id);
-      btn.disabled = true;
-      btn.textContent = t("btn_analyzing");
-      state.analyzeErrors = state.analyzeErrors || {};
-      delete state.analyzeErrors[id];
-      try {
-        const updated = await api(`/api/events/${id}/analyze`, { method: "POST" });
-        const idx = state.events.findIndex((ev) => ev.id === updated.id);
-        state.events[idx] = updated;
-        renderEventTable();
-      } catch (e) {
-        state.analyzeErrors[id] = e.message;
-        renderEventTable();
-      } finally {
-        btn.disabled = false;
-      }
     });
   });
 

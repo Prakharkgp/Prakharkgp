@@ -9,7 +9,10 @@ from urllib.parse import quote_plus, urlencode
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree
 
-from agents.kyc.analyzer import analyze_client
+try:
+    from .kyc.analyzer import analyze_client
+except ImportError:
+    from kyc.analyzer import analyze_client
 
 _STATE_RECHERCHES = []
 

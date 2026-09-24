@@ -3,7 +3,10 @@ import json
 from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
-from agents.tools import TOOLS, execute_tool
+try:
+    from .tools import TOOLS, execute_tool
+except ImportError:
+    from tools import TOOLS, execute_tool
 
 _agents_dir = Path(__file__).resolve().parent
 _backend_dir = _agents_dir.parent
@@ -11,6 +14,7 @@ _backend_dir = _agents_dir.parent
 # Charge le .env du dossier backend/ (parent) en priorité,
 # puis celui de agents/ en fallback s'il existe.
 load_dotenv(_backend_dir / '.env')
+load_dotenv(_backend_dir.parent / '.env')
 load_dotenv(_agents_dir / '.env')
 
 

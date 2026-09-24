@@ -1,10 +1,8 @@
-"""Seed data for the Signal Desk prototype.
+"""Demo source and event data for the Signal Desk prototype.
 
-Everything here — clients, entities, sources, and events — is fictional,
-built directly from the event taxonomy and source list captured in the
-hackathon's Req.md. It exists to demonstrate product shape: what a real
-feed of registry/media/compliance signals, triaged and linked back to a
-client, would look like — not to represent any real company or person.
+The client/prospect directory is loaded from the local KYC data source at runtime.
+The source and event records here remain demo data for exercising the signal
+triage workflow and are not intended to represent any real company or person.
 """
 
 CATEGORIES = [
@@ -118,84 +116,6 @@ SOURCES = [
         "coverage": "Enhanced due diligence",
         "description": "Deeper human-led investigations when a detected signal needs EDD.",
         "status": "planned",
-    },
-]
-
-CLIENTS = [
-    {
-        "id": "lefevre",
-        "name": "Antoine Lefevre",
-        "segment": "UHNW Individual — Private Banking",
-        "rm_owner": "Camille Dubois",
-        "is_prospect": False,
-        "linked_entities": [
-            {
-                "name": "Lefevre Family Holding SAS",
-                "relation": "40% shareholder",
-                "jurisdiction": "France",
-                "client_stake_percent": 40,
-                "other_shareholders": [
-                    {"name": "Marine Lefevre", "stake": "30%", "type": "individual"},
-                    {"name": "Atlas Croissance Partners", "stake": "30%", "type": "entity"},
-                ],
-            },
-            {"name": "NovaTech Robotics SAS", "relation": "Indirect, via holding", "jurisdiction": "France"},
-        ],
-    },
-    {
-        "id": "whitfield-rowe",
-        "name": "Whitfield & Rowe Group plc",
-        "segment": "Corporate — Mid-Cap, UK-listed",
-        "rm_owner": "James Okafor",
-        "is_prospect": False,
-        "linked_entities": [
-            {"name": "Whitfield & Rowe Logistics Ltd", "relation": "Wholly-owned subsidiary", "jurisdiction": "United Kingdom", "client_stake_percent": 100},
-        ],
-    },
-    {
-        "id": "meridian",
-        "name": "Meridian BioTech Inc.",
-        "segment": "Corporate — US-listed",
-        "rm_owner": "Sarah Klein",
-        "is_prospect": False,
-        "linked_entities": [],
-    },
-    {
-        "id": "aurelie-costa",
-        "name": "Aurélie Costa",
-        "segment": "UHNW Individual — Prospect",
-        "rm_owner": "Camille Dubois",
-        "is_prospect": True,
-        "linked_entities": [
-            {"name": "Costa Ventures Holding", "relation": "Sole shareholder", "jurisdiction": "France", "client_stake_percent": 100},
-        ],
-    },
-    {
-        "id": "delacroix",
-        "name": "Delacroix Capital SAS",
-        "segment": "Corporate — Family Office",
-        "rm_owner": "James Okafor",
-        "is_prospect": False,
-        "linked_entities": [],
-    },
-    {
-        "id": "meridian-holdings-prospect",
-        "name": "Julien Bertrand",
-        "segment": "Corporate Entrepreneur — Prospect",
-        "rm_owner": "Sarah Klein",
-        "is_prospect": True,
-        "linked_entities": [
-            {
-                "name": "Bertrand Industrials SAS",
-                "relation": "60% shareholder (Founder)",
-                "jurisdiction": "France",
-                "client_stake_percent": 60,
-                "other_shareholders": [
-                    {"name": "Nathalie Bertrand", "stake": "25%", "type": "individual"},
-                    {"name": "Atlas Growth Fund", "stake": "15%", "type": "entity"},
-                ],
-            },
-        ],
     },
 ]
 

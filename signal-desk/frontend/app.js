@@ -139,6 +139,7 @@ const I18N = {
     btn_apply_update: "Apply update",
     update_applied: (name) => `Referential updated — ${name} added to the shareholder structure.`,
     no_sources: "No source identified.",
+    veille_unavailable: "AI monitoring synthesis unavailable:",
     convert_to_client_btn: "Make this shareholder a client",
     converting_label: "Converting…",
     convert_success: (name) => `${name} was added as a new prospect — a commercial opportunity signal was created and analyzed. See the Clients tab.`,
@@ -289,6 +290,7 @@ const I18N = {
     btn_apply_update: "Appliquer la mise à jour",
     update_applied: (name) => `Référentiel mis à jour — ${name} ajouté à la structure actionnariale.`,
     no_sources: "Aucune source identifiée.",
+    veille_unavailable: "Synthèse de veille IA indisponible :",
     convert_to_client_btn: "Faire de cet actionnaire un client",
     converting_label: "Conversion en cours…",
     convert_success: (name) => `${name} a été ajouté comme nouveau prospect — un signal d'opportunité commerciale a été créé et analysé. Voir l'onglet Clients.`,
@@ -365,6 +367,32 @@ async function api(path, options) {
     throw new Error(detail);
   }
   return res.json();
+}
+
+function renderMarkdown(markdown) {
+  if (window.marked && window.DOMPurify) {
+    return window.DOMPurify.sanitize(window.marked.parse(markdown || ""));
+  }
+  return `<pre>${escapeHtml(markdown || "")}</pre>`;
+}
+
+// POST /api/veille — the commercial monitoring + KYC pipeline. Resolves with
+// {synthese} on success, {notFound} when the client is not in the internal KYC
+// referential (the demo clients), or {error} when the pipeline fails.
+async function runVeille(clientId) {
+  try {
+    const res = await fetch("/api/veille", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_id: clientId }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.ok) return { synthese: body.synthese };
+    if (res.status === 404) return { notFound: true };
+    return { error: body.detail || `/api/veille failed: ${res.status}` };
+  } catch (e) {
+    return { error: e.message };
+  }
 }
 
 function escapeHtml(str) {
@@ -969,7 +997,8 @@ function renderAgentProgress(panel, completedCount) {
 function renderSynthesis(client, result, detailsOpen) {
   const opps = result.opportunities || [];
   const top = opps[0];
-  const level = result.level || "Low";
+  const veille = result.veille || {};
+  const level = result.level || (veille.synthese ? null : "Low");
   const headline = top
     ? `${t("synthesis_text", opps.length, top.eventType, top.entityName)} ${top.aiSuggestedAction || ""}`
     : `${t("no_opportunity_title")} — ${t("no_opportunity_body")}`;
@@ -1030,9 +1059,12 @@ function renderSynthesis(client, result, detailsOpen) {
   return `<div class="client-modal-section synthesis-card">
     <div class="synthesis-header">
       <h3>${t("synthesis_title")}</h3>
-      <span class="pill ${PRIORITY_CLASS[level] || ""}">${escapeHtml(t("rating_label"))} : ${escapeHtml(t(LEVEL_KEY[level]))}</span>
+      ${level ? `<span class="pill ${PRIORITY_CLASS[level] || ""}">${escapeHtml(t("rating_label"))} : ${escapeHtml(t(LEVEL_KEY[level]))}</span>` : ""}
     </div>
-    <p class="synthesis-headline">${escapeHtml(headline)}</p>
+    ${veille.synthese
+      ? `<div class="veille-result">${renderMarkdown(veille.synthese)}</div>`
+      : `<p class="synthesis-headline">${escapeHtml(headline)}</p>`}
+    ${veille.error ? `<p class="veille-error">${t("veille_unavailable")} ${escapeHtml(veille.error)}</p>` : ""}
     <button class="btn btn-outline btn-small gap-details-toggle">${detailsOpen ? t("btn_hide_details") : t("btn_details")}</button>
     <div class="gap-details"${detailsOpen ? "" : " hidden"}>
       <div class="details-section"><h4>${t("details_sources_title")}</h4>${sourcesHtml}</div>
@@ -1101,6 +1133,9 @@ async function exploreCommercialOpportunity(client) {
   if (panel.dataset.loaded === "true") return;
 
   renderAgentProgress(panel, 0);
+  // The veille pipeline runs alongside the agent run; step 3 (synthesis)
+  // stays ongoing until it answers.
+  const veillePromise = runVeille(client.id);
   let run;
   try {
     const { runId } = await api(`/api/clients/${client.id}/agent-runs`, { method: "POST" });
@@ -1116,6 +1151,10 @@ async function exploreCommercialOpportunity(client) {
         renderAgentProgress(panel, shown);
       }
       if (run.status !== "running" && shown >= run.step) break;
+      if (shown === AGENT_PROGRESS_STEPS.length - 1) {
+        // hold the synthesis step until the veille pipeline has answered
+        await veillePromise;
+      }
     }
   } catch (e) {
     panel.innerHTML = `<p class="ai-error">${t("scan_call_error_prefix")} ${escapeHtml(e.message)}</p>`;
@@ -1125,9 +1164,10 @@ async function exploreCommercialOpportunity(client) {
     panel.innerHTML = `<p class="ai-error">${t("scan_call_error_prefix")} ${escapeHtml(run.error || "")}</p>`;
     return;
   }
+  const result = run.result;
+  result.veille = await veillePromise;
   await sleep(400);
 
-  const result = run.result;
   const changed = result.changedEvents || [];
   if (changed.length) {
     client.events = client.events || [];

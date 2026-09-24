@@ -18,6 +18,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from ai_provider import get_provider
+from agents.kyc.store import get_internal_record, list_internal_records
+from agents.veille import generate_veille
 from seed_data import CATEGORIES, CLIENTS, EVENTS, SOURCES
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -200,6 +202,30 @@ class ShareholderConvertIn(BaseModel):
     shareholderName: str
 
 
+class VeilleRequest(BaseModel):
+    client_id: str
+
+
+class VeilleResponse(BaseModel):
+    synthese: str
+
+
+def _internal_client_to_dict(record: dict) -> dict:
+    """A client from the internal KYC referential (data/test_*.json) that has
+    no row in the demo clients table."""
+    segment = " · ".join(filter(None, [record.get("client_type"), record.get("status")]))
+    return {
+        "id": record["client_id"],
+        "name": record["client_name"],
+        "segment": segment or "Client",
+        "rmOwner": record.get("relationship_manager") or "—",
+        "isProspect": record.get("status") != "Client",
+        "linkedEntities": [],
+        "potentialProspectCount": 0,
+        "source": "kyc",
+    }
+
+
 def _annotate_other_shareholders(client: dict, conn) -> None:
     """Mark each linked entity's other shareholders as isClient by
     cross-checking their name against the current clients table, so a
@@ -337,7 +363,12 @@ def list_clients():
         for client in clients:
             _annotate_other_shareholders(client, conn)
             client["potentialProspectCount"] = _potential_prospect_count(client)
-        return clients
+    known_ids = {client["id"] for client in clients}
+    for record in list_internal_records():
+        if record["client_id"] not in known_ids:
+            known_ids.add(record["client_id"])
+            clients.append(_internal_client_to_dict(record))
+    return clients
 
 
 @app.get("/api/clients/{client_id}")
@@ -345,7 +376,10 @@ def get_client(client_id: str):
     with get_conn() as conn:
         row = conn.execute("SELECT * FROM clients WHERE id = ?", (client_id,)).fetchone()
         if row is None:
-            raise HTTPException(status_code=404, detail="Client not found")
+            internal = get_internal_record(client_id)
+            if internal is None:
+                raise HTTPException(status_code=404, detail="Client not found")
+            return {**_internal_client_to_dict(internal), "events": []}
         client = client_row_to_dict(row)
         sources_by_id, clients_by_id = _sources_and_clients(conn)
         events = conn.execute(
@@ -390,7 +424,8 @@ def _run_agents(run_id: int, client_id: str):
     agent_runs row after each step so the UI can poll it."""
     try:
         with get_conn() as conn:
-            client = client_row_to_dict(conn.execute("SELECT * FROM clients WHERE id = ?", (client_id,)).fetchone())
+            row = conn.execute("SELECT * FROM clients WHERE id = ?", (client_id,)).fetchone()
+            client = client_row_to_dict(row) if row else _internal_client_to_dict(get_internal_record(client_id))
             provider = _get_active_provider(conn)
             sources_by_id, clients_by_id = _sources_and_clients(conn)
 
@@ -508,7 +543,8 @@ def start_agent_run(client_id: str):
     """'Explorer l'opportunité commerciale': starts the three-step agent
     sequence in the background and returns a run id the UI polls."""
     with get_conn() as conn:
-        if conn.execute("SELECT 1 FROM clients WHERE id = ?", (client_id,)).fetchone() is None:
+        known = conn.execute("SELECT 1 FROM clients WHERE id = ?", (client_id,)).fetchone()
+        if known is None and get_internal_record(client_id) is None:
             raise HTTPException(status_code=404, detail="Client not found")
         cur = conn.execute(
             "INSERT INTO agent_runs (client_id, step, status, created_at) VALUES (?, 0, 'running', ?)",
@@ -518,6 +554,19 @@ def start_agent_run(client_id: str):
         run_id = cur.lastrowid
     threading.Thread(target=_run_agents, args=(run_id, client_id), daemon=True).start()
     return {"runId": run_id}
+
+
+@app.post("/api/veille", response_model=VeilleResponse)
+def run_veille(payload: VeilleRequest):
+    """Lance le pipeline complet de veille commerciale + conformité KYC."""
+    if not payload.client_id.strip():
+        raise HTTPException(status_code=400, detail="client_id est obligatoire.")
+    if get_internal_record(payload.client_id) is None:
+        raise HTTPException(status_code=404, detail="Client not found")
+    try:
+        return {"synthese": generate_veille(payload.client_id)}
+    except Exception as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
 
 
 @app.get("/api/agent-runs/{run_id}")

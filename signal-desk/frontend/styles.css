@@ -589,6 +589,11 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
 .gap-row .ge { color: var(--red); font-size: 12px; margin-top: 4px; }
 .synthesis-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .synthesis-headline { margin: 6px 0 8px; font-size: 13px; color: var(--text); }
+.veille-result { font-size: 13px; line-height: 1.55; margin: 10px 0 12px; }
+.veille-result h1, .veille-result h2, .veille-result h3 { font-size: 14px; margin: 14px 0 6px; }
+.veille-result ul, .veille-result ol { padding-left: 20px; margin: 4px 0; }
+.veille-result p { margin: 6px 0; }
+.veille-error { font-size: 12px; color: var(--muted, #6b7280); margin: 0 0 10px; }
 .gap-details { margin-top: 12px; padding-top: 4px; border-top: 1px dashed var(--border); }
 .synthesis-card { border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; }
 .synthesis-card > .synthesis-header h3 { margin: 0; }

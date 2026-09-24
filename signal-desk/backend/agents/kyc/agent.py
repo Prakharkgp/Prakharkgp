@@ -1,10 +1,14 @@
 """Appel à Azure OpenAI (Agent Lifecycle Management) pour l'analyse KYC."""
 import json
 import os
+from pathlib import Path
+
 from dotenv import load_dotenv
 from openai import OpenAI
 
-load_dotenv()
+_BACKEND_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(_BACKEND_DIR / ".env")
+load_dotenv(_BACKEND_DIR.parent / ".env")
 
 
 class AgentConfigError(RuntimeError):
@@ -35,7 +39,6 @@ def run_agent(messages: list[dict[str, str]]) -> str:
         response = client.chat.completions.create(
             model=deployment,
             messages=messages,
-            temperature=0
         )
         return response.choices[0].message.content
     except Exception as error:

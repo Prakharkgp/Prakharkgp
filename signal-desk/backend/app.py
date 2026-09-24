@@ -16,7 +16,11 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from ai_provider import get_provider
-from seed_data import CATEGORIES, CLIENTS, EVENTS, SOURCES
+from agents.kyc.agent import AgentCallError, AgentConfigError
+from agents.kyc.analyzer import analyze_client
+from agents.kyc.store import get_internal_record, list_internal_records, search_internal_records
+from agents.veille import generate_veille
+from seed_data import CATEGORIES, EVENTS, SOURCES
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "signal_desk.db"
@@ -101,11 +105,6 @@ def seed(conn):
             "INSERT INTO sources (id, name, kind, coverage, description, status) VALUES (?, ?, ?, ?, ?, ?)",
             (s["id"], s["name"], s["kind"], s["coverage"], s["description"], s["status"]),
         )
-    for c in CLIENTS:
-        conn.execute(
-            "INSERT INTO clients (id, name, segment, rm_owner, is_prospect, linked_entities) VALUES (?, ?, ?, ?, ?, ?)",
-            (c["id"], c["name"], c["segment"], c["rm_owner"], int(c.get("is_prospect", False)), json.dumps(c["linked_entities"])),
-        )
     now = datetime.now(timezone.utc)
     for i, e in enumerate(EVENTS):
         detected_at = (now - timedelta(hours=i * 7)).isoformat()
@@ -185,6 +184,14 @@ class ShareholderConvertIn(BaseModel):
     shareholderName: str
 
 
+class KycRequest(BaseModel):
+    externalData: object = None
+
+
+class VeilleRequest(BaseModel):
+    client_id: str
+
+
 def _annotate_other_shareholders(client: dict, conn) -> None:
     """Mark each linked entity's other shareholders as isClient by
     cross-checking their name against the current clients table, so a
@@ -204,6 +211,23 @@ def _potential_prospect_count(client: dict) -> int:
         for holder in entity.get("other_shareholders", [])
         if not holder.get("isClient")
     )
+
+
+def _internal_client_to_dict(record: dict) -> dict:
+    segment = " · ".join(filter(None, [record.get("client_type"), record.get("status")]))
+    return {
+        "id": record["client_id"],
+        "name": record["client_name"],
+        "segment": segment or "Client",
+        "rmOwner": record.get("relationship_manager") or "—",
+        "isProspect": record.get("status") != "Client",
+        "linkedEntities": [],
+        "potentialProspectCount": 0,
+        "source": "kyc",
+        "country": record.get("country"),
+        "activity": record.get("business_activity") or record.get("legal_form"),
+        "kycRecord": record,
+    }
 
 
 app = FastAPI(title="Signal Desk API")
@@ -314,13 +338,20 @@ def list_sources():
 
 
 @app.get("/api/clients")
-def list_clients():
+def list_clients(query: Optional[str] = None):
     with get_conn() as conn:
         clients = [client_row_to_dict(r) for r in conn.execute("SELECT * FROM clients ORDER BY name")]
         for client in clients:
             _annotate_other_shareholders(client, conn)
             client["potentialProspectCount"] = _potential_prospect_count(client)
-        return clients
+    internal = search_internal_records(query) if query and query.strip() else list_internal_records()
+    known_ids = {client["id"] for client in clients}
+    clients.extend(
+        _internal_client_to_dict(record)
+        for record in internal
+        if record["client_id"] not in known_ids
+    )
+    return clients
 
 
 @app.get("/api/clients/{client_id}")
@@ -328,7 +359,10 @@ def get_client(client_id: str):
     with get_conn() as conn:
         row = conn.execute("SELECT * FROM clients WHERE id = ?", (client_id,)).fetchone()
         if row is None:
-            raise HTTPException(status_code=404, detail="Client not found")
+            internal = get_internal_record(client_id)
+            if internal is None:
+                raise HTTPException(status_code=404, detail="Client not found")
+            return _internal_client_to_dict(internal)
         client = client_row_to_dict(row)
         sources_by_id, clients_by_id = _sources_and_clients(conn)
         events = conn.execute(
@@ -338,6 +372,29 @@ def get_client(client_id: str):
         _annotate_other_shareholders(client, conn)
         client["potentialProspectCount"] = _potential_prospect_count(client)
         return client
+
+
+@app.post("/api/clients/{client_id}/kyc")
+def analyze_client_kyc(client_id: str, payload: KycRequest):
+    record = get_internal_record(client_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Client not found")
+    try:
+        return analyze_client(record["client_name"], payload.externalData or {})
+    except (AgentCallError, AgentConfigError) as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@app.post("/api/veille")
+def run_veille(payload: VeilleRequest):
+    if not payload.client_id.strip():
+        raise HTTPException(status_code=400, detail="client_id est obligatoire.")
+    if get_internal_record(payload.client_id) is None:
+        raise HTTPException(status_code=404, detail="Client not found")
+    try:
+        return {"synthese": generate_veille(payload.client_id)}
+    except Exception as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
 
 
 @app.post("/api/clients/{client_id}/scan-opportunities")

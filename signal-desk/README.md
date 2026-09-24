@@ -43,9 +43,9 @@ pip install -r requirements.txt
 python -m uvicorn app:app --reload
 ```
 
-Open http://127.0.0.1:8000 — sample sources, clients, and events are
-seeded automatically on first run, into `backend/signal_desk.db` (SQLite,
-git-ignored).
+Open http://127.0.0.1:8001 — demo sources and events are seeded automatically
+on first run into `backend/signal_desk.db` (SQLite, git-ignored). The Clients
+screen loads live client/prospect records and KYC services from the same API.
 
 ## Connecting Azure AI Foundry later
 
@@ -77,19 +77,20 @@ the Foundry endpoint via `base_url`.
 | GET | `/api/sources` | List public/private sources |
 | GET | `/api/clients` | List clients |
 | GET | `/api/clients/{id}` | Client detail: ownership chain + linked signals |
+| POST | `/api/clients/{id}/kyc` | Run KYC analysis against supplied external data |
+| POST | `/api/veille` | Run commercial monitoring for an internal client |
 | GET | `/api/ai/status` | Which AI engine is currently active |
 
 ## Deploy (Render)
 
-`render.yaml` at the repo root includes a `signal-desk` web service
-pointed at `signal-desk/backend`, alongside the existing `venture-bridge`
-services. Push to GitHub, then in the
+`render.yaml` at the repo root includes the `signal-desk` web service
+pointed at `signal-desk/backend`. Push to GitHub, then in the
 [Render dashboard](https://dashboard.render.com) use **New +** → **Blueprint**
 on this repo; Render will propose all services defined in `render.yaml`.
 To enable Azure AI Foundry on the deployed instance, add
 `AZURE_AI_FOUNDRY_ENDPOINT` / `AZURE_AI_FOUNDRY_API_KEY` /
 `AZURE_AI_FOUNDRY_DEPLOYMENT` as environment variables on that service in
-Render's dashboard — the same free-tier caveats as `venture-bridge` apply
+Render's dashboard — the same free-tier caveats apply
 (SQLite resets on redeploy, service spins down when idle).
 
 ## A note on the data

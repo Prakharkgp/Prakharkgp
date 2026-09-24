@@ -315,6 +315,7 @@ const state = {
   pageSize: 10,
   expandedEventId: null,
   modalClient: null,
+  veilleByClientId: {},
   lang: localStorage.getItem("sd_lang") || "fr",
 };
 
@@ -373,10 +374,36 @@ async function api(path, options) {
   return res.json();
 }
 
+function normalizeKycClient(client) {
+  return {
+    id: client.client_id,
+    name: client.client_name,
+    segment: [client.client_type, client.status].filter(Boolean).join(" · ") || "Client",
+    rmOwner: client.relationship_manager || "—",
+    isProspect: client.status !== "Client",
+    linkedEntities: [],
+    potentialProspectCount: 0,
+    source: "kyc",
+    country: client.country,
+    activity: client.business_activity || client.legal_form,
+  };
+}
+
+function normalizeClient(client) {
+  return client.client_id ? normalizeKycClient(client) : client;
+}
+
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str ?? "";
   return div.innerHTML;
+}
+
+function renderMarkdown(markdown) {
+  if (window.marked && window.DOMPurify) {
+    return window.DOMPurify.sanitize(window.marked.parse(markdown || ""));
+  }
+  return `<pre>${escapeHtml(markdown || "")}</pre>`;
 }
 
 function setupClientModal() {
@@ -786,7 +813,7 @@ function renderClients() {
 }
 
 async function openClientModal(clientId) {
-  const client = await api(`/api/clients/${clientId}`);
+  const client = await api(`/api/clients/${encodeURIComponent(clientId)}`);
   state.modalClient = client;
   renderClientModalContent(client);
   document.getElementById("client-modal-overlay").hidden = false;
@@ -860,6 +887,7 @@ function renderShareholdersBlock(entity) {
 }
 
 function renderClientModalContent(client) {
+  const veille = state.veilleByClientId[client.id] || "";
   const chain = client.linkedEntities.length
     ? `<ul class="ownership-chain">${client.linkedEntities
         .map(
@@ -906,6 +934,7 @@ function renderClientModalContent(client) {
       <h2>${escapeHtml(client.name)}</h2>
       <div class="segment">${escapeHtml(client.segment)}</div>
       <div class="rm">RM: ${escapeHtml(client.rmOwner)}</div>
+      ${client.source === "kyc" ? `<div class="rm">Country: ${escapeHtml(client.country || "—")} · Activity: ${escapeHtml(client.activity || "—")}</div>` : ""}
     </div>
 
     <div class="client-modal-section">
@@ -918,7 +947,9 @@ function renderClientModalContent(client) {
       <button class="btn btn-primary" id="explore-opportunity-btn">${t("explore_opportunity_btn")}</button>
     </div>
 
-    <div id="explore-opportunity-panel" hidden></div>
+    <div id="explore-opportunity-panel"${veille ? "" : " hidden"}>
+      ${veille ? `<div class="client-modal-section veille-result"><h3>${t("client_opportunities_title")}</h3>${renderMarkdown(veille)}</div>` : ""}
+    </div>
 
     <div class="client-modal-section">
       <h3>${t("linked_signals_title")}</h3>
@@ -927,7 +958,9 @@ function renderClientModalContent(client) {
   `;
 
   document.getElementById("explore-opportunity-btn").addEventListener("click", () => exploreCommercialOpportunity(client));
-  wireShareholderConvertButtons(client);
+  if (client.source !== "kyc") {
+    wireShareholderConvertButtons(client);
+  }
 }
 
 function wireShareholderConvertButtons(client) {
@@ -985,7 +1018,7 @@ async function convertShareholderToClient(client, btn) {
 
 async function refreshClients() {
   const clients = await api("/api/clients");
-  state.clients = clients;
+  state.clients = clients.map(normalizeClient);
   renderClientKPIs();
   renderClients();
 }
@@ -1050,75 +1083,21 @@ async function exploreCommercialOpportunity(client) {
   }
 
   panel.hidden = false;
-  renderAgentProgress(panel, 0);
+  panel.innerHTML = `<div class="client-modal-section"><h3>${t("client_opportunities_title")}</h3><p>Generating veille…</p></div>`;
 
-  const existingOpportunities = (client.events || []).filter((e) => e.category === "Commercial Opportunity");
-
-  const fetchPromise = (async () => {
-    try {
-      return { scanResult: await api(`/api/clients/${client.id}/scan-opportunities`, { method: "POST" }), scanError: null };
-    } catch (e) {
-      return { scanResult: null, scanError: e.message };
-    }
-  })();
-
-  const progressDelays = [500, 1100, 1700];
-  const progressTimers = progressDelays.map(
-    (delay, i) => new Promise((resolve) => setTimeout(() => { renderAgentProgress(panel, i + 1); resolve(); }, delay))
-  );
-
-  const [{ scanResult, scanError }] = await Promise.all([fetchPromise, ...progressTimers]);
-
-  if (scanResult && scanResult.found) {
-    scanResult.gaps.forEach((g) => {
-      const idx = state.events.findIndex((ev) => ev.id === g.id);
-      if (idx === -1) state.events.push(g);
-      else state.events[idx] = g;
+  try {
+    const response = await api("/api/veille", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_id: client.id }),
     });
-    renderKPIs();
-    renderEventTable();
-  }
-
-  const hasNewGaps = !!(scanResult && scanResult.found && scanResult.gaps.length);
-  const hasExisting = existingOpportunities.length > 0;
-
-  if (!hasExisting && !hasNewGaps && !scanError) {
-    panel.innerHTML = `<div class="client-modal-section"><h3>${t("client_opportunities_title")}</h3>${renderNoOpportunityBanner()}</div>`;
+    state.veilleByClientId[client.id] = response.synthese;
+    panel.innerHTML = `<div class="client-modal-section veille-result"><h3>${t("client_opportunities_title")}</h3>${renderMarkdown(response.synthese)}</div>`;
     panel.dataset.loaded = "true";
-    return;
+  } catch (error) {
+    panel.innerHTML = `<div class="client-modal-section"><p class="ai-error">${escapeHtml(error.message)}</p></div>`;
+    panel.dataset.loaded = "true";
   }
-
-  const existingHtml = hasExisting
-    ? existingOpportunities
-        .map(
-          (e) => `<div class="opportunity-row">
-            <div class="ot">${escapeHtml(e.eventType)} — ${escapeHtml(e.entityName)}</div>
-            <div class="om">${escapeHtml(e.description)}</div>
-          </div>`
-        )
-        .join("")
-    : `<p style="font-size:13px;color:var(--muted);">${t("client_opportunities_empty")}</p>`;
-
-  const gapsHtml = hasNewGaps ? scanResult.gaps.map(renderAgentFindingCard).join("") : "";
-  const errorHtml = scanError ? `<p class="ai-error">${t("scan_call_error_prefix")} ${escapeHtml(scanError)}</p>` : "";
-
-  panel.innerHTML = `
-    <div class="client-modal-section">
-      <h3>${t("client_opportunities_title")}</h3>
-      ${existingHtml}
-    </div>
-    ${
-      hasNewGaps
-        ? `<div class="client-modal-section">
-      <h3>${t("agent_findings_title")}</h3>
-      <p style="font-size:13px;color:var(--muted);margin:0 0 10px;">${t("gap_found_intro")}</p>
-      ${gapsHtml}
-    </div>`
-        : ""
-    }
-    ${errorHtml}
-  `;
-  panel.dataset.loaded = "true";
 }
 
 async function renderAIStatus() {
@@ -1219,7 +1198,7 @@ async function init() {
   state.categories = meta.categories;
   state.events = events;
   state.sources = sources;
-  state.clients = clients;
+  state.clients = clients.map(normalizeClient);
 
   renderAll();
   renderAIStatus();

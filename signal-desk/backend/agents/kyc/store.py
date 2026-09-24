@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-DATA_DIRECTORY = Path(__file__).resolve().parents[2] / "data"
+DATA_DIRECTORY = Path(__file__).resolve().parents[3] / "data"
 
 # Champs commerciaux autorisés à être transmis au modèle.
 _COMMERCIAL_KEYS = (
@@ -108,18 +108,34 @@ def _extract_record(document: dict[str, Any], source: str) -> dict[str, Any] | N
     return None
 
 
+def list_internal_records() -> list[dict[str, Any]]:
+    """Return all sanitized client records available to the application."""
+    records = []
+    for path in sorted(DATA_DIRECTORY.glob("test_*.json")):
+        record = _extract_record(_load_json(path), path.name)
+        if record:
+            records.append(record)
+    return records
+
+
+def get_internal_record(client_id: str) -> dict[str, Any] | None:
+    """Return one sanitized client record by its stable identifier."""
+    return next(
+        (record for record in list_internal_records() if record["client_id"] == client_id),
+        None,
+    )
+
+
 def search_internal_records(client_name: str) -> list[dict[str, Any]]:
     """Retourne les enregistrements internes dont le nom correspond (complet, nom ou prénom)."""
     if not client_name or not client_name.strip():
         return []
 
     matches: list[dict[str, Any]] = []
-    for path in sorted(DATA_DIRECTORY.glob("test_*.json")):
-        record = _extract_record(_load_json(path), path.name)
-        if not record:
-            continue
+    for record in list_internal_records():
         candidate_names = [
             record["client_name"],
+            record["client_id"],
             record.get("last_name"),
             record.get("first_name"),
             " ".join(filter(None, [record.get("first_name"), record.get("last_name")])),

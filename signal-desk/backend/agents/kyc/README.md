@@ -55,7 +55,7 @@ Les tests sont **hors ligne** : l'agent Azure OpenAI et la couche réseau de
 `tools_calling` sont simulés. Lance-les depuis le dossier `backend/` :
 
 ```powershell
-cd venture-bridge/backend
+cd signal-desk/backend
 py -3.12 -m pip install pytest
 py -3.12 -m pytest tools_kyc/tests
 ```
@@ -80,6 +80,6 @@ Suite :
 Pour ne lancer que ce test :
 
 ```powershell
-cd venture-bridge/backend
+cd signal-desk/backend
 py -3.12 -m pytest tools_kyc/tests/test_integration_tools_calling_kyc.py -v
 ```

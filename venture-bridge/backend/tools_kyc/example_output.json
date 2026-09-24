@@ -1,0 +1,89 @@
+{
+  "client_name": "DOMAINE DE CHEZELLES",
+  "internal_records_found": 1,
+  "internal_records": [
+    {
+      "source_file": "test_2_pm.json",
+      "record_kind": "person",
+      "client_id": "301238697",
+      "client_name": "DOMAINE DE CHEZELLES",
+      "last_name": null,
+      "first_name": null,
+      "client_type": "Legal person",
+      "status": "Client",
+      "legal_form": "EI - Entreprise individuelle / Entreprise en nom personnel (1)",
+      "country": "France",
+      "business_activity": "Silviculture and other forestry activities",
+      "commercial": {
+        "productsAndServicesDetails": "Il ne s'intéresse à rien",
+        "potentialOtherBusinessLines": "Petit potentiel mais on le prend quand même",
+        "relationOtherBusinessLines": "TIM",
+        "expectedAssets1YearValue": "500 000 EUR - 5 000 000 EUR (2)",
+        "otherBanksRelations": "CAM",
+        "prospectConversionDate": "2024-03-06"
+      },
+      "bank_services": ["Corporate structures (02)"],
+      "bank_products": ["Private equity funds (07)"]
+    }
+  ],
+  "analysis": {
+    "summary": "Homonymie détectée : les registres externes remontent DOMAINE APICOLE DE CHEZELLES (SASU, SIREN 775193071), distincte de l'entité interne DOMAINE DE CHEZELLES (EI). Identité à fiabiliser avant toute conclusion KYC. Profil déjà classé AML High / PEP : revue KYC renforcée recommandée.",
+    "identity_check": {
+      "status": "incoherent",
+      "internal_identity": {
+        "name": "DOMAINE DE CHEZELLES",
+        "legal_form": "EI - Entreprise individuelle",
+        "siren": null
+      },
+      "external_identity": {
+        "name": "DOMAINE APICOLE DE CHEZELLES",
+        "legal_form": "SASU",
+        "siren": "775193071"
+      },
+      "discrepancies": ["nom", "forme_juridique", "registre", "siren"],
+      "homonymy_risk": "high",
+      "evidence": "Pappers/BODACC renvoient DOMAINE APICOLE DE CHEZELLES, SIREN 775193071, forme SASU."
+    },
+    "kyc_deltas": [
+      {
+        "field": "siren",
+        "internal_value": null,
+        "external_value": "775193071",
+        "status": "unverified",
+        "action": "a_completer",
+        "severity": "high",
+        "evidence": "Aucun SIREN interne ; SIREN externe rattaché à une entité potentiellement distincte."
+      },
+      {
+        "field": "forme_juridique",
+        "internal_value": "EI - Entreprise individuelle",
+        "external_value": "SASU",
+        "status": "conflicting",
+        "action": "a_corriger",
+        "severity": "high",
+        "evidence": "Écart majeur EI (interne) vs SASU (externe)."
+      },
+      {
+        "field": "beneficiaire_effectif",
+        "internal_value": "Marie-Cécile Hernaez",
+        "external_value": null,
+        "status": "unverified",
+        "action": "a_verifier",
+        "severity": "medium",
+        "evidence": "Aucune confirmation externe du bénéficiaire effectif interne."
+      }
+    ],
+    "aml_assessment": {
+      "current_risk": "high",
+      "pep_status": "PEP",
+      "reassessment_required": true,
+      "reason": "Profil AML High et PEP combiné à une homonymie et à des modifications d'administration observées sur l'entité externe : revue KYC renforcée nécessaire."
+    },
+    "kyc_alert": {
+      "should_review": true,
+      "reason": "Lever l'ambiguïté d'identité entre DOMAINE DE CHEZELLES et DOMAINE APICOLE DE CHEZELLES avant toute action, et fiabiliser SIREN/forme juridique.",
+      "priority": "high"
+    }
+  }
+}
+

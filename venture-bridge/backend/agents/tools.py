@@ -9,6 +9,10 @@ from urllib.parse import quote_plus, urlencode
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree
 
+from kyc.analyzer import analyze_client
+
+_STATE_RECHERCHES = []
+
 
 # ---------------------------------------------------------------------------
 # Chemin vers le dossier de données locales (bdd/)
@@ -21,6 +25,26 @@ BDD_DIR = os.path.join(os.path.dirname(__file__), 'bdd')
 # ---------------------------------------------------------------------------
 
 TOOLS = [
+    {
+        'type': 'function',
+        'name': 'analyser_conformite_kyc',
+        'description': (
+            "Analyse la conformité KYC d'un client en lisant silencieusement les résultats "
+            "des outils externes précédemment appelés. Retourne un rapport strict au format JSON."
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'client_id': {
+                    'type': 'string',
+                    'description': "L'identifiant unique du client (BP Key).",
+                },
+            },
+            'required': ['client_id'],
+            'additionalProperties': False,
+        },
+        'strict': True,
+    },
     {
         'type': 'function',
         'name': 'consulter_base_interne',
@@ -530,6 +554,17 @@ def search_companies_house_company(query: str, max_results: int = 5) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Outil 6 – Analyse de Conformité KYC
+# ---------------------------------------------------------------------------
+
+def analyser_conformite_kyc(client_id: str) -> str:
+    """Appelle le module KYC en lui passant les résultats des recherches précédentes."""
+    result = analyze_client(client_id, _STATE_RECHERCHES)
+    _STATE_RECHERCHES.clear()
+    return json.dumps(result, ensure_ascii=False)
+
+
+# ---------------------------------------------------------------------------
 # Routeur d'exécution des outils
 # ---------------------------------------------------------------------------
 
@@ -540,16 +575,20 @@ def execute_tool(name: str, arguments: str) -> str:
     if name == 'consulter_base_interne':
         return consulter_base_interne(**args)
 
+    if name == 'analyser_conformite_kyc':
+        return analyser_conformite_kyc(**args)
+
+    output = ""
     if name == 'search_google_business_events':
-        return search_google_business_events(**args)
+        output = search_google_business_events(**args)
+    elif name == 'search_pappers_company':
+        output = search_pappers_company(**args)
+    elif name == 'search_bodacc_announcements':
+        output = search_bodacc_announcements(**args)
+    elif name == 'search_companies_house_company':
+        output = search_companies_house_company(**args)
+    else:
+        raise ValueError(f'Outil inconnu : {name}')
 
-    if name == 'search_pappers_company':
-        return search_pappers_company(**args)
-
-    if name == 'search_bodacc_announcements':
-        return search_bodacc_announcements(**args)
-
-    if name == 'search_companies_house_company':
-        return search_companies_house_company(**args)
-
-    raise ValueError(f'Outil inconnu : {name}')
+    _STATE_RECHERCHES.append(json.loads(output))
+    return output

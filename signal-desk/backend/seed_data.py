@@ -124,7 +124,7 @@ CLIENTS = [
         "id": "lefevre",
         "name": "Antoine Lefevre",
         "segment": "UHNW Individual — Private Banking",
-        "rm_owner": "Camille Dubois",
+        "rm_owner": "Marie-France Rigoroso",
         "is_prospect": False,
         "linked_entities": [
             {
@@ -162,7 +162,7 @@ CLIENTS = [
         "id": "aurelie-costa",
         "name": "Aurélie Costa",
         "segment": "UHNW Individual — Prospect",
-        "rm_owner": "Camille Dubois",
+        "rm_owner": "Marie-France Rigoroso",
         "is_prospect": True,
         "linked_entities": [
             {"name": "Costa Ventures Holding", "relation": "Sole shareholder", "jurisdiction": "France", "client_stake_percent": 100},
@@ -172,7 +172,7 @@ CLIENTS = [
         "id": "delacroix",
         "name": "Delacroix Capital SAS",
         "segment": "Corporate — Family Office",
-        "rm_owner": "James Okafor",
+        "rm_owner": "Marie-France Rigoroso",
         "is_prospect": False,
         "linked_entities": [],
     },
@@ -180,7 +180,7 @@ CLIENTS = [
         "id": "meridian-holdings-prospect",
         "name": "Julien Bertrand",
         "segment": "Corporate Entrepreneur — Prospect",
-        "rm_owner": "Sarah Klein",
+        "rm_owner": "Marie-France Rigoroso",
         "is_prospect": True,
         "linked_entities": [
             {

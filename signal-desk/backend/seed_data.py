@@ -134,7 +134,11 @@ CLIENTS = [
                 "client_stake_percent": 40,
                 "other_shareholders": [
                     {"name": "Marine Lefevre", "stake": "30%", "type": "individual"},
-                    {"name": "Atlas Croissance Partners", "stake": "30%", "type": "entity"},
+                ],
+                # Found in public sources by the agents but not yet in the
+                # referential — surfaced as a proposed update.
+                "web_shareholders": [
+                    {"name": "Atlas Croissance Partners", "stake": "30%", "type": "entity", "source_id": "inpi"},
                 ],
             },
             {"name": "NovaTech Robotics SAS", "relation": "Indirect, via holding", "jurisdiction": "France"},
@@ -190,7 +194,9 @@ CLIENTS = [
                 "client_stake_percent": 60,
                 "other_shareholders": [
                     {"name": "Nathalie Bertrand", "stake": "25%", "type": "individual"},
-                    {"name": "Atlas Growth Fund", "stake": "15%", "type": "entity"},
+                ],
+                "web_shareholders": [
+                    {"name": "Atlas Growth Fund", "stake": "15%", "type": "entity", "source_id": "fin-media"},
                 ],
             },
         ],

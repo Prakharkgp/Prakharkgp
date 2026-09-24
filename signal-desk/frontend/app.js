@@ -109,9 +109,6 @@ const I18N = {
     progress_step_synthesis: "3/3 Commercial opportunities synthesis preparation",
     no_opportunity_title: "No opportunity for this legal entity",
     no_opportunity_body: "The AI agent cross-checked the shareholder structure against tracked signals and found nothing new.",
-    agent_findings_title: "Agent findings",
-    gap_found_intro: "The agent found linked entities with no signal on file yet:",
-    client_opportunities_title: "Commercial opportunity signals",
     client_opportunities_empty: "No commercial opportunity signals on file for this client.",
     linked_signals_empty_short: "No linked signals.",
     decline_reason_label: "Reason for not pursuing this opportunity",
@@ -125,18 +122,23 @@ const I18N = {
     scan_call_error_prefix: "Check failed:",
     btn_dashboard: "Signals",
     gap_added_tag: "Added to the Signal Directory",
-    step_search_online: "1. Online search",
-    step_search_online_placeholder: "No additional public source reachable from this demo environment.",
-    step_kyc_check: "2. Internal KYC data check",
-    step_kyc_check_result: (relation, jurisdiction) => `No signal on file for this entity yet (${relation}, ${jurisdiction}) — internal referential updated.`,
-    step_synthesis: "3. Synthetic summary",
-    step_commercial_proposal: "4. Commercial proposal",
     other_shareholders_label: "Other shareholders",
-    other_shareholders_section_title: "Potential shareholders to address",
     already_client_tag: "Already a client",
     btn_details: "Details",
     btn_hide_details: "Hide details",
-    rating_label: "Rating",
+    rating_label: "Level",
+    synthesis_title: "Commercial opportunity synthesis",
+    synthesis_text: (n, type, entity) => `${n} pending commercial opportunit${n > 1 ? "ies" : "y"} — main one: ${type} (${entity}).`,
+    level_high: "High",
+    level_medium: "Medium",
+    level_low: "Low",
+    details_sources_title: "Sources identified by the agents",
+    details_opportunities_title: "Opportunities detected",
+    details_updates_title: "Proposed referential updates",
+    referential_update_line: (name, stake, entity, source) => `${name} (${stake}) found as a shareholder of ${entity} via ${source} — missing from our referential.`,
+    btn_apply_update: "Apply update",
+    update_applied: (name) => `Referential updated — ${name} added to the shareholder structure.`,
+    no_sources: "No source identified.",
     convert_to_client_btn: "Make this shareholder a client",
     converting_label: "Converting…",
     convert_success: (name) => `${name} was added as a new prospect — a commercial opportunity signal was created and analyzed. See the Clients tab.`,
@@ -260,9 +262,6 @@ const I18N = {
     progress_step_synthesis: "3/3 Préparation de la synthèse des opportunités commerciales",
     no_opportunity_title: "Aucune opportunité pour cette entité juridique",
     no_opportunity_body: "L'agent IA a comparé la structure actionnariale aux signaux suivis et n'a rien trouvé de nouveau.",
-    agent_findings_title: "Résultats de l'agent",
-    gap_found_intro: "L'agent a trouvé des entités liées sans signal enregistré :",
-    client_opportunities_title: "Signaux d'opportunité commerciale",
     client_opportunities_empty: "Aucun signal d'opportunité commerciale enregistré pour ce client.",
     linked_signals_empty_short: "Aucun signal lié.",
     decline_reason_label: "Motif de non-poursuite de cette opportunité",
@@ -276,18 +275,23 @@ const I18N = {
     scan_call_error_prefix: "Échec de la vérification :",
     btn_dashboard: "Veille",
     gap_added_tag: "Ajouté au répertoire des signaux",
-    step_search_online: "1. Recherche en ligne",
-    step_search_online_placeholder: "Aucune source publique supplémentaire accessible depuis cet environnement de démonstration.",
-    step_kyc_check: "2. Vérification KYC interne",
-    step_kyc_check_result: (relation, jurisdiction) => `Aucun signal enregistré pour cette entité (${relation}, ${jurisdiction}) — référentiel interne mis à jour.`,
-    step_synthesis: "3. Synthèse",
-    step_commercial_proposal: "4. Proposition commerciale",
     other_shareholders_label: "Autres actionnaires",
-    other_shareholders_section_title: "Actionnaires potentiels à adresser",
     already_client_tag: "Déjà client",
     btn_details: "Détails",
     btn_hide_details: "Masquer les détails",
     rating_label: "Niveau",
+    synthesis_title: "Synthèse de l'opportunité commerciale",
+    synthesis_text: (n, type, entity) => `${n} opportunité${n > 1 ? "s" : ""} commerciale${n > 1 ? "s" : ""} en cours — principale : ${type} (${entity}).`,
+    level_high: "Élevé",
+    level_medium: "Moyen",
+    level_low: "Faible",
+    details_sources_title: "Sources identifiées par les agents",
+    details_opportunities_title: "Opportunités détectées",
+    details_updates_title: "Mises à jour proposées du référentiel",
+    referential_update_line: (name, stake, entity, source) => `${name} (${stake}) identifié comme actionnaire de ${entity} via ${source} — absent de notre référentiel.`,
+    btn_apply_update: "Appliquer la mise à jour",
+    update_applied: (name) => `Référentiel mis à jour — ${name} ajouté à la structure actionnariale.`,
+    no_sources: "Aucune source identifiée.",
     convert_to_client_btn: "Faire de cet actionnaire un client",
     converting_label: "Conversion en cours…",
     convert_success: (name) => `${name} a été ajouté comme nouveau prospect — un signal d'opportunité commerciale a été créé et analysé. Voir l'onglet Clients.`,
@@ -825,24 +829,6 @@ function renderShareholdersBlock(entity) {
   return `<ul class="other-shareholders">${rows}</ul>`;
 }
 
-function renderShareholdersSection(client) {
-  const entitiesWithShareholders = (client.linkedEntities || []).filter((e) => e.other_shareholders && e.other_shareholders.length);
-  if (!entitiesWithShareholders.length) return "";
-  const blocks = entitiesWithShareholders
-    .map(
-      (e) => `<div class="other-shareholders-entity">
-        <div class="other-shareholders-entity-name">${escapeHtml(e.name)}</div>
-        ${renderShareholdersBlock(e)}
-      </div>`
-    )
-    .join("");
-  return `<div class="client-modal-section">
-    <h3>${t("other_shareholders_section_title")}</h3>
-    ${blocks}
-    <p class="shareholder-convert-status" id="shareholder-convert-status"></p>
-  </div>`;
-}
-
 function renderClientModalContent(client) {
   const chain = client.linkedEntities.length
     ? `<ul class="ownership-chain">${client.linkedEntities
@@ -942,6 +928,9 @@ async function convertShareholderToClient(client, btn) {
         })
       );
     }
+    const entity = client.linkedEntities.find((e) => e.name === entityName);
+    const holder = entity && (entity.other_shareholders || []).find((h) => h.name === shareholderName);
+    if (holder) holder.isClient = true;
     statusEl.textContent = t("convert_success", shareholderName);
     statusEl.className = "shareholder-convert-status ok";
 
@@ -970,22 +959,16 @@ async function refreshClients() {
   renderClients();
 }
 
-function renderNoOpportunityBanner() {
-  return `
-    <div class="no-opportunity-banner">
-      <strong>${t("no_opportunity_title")}</strong>
-      ${t("no_opportunity_body")}
-    </div>`;
-}
-
 const AGENT_PROGRESS_STEPS = ["progress_step_search", "progress_step_kyc", "progress_step_synthesis"];
+const LEVEL_KEY = { High: "level_high", Medium: "level_medium", Low: "level_low" };
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function renderAgentProgress(panel, completedCount) {
   const rows = AGENT_PROGRESS_STEPS.map((key, i) => {
     const stepNum = i + 1;
     const isDone = stepNum <= completedCount;
     const isActive = stepNum === completedCount + 1;
-    const icon = isDone ? '<span class="agent-progress-check">✓</span>' : isActive ? '<span class="agent-progress-spinner"></span>' : "";
+    const icon = isDone ? '<span class="agent-progress-check">✓</span>' : isActive ? '<span class="agent-progress-spinner">↻</span>' : "";
     return `<div class="agent-progress-row${isDone ? " done" : ""}${isActive ? " active" : ""}">
       ${icon}
       <span class="agent-progress-label">${escapeHtml(t(key))}</span>
@@ -994,52 +977,128 @@ function renderAgentProgress(panel, completedCount) {
   panel.innerHTML = `<div class="client-modal-section"><h3>${t("scan_loading_title")}</h3><div class="agent-progress">${rows}</div></div>`;
 }
 
-function renderAgentFindingCard(g) {
-  const ratingPill = g.priority
-    ? `<span class="pill ${PRIORITY_CLASS[g.priority] || ""}">${escapeHtml(t(PRIORITY_KEY[g.priority] || g.priority))}</span>`
+function renderSynthesis(client, result, detailsOpen) {
+  const opps = result.opportunities || [];
+  const top = opps[0];
+  const level = result.level || "Low";
+  const headline = top
+    ? `${t("synthesis_text", opps.length, top.eventType, top.entityName)} ${top.aiSuggestedAction || ""}`
+    : `${t("no_opportunity_title")} — ${t("no_opportunity_body")}`;
+  const fmtDate = (d) => new Date(d).toLocaleDateString(state.lang === "fr" ? "fr-FR" : "en-US");
+
+  const sourcesHtml = opps.length
+    ? `<ul class="details-list">${opps
+        .map((o) => `<li><strong>${escapeHtml(o.sourceName)}</strong> · ${fmtDate(o.detectedAt)} — ${escapeHtml(o.description)}</li>`)
+        .join("")}</ul>`
+    : `<p class="details-empty">${t("no_sources")}</p>`;
+
+  const oppsHtml = opps.length
+    ? opps
+        .map(
+          (o) => `<div class="opportunity-row">
+            <div class="synthesis-header">
+              <div class="ot">${escapeHtml(o.eventType)} — ${escapeHtml(o.entityName)}</div>
+              <span class="pill ${PRIORITY_CLASS[o.priority] || ""}">${escapeHtml(t(PRIORITY_KEY[o.priority] || o.priority))}</span>
+            </div>
+            ${o.isNew ? `<div class="gap-added-tag">${t("gap_added_tag")}</div>` : ""}
+            <div class="om">${escapeHtml(o.aiSummary || o.description)}</div>
+            ${o.aiSuggestedAction ? `<div class="ga">→ ${escapeHtml(o.aiSuggestedAction)}</div>` : ""}
+          </div>`
+        )
+        .join("")
+    : `<p class="details-empty">${t("client_opportunities_empty")}</p>`;
+
+  const updates = result.referentialUpdates || [];
+  const updatesHtml = updates.length
+    ? `<div class="details-section">
+        <h4>${t("details_updates_title")}</h4>
+        ${updates
+          .map(
+            (u) => `<div class="referential-update-row">
+              <span>${escapeHtml(t("referential_update_line", u.name, u.stake, u.entityName, u.sourceName))}</span>
+              <button class="btn btn-outline btn-small apply-update-btn" data-entity="${escapeHtml(u.entityName)}" data-shareholder="${escapeHtml(u.name)}">${t("btn_apply_update")}</button>
+            </div>`
+          )
+          .join("")}
+      </div>`
     : "";
 
-  const details = g.error
-    ? `<div class="ge">${t("scan_call_error_prefix")} ${escapeHtml(g.error)}</div>`
-    : `
-      <div class="agent-step">
-        <div class="agent-step-label">${t("step_search_online")}</div>
-        <p>${escapeHtml(t("step_search_online_placeholder"))}</p>
-      </div>
-      <div class="agent-step">
-        <div class="agent-step-label">${t("step_kyc_check")}</div>
-        <p>${escapeHtml(t("step_kyc_check_result", g.relation, g.jurisdiction))}</p>
-      </div>
-      <div class="agent-step">
-        <div class="agent-step-label">${t("step_synthesis")}</div>
-        <p>${escapeHtml(g.aiSummary)}</p>
-      </div>
-      <div class="agent-step">
-        <div class="agent-step-label">${t("step_commercial_proposal")}</div>
-        <p>${escapeHtml(g.aiSuggestedAction)}</p>
-      </div>`;
+  const holderEntities = (client.linkedEntities || []).filter((e) => e.other_shareholders && e.other_shareholders.length);
+  const holdersHtml = holderEntities.length
+    ? `<div class="details-section">
+        <h4>${t("other_shareholders_label")}</h4>
+        ${holderEntities
+          .map(
+            (e) => `<div class="other-shareholders-entity">
+              <div class="other-shareholders-entity-name">${escapeHtml(e.name)}</div>
+              ${renderShareholdersBlock(e)}
+            </div>`
+          )
+          .join("")}
+      </div>`
+    : "";
 
-  return `<div class="gap-row">
+  return `<div class="client-modal-section synthesis-card">
     <div class="synthesis-header">
-      <div class="ot">${escapeHtml(g.entityName)} — ${escapeHtml(g.relation)} · ${escapeHtml(g.jurisdiction)}</div>
-      ${ratingPill}
+      <h3>${t("synthesis_title")}</h3>
+      <span class="pill ${PRIORITY_CLASS[level] || ""}">${escapeHtml(t("rating_label"))} : ${escapeHtml(t(LEVEL_KEY[level]))}</span>
     </div>
-    <div class="gap-added-tag">${t("gap_added_tag")}</div>
-    <p class="synthesis-headline">${escapeHtml(g.error ? t("scan_call_error_prefix") : g.aiSuggestedAction || "")}</p>
-    <button class="btn btn-outline btn-small gap-details-toggle" data-id="${g.id}">${t("btn_details")}</button>
-    <div class="gap-details" hidden>${details}</div>
+    <p class="synthesis-headline">${escapeHtml(headline)}</p>
+    <button class="btn btn-outline btn-small gap-details-toggle">${detailsOpen ? t("btn_hide_details") : t("btn_details")}</button>
+    <div class="gap-details"${detailsOpen ? "" : " hidden"}>
+      <div class="details-section"><h4>${t("details_sources_title")}</h4>${sourcesHtml}</div>
+      <div class="details-section"><h4>${t("details_opportunities_title")}</h4>${oppsHtml}</div>
+      ${updatesHtml}
+      ${holdersHtml}
+      <p class="shareholder-convert-status" id="shareholder-convert-status"></p>
+    </div>
   </div>`;
 }
 
-function wireGapDetailsToggles() {
-  document.querySelectorAll(".gap-details-toggle").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const details = btn.parentElement.querySelector(".gap-details");
-      const isHidden = details.hidden;
-      details.hidden = !isHidden;
-      btn.textContent = isHidden ? t("btn_hide_details") : t("btn_details");
-    });
+function showExploreResult(client, result, detailsOpen) {
+  const panel = document.getElementById("explore-opportunity-panel");
+  panel.hidden = false;
+  panel.innerHTML = renderSynthesis(client, result, detailsOpen);
+  panel.dataset.loaded = "true";
+
+  const toggle = panel.querySelector(".gap-details-toggle");
+  toggle.addEventListener("click", () => {
+    const details = panel.querySelector(".gap-details");
+    details.hidden = !details.hidden;
+    toggle.textContent = details.hidden ? t("btn_details") : t("btn_hide_details");
   });
+  wireShareholderConvertButtons(client);
+  panel.querySelectorAll(".apply-update-btn").forEach((btn) => {
+    btn.addEventListener("click", () => applyReferentialUpdate(client, result, btn));
+  });
+}
+
+async function applyReferentialUpdate(client, result, btn) {
+  const entityName = btn.dataset.entity;
+  const shareholderName = btn.dataset.shareholder;
+  btn.disabled = true;
+  try {
+    const updated = await api(`/api/clients/${client.id}/referential-updates/apply`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entityName, shareholderName }),
+    });
+    result.referentialUpdates = result.referentialUpdates.filter(
+      (u) => !(u.entityName === entityName && u.name === shareholderName)
+    );
+    Object.assign(client, updated);
+    renderClientModalContent(client);
+    showExploreResult(client, result, true);
+    const statusEl = document.getElementById("shareholder-convert-status");
+    statusEl.textContent = t("update_applied", shareholderName);
+    statusEl.className = "shareholder-convert-status ok";
+    await refreshClients();
+  } catch (e) {
+    btn.disabled = false;
+    const statusEl = document.getElementById("shareholder-convert-status");
+    statusEl.textContent = `${t("scan_call_error_prefix")} ${e.message}`;
+    statusEl.className = "shareholder-convert-status error";
+  }
 }
 
 async function exploreCommercialOpportunity(client) {
@@ -1049,104 +1108,54 @@ async function exploreCommercialOpportunity(client) {
     panel.hidden = true;
     return;
   }
-
   panel.hidden = false;
+  if (panel.dataset.loaded === "true") return;
+
   renderAgentProgress(panel, 0);
-
-  const existingOpportunities = (client.events || []).filter((e) => e.category === "Commercial Opportunity");
-
-  const fetchPromise = (async () => {
-    try {
-      return { scanResult: await api(`/api/clients/${client.id}/scan-opportunities`, { method: "POST" }), scanError: null };
-    } catch (e) {
-      return { scanResult: null, scanError: e.message };
+  let run;
+  try {
+    const { runId } = await api(`/api/clients/${client.id}/agent-runs`, { method: "POST" });
+    // Poll the run row; each completed step is recorded in the DB by the
+    // backend. Advance one step per tick so every checkmark is visible even
+    // when a step finishes faster than the poll interval.
+    let shown = 0;
+    for (;;) {
+      await sleep(400);
+      run = await api(`/api/agent-runs/${runId}`);
+      if (run.step > shown) {
+        shown += 1;
+        renderAgentProgress(panel, shown);
+      }
+      if (run.status !== "running" && shown >= run.step) break;
     }
-  })();
+  } catch (e) {
+    panel.innerHTML = `<p class="ai-error">${t("scan_call_error_prefix")} ${escapeHtml(e.message)}</p>`;
+    return;
+  }
+  if (run.status === "error") {
+    panel.innerHTML = `<p class="ai-error">${t("scan_call_error_prefix")} ${escapeHtml(run.error || "")}</p>`;
+    return;
+  }
+  await sleep(400);
 
-  const progressDelays = [500, 1100, 1700];
-  const progressTimers = progressDelays.map(
-    (delay, i) => new Promise((resolve) => setTimeout(() => { renderAgentProgress(panel, i + 1); resolve(); }, delay))
-  );
-
-  const [{ scanResult, scanError }] = await Promise.all([fetchPromise, ...progressTimers]);
-
-  const upsertEvent = (ev) => {
-    const idx = state.events.findIndex((x) => x.id === ev.id);
-    if (idx === -1) state.events.push(ev);
-    else state.events[idx] = ev;
-  };
-  const analyzed = (scanResult && scanResult.analyzed) || [];
-  analyzed.forEach((ev) => {
-    upsertEvent(ev);
-    const i = existingOpportunities.findIndex((x) => x.id === ev.id);
-    if (i !== -1) existingOpportunities[i] = ev;
-  });
-  if (scanResult && scanResult.found) scanResult.gaps.forEach(upsertEvent);
-  if (analyzed.length || (scanResult && scanResult.found)) {
-    const changed = [...analyzed, ...((scanResult && scanResult.found && scanResult.gaps) || [])];
+  const result = run.result;
+  const changed = result.changedEvents || [];
+  if (changed.length) {
     client.events = client.events || [];
     changed.forEach((ev) => {
-      const i = client.events.findIndex((x) => x.id === ev.id);
-      if (i === -1) client.events.unshift(ev);
-      else client.events[i] = ev;
+      const i = state.events.findIndex((x) => x.id === ev.id);
+      if (i === -1) state.events.push(ev);
+      else state.events[i] = ev;
+      const j = client.events.findIndex((x) => x.id === ev.id);
+      if (j === -1) client.events.unshift(ev);
+      else client.events[j] = ev;
     });
     const list = document.getElementById("linked-signals-list");
     if (list) list.innerHTML = renderLinkedSignals(client);
     renderKPIs();
     renderEventTable();
   }
-
-  const hasNewGaps = !!(scanResult && scanResult.found && scanResult.gaps.length);
-  const hasExisting = existingOpportunities.length > 0;
-  const shareholdersHtml = renderShareholdersSection(client);
-
-  if (!hasExisting && !hasNewGaps && !scanError) {
-    panel.innerHTML = `
-      <div class="client-modal-section"><h3>${t("client_opportunities_title")}</h3>${renderNoOpportunityBanner()}</div>
-      ${shareholdersHtml}
-    `;
-    panel.dataset.loaded = "true";
-    wireShareholderConvertButtons(client);
-    return;
-  }
-
-  const existingHtml = hasExisting
-    ? existingOpportunities
-        .map(
-          (e) => `<div class="opportunity-row">
-            <div class="synthesis-header">
-              <div class="ot">${escapeHtml(e.eventType)} — ${escapeHtml(e.entityName)}</div>
-              <span class="pill ${PRIORITY_CLASS[e.priority] || ""}">${escapeHtml(t(PRIORITY_KEY[e.priority] || e.priority))}</span>
-            </div>
-            <div class="om">${escapeHtml(e.aiSummary || e.description)}</div>
-          </div>`
-        )
-        .join("")
-    : `<p style="font-size:13px;color:var(--muted);">${t("client_opportunities_empty")}</p>`;
-
-  const gapsHtml = hasNewGaps ? scanResult.gaps.map(renderAgentFindingCard).join("") : "";
-  const errorHtml = scanError ? `<p class="ai-error">${t("scan_call_error_prefix")} ${escapeHtml(scanError)}</p>` : "";
-
-  panel.innerHTML = `
-    <div class="client-modal-section">
-      <h3>${t("client_opportunities_title")}</h3>
-      ${existingHtml}
-    </div>
-    ${
-      hasNewGaps
-        ? `<div class="client-modal-section">
-      <h3>${t("agent_findings_title")}</h3>
-      <p style="font-size:13px;color:var(--muted);margin:0 0 10px;">${t("gap_found_intro")}</p>
-      ${gapsHtml}
-    </div>`
-        : ""
-    }
-    ${shareholdersHtml}
-    ${errorHtml}
-  `;
-  panel.dataset.loaded = "true";
-  wireShareholderConvertButtons(client);
-  wireGapDetailsToggles();
+  showExploreResult(client, result, false);
 }
 
 async function renderAIStatus() {

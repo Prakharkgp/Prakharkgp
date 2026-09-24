@@ -6,6 +6,8 @@ intelligence sources, linked back to clients and entities."""
 import json
 import re
 import sqlite3
+import threading
+import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -87,6 +89,19 @@ def init_db():
                 endpoint TEXT NOT NULL DEFAULT '',
                 api_key TEXT NOT NULL DEFAULT '',
                 deployment TEXT NOT NULL DEFAULT ''
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS agent_runs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                client_id TEXT NOT NULL,
+                step INTEGER NOT NULL DEFAULT 0,
+                status TEXT NOT NULL,
+                result TEXT,
+                error TEXT,
+                created_at TEXT NOT NULL
             )
             """
         )
@@ -342,133 +357,209 @@ def get_client(client_id: str):
         return client
 
 
-@app.post("/api/clients/{client_id}/scan-opportunities")
-def scan_client_opportunities(client_id: str):
-    """The 'agent' button: cross-checks the client's known ownership
-    structure against the signals already on file, and flags any linked
-    entity that has no tracked signal yet — i.e. something the internal
-    referential may have missed. For each gap, a new signal is created
-    directly in the Signal Directory (source = the internal cross-check
-    agent) and immediately run through the active AI provider — so the
-    agent doesn't just preview a finding, it adds a fully-analyzed line."""
+PRIORITY_RANK = {"High": 3, "Medium": 2, "Low": 1}
+# Stand-in for web-search / referential-lookup latency: those two agent steps
+# have no live data source in this demo, so without a pause the checklist
+# would complete before it is ever visible.
+SIMULATED_STEP_SECONDS = 0.8
+
+
+def _set_run(run_id: int, **fields):
+    with get_conn() as conn:
+        assignments = ", ".join(f"{k} = ?" for k in fields)
+        conn.execute(f"UPDATE agent_runs SET {assignments} WHERE id = ?", (*fields.values(), run_id))
+        conn.commit()
+
+
+def _analyze_and_store(conn, provider, event_id: int, payload: dict):
+    analysis = provider.analyze(payload)
+    conn.execute(
+        """
+        UPDATE events SET ai_summary = ?, ai_suggested_action = ?, ai_confidence = ?, ai_provider_used = ?,
+            priority = COALESCE(?, priority)
+        WHERE id = ?
+        """,
+        (analysis["summary"], analysis["suggested_action"], analysis["confidence"], provider.name,
+         analysis.get("priority"), event_id),
+    )
+    conn.commit()
+
+
+def _run_agents(run_id: int, client_id: str):
+    """Runs the three agent steps for one client, recording progress in the
+    agent_runs row after each step so the UI can poll it."""
+    try:
+        with get_conn() as conn:
+            client = client_row_to_dict(conn.execute("SELECT * FROM clients WHERE id = ?", (client_id,)).fetchone())
+            provider = _get_active_provider(conn)
+            sources_by_id, clients_by_id = _sources_and_clients(conn)
+
+            # Step 1 — multi-source web searches: shareholders found in public
+            # sources for the client's entities.
+            time.sleep(SIMULATED_STEP_SECONDS)
+            web_findings = [
+                {
+                    "entityName": entity["name"],
+                    "name": holder["name"],
+                    "stake": holder["stake"],
+                    "type": holder.get("type"),
+                    "sourceName": sources_by_id.get(holder.get("source_id"), {}).get("name", holder.get("source_id")),
+                }
+                for entity in client["linkedEntities"]
+                for holder in entity.get("web_shareholders", [])
+            ]
+            _set_run(run_id, step=1)
+
+            # Step 2 — KYC referential comparison: web findings missing from the
+            # referential, and linked entities with no signal on file.
+            time.sleep(SIMULATED_STEP_SECONDS)
+            referential_names = {
+                (entity["name"], h["name"].lower())
+                for entity in client["linkedEntities"]
+                for h in entity.get("other_shareholders", [])
+            }
+            referential_updates = [
+                f for f in web_findings if (f["entityName"], f["name"].lower()) not in referential_names
+            ]
+            tracked_entities = {
+                r["entity_name"] for r in conn.execute("SELECT entity_name FROM events WHERE client_id = ?", (client_id,))
+            }
+            gaps = [e for e in client["linkedEntities"] if e["name"] not in tracked_entities]
+            _set_run(run_id, step=2)
+
+            # Step 3 — synthesis: the agents analyze pending opportunities (this
+            # sets their priority), and turn each gap into a new signal.
+            changed_ids = []
+            for ev_row in conn.execute(
+                """
+                SELECT * FROM events WHERE client_id = ? AND category = 'Commercial Opportunity'
+                    AND status = 'Under Review' AND ai_summary IS NULL
+                """,
+                (client_id,),
+            ).fetchall():
+                ev = event_row_to_dict(ev_row, sources_by_id, clients_by_id)
+                _analyze_and_store(conn, provider, ev["id"], {
+                    "category": ev["category"], "event_type": ev["eventType"], "entity_name": ev["entityName"],
+                    "source_name": ev["sourceName"], "description": ev["description"],
+                })
+                changed_ids.append(ev["id"])
+
+            now = datetime.now(timezone.utc).isoformat()
+            new_ids = set()
+            for gap in gaps[:3]:
+                description = (
+                    f"{gap['name']} is linked to {client['name']} "
+                    f"({gap['relation']}, {gap['jurisdiction']}) but had no signal on file — "
+                    "added automatically by the internal referential cross-check agent."
+                )
+                cur = conn.execute(
+                    """
+                    INSERT INTO events (
+                        category, event_type, entity_name, client_id, source_id, priority,
+                        description, status, detected_at, ai_summary, ai_suggested_action,
+                        ai_confidence, ai_provider_used, decline_reason
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'Under Review', ?, NULL, NULL, NULL, NULL, NULL)
+                    """,
+                    (
+                        "Commercial Opportunity", "Potential missed opportunity", gap["name"],
+                        client_id, "internal-crosscheck", "Medium", description, now,
+                    ),
+                )
+                conn.commit()
+                _analyze_and_store(conn, provider, cur.lastrowid, {
+                    "category": "Commercial Opportunity", "event_type": "Potential missed opportunity",
+                    "entity_name": gap["name"], "source_name": "AI Agent — Internal Cross-Check",
+                    "description": description,
+                })
+                new_ids.add(cur.lastrowid)
+                changed_ids.append(cur.lastrowid)
+
+            opportunities = []
+            for r in conn.execute(
+                """
+                SELECT * FROM events WHERE client_id = ? AND category = 'Commercial Opportunity'
+                    AND status = 'Under Review' ORDER BY detected_at DESC
+                """,
+                (client_id,),
+            ):
+                ev = event_row_to_dict(r, sources_by_id, clients_by_id)
+                ev["isNew"] = ev["id"] in new_ids
+                opportunities.append(ev)
+            opportunities.sort(key=lambda e: PRIORITY_RANK.get(e["priority"], 0), reverse=True)
+
+            changed = [
+                event_row_to_dict(conn.execute("SELECT * FROM events WHERE id = ?", (i,)).fetchone(), sources_by_id, clients_by_id)
+                for i in changed_ids
+            ]
+            result = {
+                "level": opportunities[0]["priority"] if opportunities else None,
+                "opportunities": opportunities,
+                "referentialUpdates": referential_updates,
+                "changedEvents": changed,
+                "provider": provider.name,
+            }
+        _set_run(run_id, step=3, status="done", result=json.dumps(result))
+    except Exception as exc:
+        _set_run(run_id, status="error", error=f"{type(exc).__name__}: {exc}")
+
+
+@app.post("/api/clients/{client_id}/agent-runs")
+def start_agent_run(client_id: str):
+    """'Explorer l'opportunité commerciale': starts the three-step agent
+    sequence in the background and returns a run id the UI polls."""
+    with get_conn() as conn:
+        if conn.execute("SELECT 1 FROM clients WHERE id = ?", (client_id,)).fetchone() is None:
+            raise HTTPException(status_code=404, detail="Client not found")
+        cur = conn.execute(
+            "INSERT INTO agent_runs (client_id, step, status, created_at) VALUES (?, 0, 'running', ?)",
+            (client_id, datetime.now(timezone.utc).isoformat()),
+        )
+        conn.commit()
+        run_id = cur.lastrowid
+    threading.Thread(target=_run_agents, args=(run_id, client_id), daemon=True).start()
+    return {"runId": run_id}
+
+
+@app.get("/api/agent-runs/{run_id}")
+def get_agent_run(run_id: int):
+    with get_conn() as conn:
+        row = conn.execute("SELECT * FROM agent_runs WHERE id = ?", (run_id,)).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Agent run not found")
+    return {
+        "runId": row["id"],
+        "clientId": row["client_id"],
+        "step": row["step"],
+        "status": row["status"],
+        "result": json.loads(row["result"]) if row["result"] else None,
+        "error": row["error"],
+    }
+
+
+@app.post("/api/clients/{client_id}/referential-updates/apply")
+def apply_referential_update(client_id: str, payload: ShareholderConvertIn):
+    """Accepts an agent-proposed update: a shareholder found in public
+    sources but missing from the referential is added to the entity's
+    shareholder structure."""
     with get_conn() as conn:
         row = conn.execute("SELECT * FROM clients WHERE id = ?", (client_id,)).fetchone()
         if row is None:
             raise HTTPException(status_code=404, detail="Client not found")
-        client = client_row_to_dict(row)
-        provider = _get_active_provider(conn)
-        sources_by_id, clients_by_id = _sources_and_clients(conn)
-
-        # Commercial Opportunity priority is set by the agents' analysis, and
-        # this is now the only place agents run — so pending opportunities
-        # that were never analyzed get their synthesis and priority here.
-        analyzed = []
-        pending_unanalyzed = conn.execute(
-            """
-            SELECT * FROM events WHERE client_id = ? AND category = 'Commercial Opportunity'
-                AND status = 'Under Review' AND ai_summary IS NULL
-            """,
-            (client_id,),
-        ).fetchall()
-        for ev_row in pending_unanalyzed:
-            ev = event_row_to_dict(ev_row, sources_by_id, clients_by_id)
-            try:
-                analysis = provider.analyze(
-                    {
-                        "category": ev["category"],
-                        "event_type": ev["eventType"],
-                        "entity_name": ev["entityName"],
-                        "source_name": ev["sourceName"],
-                        "description": ev["description"],
-                    }
-                )
-            except Exception:
-                break
-            conn.execute(
-                """
-                UPDATE events SET ai_summary = ?, ai_suggested_action = ?, ai_confidence = ?, ai_provider_used = ?,
-                    priority = COALESCE(?, priority)
-                WHERE id = ?
-                """,
-                (analysis["summary"], analysis["suggested_action"], analysis["confidence"], provider.name,
-                 analysis.get("priority"), ev["id"]),
-            )
-            conn.commit()
-            updated = conn.execute("SELECT * FROM events WHERE id = ?", (ev["id"],)).fetchone()
-            analyzed.append(event_row_to_dict(updated, sources_by_id, clients_by_id))
-
-        tracked_entities = {
-            r["entity_name"]
-            for r in conn.execute("SELECT entity_name FROM events WHERE client_id = ?", (client_id,))
-        }
-        gaps = [e for e in client["linkedEntities"] if e["name"] not in tracked_entities]
-
-        if not gaps:
-            return {"found": False, "clientId": client_id, "clientName": client["name"], "analyzed": analyzed}
-
-        now = datetime.now(timezone.utc).isoformat()
-        results = []
-
-        for gap in gaps[:3]:
-            description = (
-                f"{gap['name']} is linked to {client['name']} "
-                f"({gap['relation']}, {gap['jurisdiction']}) but had no signal on file — "
-                "added automatically by the internal referential cross-check agent."
-            )
-            cur = conn.execute(
-                """
-                INSERT INTO events (
-                    category, event_type, entity_name, client_id, source_id, priority,
-                    description, status, detected_at, ai_summary, ai_suggested_action,
-                    ai_confidence, ai_provider_used, decline_reason
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'Under Review', ?, NULL, NULL, NULL, NULL, NULL)
-                """,
-                (
-                    "Commercial Opportunity", "Potential missed opportunity", gap["name"],
-                    client_id, "internal-crosscheck", "Medium", description, now,
-                ),
-            )
-            new_event_id = cur.lastrowid
-            conn.commit()
-
-            error = None
-            try:
-                analysis = provider.analyze(
-                    {
-                        "category": "Commercial Opportunity",
-                        "event_type": "Potential missed opportunity",
-                        "entity_name": gap["name"],
-                        "source_name": "AI Agent — Internal Cross-Check",
-                        "description": description,
-                    }
-                )
-                conn.execute(
-                    """
-                    UPDATE events SET ai_summary = ?, ai_suggested_action = ?, ai_confidence = ?, ai_provider_used = ?,
-                        priority = COALESCE(?, priority)
-                    WHERE id = ?
-                    """,
-                    (analysis["summary"], analysis["suggested_action"], analysis["confidence"], provider.name, analysis.get("priority"), new_event_id),
-                )
-                conn.commit()
-            except Exception as exc:
-                error = f"{type(exc).__name__}: {exc}"
-
-            new_row = conn.execute("SELECT * FROM events WHERE id = ?", (new_event_id,)).fetchone()
-            event = event_row_to_dict(new_row, sources_by_id, clients_by_id)
-            event["relation"] = gap["relation"]
-            event["jurisdiction"] = gap["jurisdiction"]
-            event["error"] = error
-            results.append(event)
-
-        return {
-            "found": True,
-            "clientId": client_id,
-            "clientName": client["name"],
-            "provider": provider.name,
-            "gaps": results,
-            "analyzed": analyzed,
-        }
+        entities = json.loads(row["linked_entities"])
+        entity = next((e for e in entities if e["name"] == payload.entityName), None)
+        if entity is None:
+            raise HTTPException(status_code=404, detail="Linked entity not found on this client")
+        web = entity.get("web_shareholders", [])
+        holder = next((h for h in web if h["name"] == payload.shareholderName), None)
+        if holder is None:
+            raise HTTPException(status_code=404, detail="No proposed update for this shareholder")
+        entity["web_shareholders"] = [h for h in web if h is not holder]
+        entity.setdefault("other_shareholders", []).append(
+            {"name": holder["name"], "stake": holder["stake"], "type": holder.get("type")}
+        )
+        conn.execute("UPDATE clients SET linked_entities = ? WHERE id = ?", (json.dumps(entities), client_id))
+        conn.commit()
+    return get_client(client_id)
 
 
 @app.post("/api/clients/{client_id}/shareholders/convert")

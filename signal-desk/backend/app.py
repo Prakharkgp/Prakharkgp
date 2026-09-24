@@ -356,6 +356,46 @@ def scan_client_opportunities(client_id: str):
         if row is None:
             raise HTTPException(status_code=404, detail="Client not found")
         client = client_row_to_dict(row)
+        provider = _get_active_provider(conn)
+        sources_by_id, clients_by_id = _sources_and_clients(conn)
+
+        # Commercial Opportunity priority is set by the agents' analysis, and
+        # this is now the only place agents run — so pending opportunities
+        # that were never analyzed get their synthesis and priority here.
+        analyzed = []
+        pending_unanalyzed = conn.execute(
+            """
+            SELECT * FROM events WHERE client_id = ? AND category = 'Commercial Opportunity'
+                AND status = 'Under Review' AND ai_summary IS NULL
+            """,
+            (client_id,),
+        ).fetchall()
+        for ev_row in pending_unanalyzed:
+            ev = event_row_to_dict(ev_row, sources_by_id, clients_by_id)
+            try:
+                analysis = provider.analyze(
+                    {
+                        "category": ev["category"],
+                        "event_type": ev["eventType"],
+                        "entity_name": ev["entityName"],
+                        "source_name": ev["sourceName"],
+                        "description": ev["description"],
+                    }
+                )
+            except Exception:
+                break
+            conn.execute(
+                """
+                UPDATE events SET ai_summary = ?, ai_suggested_action = ?, ai_confidence = ?, ai_provider_used = ?,
+                    priority = COALESCE(?, priority)
+                WHERE id = ?
+                """,
+                (analysis["summary"], analysis["suggested_action"], analysis["confidence"], provider.name,
+                 analysis.get("priority"), ev["id"]),
+            )
+            conn.commit()
+            updated = conn.execute("SELECT * FROM events WHERE id = ?", (ev["id"],)).fetchone()
+            analyzed.append(event_row_to_dict(updated, sources_by_id, clients_by_id))
 
         tracked_entities = {
             r["entity_name"]
@@ -364,10 +404,8 @@ def scan_client_opportunities(client_id: str):
         gaps = [e for e in client["linkedEntities"] if e["name"] not in tracked_entities]
 
         if not gaps:
-            return {"found": False, "clientId": client_id, "clientName": client["name"]}
+            return {"found": False, "clientId": client_id, "clientName": client["name"], "analyzed": analyzed}
 
-        provider = _get_active_provider(conn)
-        sources_by_id, clients_by_id = _sources_and_clients(conn)
         now = datetime.now(timezone.utc).isoformat()
         results = []
 
@@ -429,6 +467,7 @@ def scan_client_opportunities(client_id: str):
             "clientName": client["name"],
             "provider": provider.name,
             "gaps": results,
+            "analyzed": analyzed,
         }
 
 

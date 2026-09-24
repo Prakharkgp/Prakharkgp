@@ -855,8 +855,36 @@ function renderClientModalContent(client) {
         .join("")}</ul>`
     : `<p style="font-size:13px;color:var(--muted);">${t("no_linked_entities")}</p>`;
 
+  document.getElementById("client-modal-content").innerHTML = `
+    <div class="client-modal-header">
+      <h2>${escapeHtml(client.name)}</h2>
+      <div class="segment">${escapeHtml(client.segment)}</div>
+      <div class="rm">RM: ${escapeHtml(client.rmOwner)}</div>
+    </div>
+
+    <div class="client-modal-section">
+      <h3>${t("shareholder_structure_title")}</h3>
+      ${chain}
+    </div>
+
+    <div class="client-modal-actions">
+      <button class="btn btn-primary" id="explore-opportunity-btn">${t("explore_opportunity_btn")}</button>
+    </div>
+
+    <div id="explore-opportunity-panel" hidden></div>
+
+    <div class="client-modal-section">
+      <h3>${t("linked_signals_title")}</h3>
+      <div id="linked-signals-list">${renderLinkedSignals(client)}</div>
+    </div>
+  `;
+
+  document.getElementById("explore-opportunity-btn").addEventListener("click", () => exploreCommercialOpportunity(client));
+}
+
+function renderLinkedSignals(client) {
   const LEGACY_STATUSES = new Set(["Actioned", "Dismissed"]);
-  const signals = client.events && client.events.length
+  return client.events && client.events.length
     ? client.events
         .map((e) => {
           const dateStr = new Date(e.detectedAt).toLocaleDateString(state.lang === "fr" ? "fr-FR" : "en-US");
@@ -880,32 +908,6 @@ function renderClientModalContent(client) {
         })
         .join("")
     : `<p style="font-size:13px;color:var(--muted);">${t("no_signals_recorded")}</p>`;
-
-  document.getElementById("client-modal-content").innerHTML = `
-    <div class="client-modal-header">
-      <h2>${escapeHtml(client.name)}</h2>
-      <div class="segment">${escapeHtml(client.segment)}</div>
-      <div class="rm">RM: ${escapeHtml(client.rmOwner)}</div>
-    </div>
-
-    <div class="client-modal-section">
-      <h3>${t("shareholder_structure_title")}</h3>
-      ${chain}
-    </div>
-
-    <div class="client-modal-actions">
-      <button class="btn btn-primary" id="explore-opportunity-btn">${t("explore_opportunity_btn")}</button>
-    </div>
-
-    <div id="explore-opportunity-panel" hidden></div>
-
-    <div class="client-modal-section">
-      <h3>${t("linked_signals_title")}</h3>
-      ${signals}
-    </div>
-  `;
-
-  document.getElementById("explore-opportunity-btn").addEventListener("click", () => exploreCommercialOpportunity(client));
 }
 
 function wireShareholderConvertButtons(client) {
@@ -1068,12 +1070,28 @@ async function exploreCommercialOpportunity(client) {
 
   const [{ scanResult, scanError }] = await Promise.all([fetchPromise, ...progressTimers]);
 
-  if (scanResult && scanResult.found) {
-    scanResult.gaps.forEach((g) => {
-      const idx = state.events.findIndex((ev) => ev.id === g.id);
-      if (idx === -1) state.events.push(g);
-      else state.events[idx] = g;
+  const upsertEvent = (ev) => {
+    const idx = state.events.findIndex((x) => x.id === ev.id);
+    if (idx === -1) state.events.push(ev);
+    else state.events[idx] = ev;
+  };
+  const analyzed = (scanResult && scanResult.analyzed) || [];
+  analyzed.forEach((ev) => {
+    upsertEvent(ev);
+    const i = existingOpportunities.findIndex((x) => x.id === ev.id);
+    if (i !== -1) existingOpportunities[i] = ev;
+  });
+  if (scanResult && scanResult.found) scanResult.gaps.forEach(upsertEvent);
+  if (analyzed.length || (scanResult && scanResult.found)) {
+    const changed = [...analyzed, ...((scanResult && scanResult.found && scanResult.gaps) || [])];
+    client.events = client.events || [];
+    changed.forEach((ev) => {
+      const i = client.events.findIndex((x) => x.id === ev.id);
+      if (i === -1) client.events.unshift(ev);
+      else client.events[i] = ev;
     });
+    const list = document.getElementById("linked-signals-list");
+    if (list) list.innerHTML = renderLinkedSignals(client);
     renderKPIs();
     renderEventTable();
   }
@@ -1096,8 +1114,11 @@ async function exploreCommercialOpportunity(client) {
     ? existingOpportunities
         .map(
           (e) => `<div class="opportunity-row">
-            <div class="ot">${escapeHtml(e.eventType)} — ${escapeHtml(e.entityName)}</div>
-            <div class="om">${escapeHtml(e.description)}</div>
+            <div class="synthesis-header">
+              <div class="ot">${escapeHtml(e.eventType)} — ${escapeHtml(e.entityName)}</div>
+              <span class="pill ${PRIORITY_CLASS[e.priority] || ""}">${escapeHtml(t(PRIORITY_KEY[e.priority] || e.priority))}</span>
+            </div>
+            <div class="om">${escapeHtml(e.aiSummary || e.description)}</div>
           </div>`
         )
         .join("")

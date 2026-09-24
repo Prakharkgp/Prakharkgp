@@ -21,14 +21,43 @@
         </div>
       </div>
       <nav class="tabs" id="tabs">
+        <button class="tab active" data-tab="clients" data-i18n="tab_clients">Clients</button>
         <button class="tab" data-tab="dashboard" data-i18n="tab_dashboard">Répertoire des signaux</button>
         <button class="tab" data-tab="sources" data-i18n="tab_sources">Sources</button>
-        <button class="tab active" data-tab="clients" data-i18n="tab_clients">Clients</button>
         <button class="tab" data-tab="ai" data-i18n="tab_ai">Moteur IA</button>
       </nav>
     </header>
 
     <main>
+      <!-- CLIENTS -->
+      <section id="panel-clients" class="panel active">
+        <h2 class="page-title" data-i18n="clients_title">Clients &amp; actionnariat</h2>
+        <p class="page-subtitle" data-i18n="clients_subtitle">
+          Les événements sur des entités détenues indirectement sont rattachés au
+          client via la chaîne d'actionnariat — le même rôle que jouerait une
+          source comme Moody's Orbis en production.
+        </p>
+
+        <div class="kpis" id="client-kpis"></div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th data-i18n="col_client">Client</th>
+                <th data-i18n="col_type">Type</th>
+                <th data-i18n="col_segment">Segment</th>
+                <th data-i18n="col_rm">Chargé de relation</th>
+                <th data-i18n="col_linked_entities">Entités liées</th>
+                <th data-i18n="col_opportunity_prospects">Prospects opportunité</th>
+                <th data-i18n="col_action">Action</th>
+              </tr>
+            </thead>
+            <tbody id="clients-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+
       <!-- DASHBOARD / SIGNAL DIRECTORY -->
       <section id="panel-dashboard" class="panel">
         <h2 class="page-title" data-i18n="dashboard_title">Répertoire des signaux</h2>
@@ -116,35 +145,6 @@
               </tr>
             </thead>
             <tbody id="sources-table-body"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- CLIENTS -->
-      <section id="panel-clients" class="panel active">
-        <h2 class="page-title" data-i18n="clients_title">Clients &amp; actionnariat</h2>
-        <p class="page-subtitle" data-i18n="clients_subtitle">
-          Les événements sur des entités détenues indirectement sont rattachés au
-          client via la chaîne d'actionnariat — le même rôle que jouerait une
-          source comme Moody's Orbis en production.
-        </p>
-
-        <div class="kpis" id="client-kpis"></div>
-
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th data-i18n="col_client">Client</th>
-                <th data-i18n="col_type">Type</th>
-                <th data-i18n="col_segment">Segment</th>
-                <th data-i18n="col_rm">Chargé de relation</th>
-                <th data-i18n="col_linked_entities">Entités liées</th>
-                <th data-i18n="col_opportunity_prospects">Prospects opportunité</th>
-                <th data-i18n="col_action">Action</th>
-              </tr>
-            </thead>
-            <tbody id="clients-table-body"></tbody>
           </table>
         </div>
       </section>

@@ -1,4 +1,4 @@
-from client import FoundryClient
+from agents.client import FoundryClient
 
 
 def main() -> None:

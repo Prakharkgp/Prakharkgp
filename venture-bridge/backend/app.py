@@ -12,6 +12,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from agents.router import router as agents_router
+
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "venture_bridge.db"
 FRONTEND_DIR = BASE_DIR.parent / "frontend"
@@ -169,6 +171,7 @@ class LogEntryIn(BaseModel):
 
 
 app = FastAPI(title="Venture Bridge API")
+app.include_router(agents_router)
 
 
 @app.on_event("startup")

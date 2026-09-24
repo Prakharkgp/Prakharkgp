@@ -108,9 +108,9 @@ const I18N = {
     shareholder_structure_title: "Shareholder structure",
     explore_opportunity_btn: "Explore commercial opportunity",
     scan_loading_title: "Agent sequence running…",
-    progress_step_search: "1/1 Online search",
-    progress_step_kyc: "2/2 Internal KYC data comparison",
-    progress_step_synthesis: "3/3 Synthetic commercial opportunity report",
+    progress_step_search: "1/1 Multi-sources web searches",
+    progress_step_kyc: "2/2 Person KYC data comparison",
+    progress_step_synthesis: "3/3 Commercial opportunities synthesis preparation",
     no_opportunity_title: "No opportunity for this legal entity",
     no_opportunity_body: "The AI agent cross-checked the shareholder structure against tracked signals and found nothing new.",
     agent_findings_title: "Agent findings",
@@ -136,7 +136,11 @@ const I18N = {
     step_synthesis: "3. Synthetic summary",
     step_commercial_proposal: "4. Commercial proposal",
     other_shareholders_label: "Other shareholders",
+    other_shareholders_section_title: "Potential shareholders to address",
     already_client_tag: "Already a client",
+    btn_details: "Details",
+    btn_hide_details: "Hide details",
+    rating_label: "Rating",
     convert_to_client_btn: "Make this shareholder a client",
     converting_label: "Converting…",
     convert_success: (name) => `${name} was added as a new prospect — a commercial opportunity signal was created and analyzed. See the Clients tab.`,
@@ -259,9 +263,9 @@ const I18N = {
     shareholder_structure_title: "Structure actionnariale",
     explore_opportunity_btn: "Explorer l'opportunité commerciale",
     scan_loading_title: "Séquence d'agents en cours…",
-    progress_step_search: "1/1 Recherche en ligne",
-    progress_step_kyc: "2/2 Comparaison des données KYC internes",
-    progress_step_synthesis: "3/3 Rapport de synthèse d'opportunité commerciale",
+    progress_step_search: "1/1 Recherches web multi-sources",
+    progress_step_kyc: "2/2 Comparaison des données KYC des référentiels",
+    progress_step_synthesis: "3/3 Préparation de la synthèse des opportunités commerciales",
     no_opportunity_title: "Aucune opportunité pour cette entité juridique",
     no_opportunity_body: "L'agent IA a comparé la structure actionnariale aux signaux suivis et n'a rien trouvé de nouveau.",
     agent_findings_title: "Résultats de l'agent",
@@ -287,7 +291,11 @@ const I18N = {
     step_synthesis: "3. Synthèse",
     step_commercial_proposal: "4. Proposition commerciale",
     other_shareholders_label: "Autres actionnaires",
+    other_shareholders_section_title: "Actionnaires potentiels à adresser",
     already_client_tag: "Déjà client",
+    btn_details: "Détails",
+    btn_hide_details: "Masquer les détails",
+    rating_label: "Niveau",
     convert_to_client_btn: "Faire de cet actionnaire un client",
     converting_label: "Conversion en cours…",
     convert_success: (name) => `${name} a été ajouté comme nouveau prospect — un signal d'opportunité commerciale a été créé et analysé. Voir l'onglet Clients.`,
@@ -853,6 +861,24 @@ function renderShareholdersBlock(entity) {
   return `<ul class="other-shareholders">${rows}</ul>`;
 }
 
+function renderShareholdersSection(client) {
+  const entitiesWithShareholders = (client.linkedEntities || []).filter((e) => e.other_shareholders && e.other_shareholders.length);
+  if (!entitiesWithShareholders.length) return "";
+  const blocks = entitiesWithShareholders
+    .map(
+      (e) => `<div class="other-shareholders-entity">
+        <div class="other-shareholders-entity-name">${escapeHtml(e.name)}</div>
+        ${renderShareholdersBlock(e)}
+      </div>`
+    )
+    .join("");
+  return `<div class="client-modal-section">
+    <h3>${t("other_shareholders_section_title")}</h3>
+    ${blocks}
+    <p class="shareholder-convert-status" id="shareholder-convert-status"></p>
+  </div>`;
+}
+
 function renderClientModalContent(client) {
   const chain = client.linkedEntities.length
     ? `<ul class="ownership-chain">${client.linkedEntities
@@ -860,11 +886,6 @@ function renderClientModalContent(client) {
           (e) => `<li>
             <div class="ownership-chain-row"><span>${escapeHtml(e.name)}</span><span class="relation">${escapeHtml(e.relation)} · ${escapeHtml(e.jurisdiction)}</span></div>
             ${renderOwnershipBreakdown(client, e)}
-            ${
-              e.other_shareholders && e.other_shareholders.length
-                ? `<div class="other-shareholders-label">${t("other_shareholders_label")}</div>${renderShareholdersBlock(e)}`
-                : ""
-            }
           </li>`
         )
         .join("")}</ul>`
@@ -906,7 +927,6 @@ function renderClientModalContent(client) {
     <div class="client-modal-section">
       <h3>${t("shareholder_structure_title")}</h3>
       ${chain}
-      <p class="shareholder-convert-status" id="shareholder-convert-status"></p>
     </div>
 
     <div class="client-modal-actions">
@@ -922,7 +942,6 @@ function renderClientModalContent(client) {
   `;
 
   document.getElementById("explore-opportunity-btn").addEventListener("click", () => exploreCommercialOpportunity(client));
-  wireShareholderConvertButtons(client);
 }
 
 function wireShareholderConvertButtons(client) {
@@ -1010,7 +1029,11 @@ function renderAgentProgress(panel, completedCount) {
 }
 
 function renderAgentFindingCard(g) {
-  const body = g.error
+  const ratingPill = g.priority
+    ? `<span class="pill ${PRIORITY_CLASS[g.priority] || ""}">${escapeHtml(t(PRIORITY_KEY[g.priority] || g.priority))}</span>`
+    : "";
+
+  const details = g.error
     ? `<div class="ge">${t("scan_call_error_prefix")} ${escapeHtml(g.error)}</div>`
     : `
       <div class="agent-step">
@@ -1029,11 +1052,28 @@ function renderAgentFindingCard(g) {
         <div class="agent-step-label">${t("step_commercial_proposal")}</div>
         <p>${escapeHtml(g.aiSuggestedAction)}</p>
       </div>`;
+
   return `<div class="gap-row">
-    <div class="ot">${escapeHtml(g.entityName)} — ${escapeHtml(g.relation)} · ${escapeHtml(g.jurisdiction)}</div>
+    <div class="synthesis-header">
+      <div class="ot">${escapeHtml(g.entityName)} — ${escapeHtml(g.relation)} · ${escapeHtml(g.jurisdiction)}</div>
+      ${ratingPill}
+    </div>
     <div class="gap-added-tag">${t("gap_added_tag")}</div>
-    ${body}
+    <p class="synthesis-headline">${escapeHtml(g.error ? t("scan_call_error_prefix") : g.aiSuggestedAction || "")}</p>
+    <button class="btn btn-outline btn-small gap-details-toggle" data-id="${g.id}">${t("btn_details")}</button>
+    <div class="gap-details" hidden>${details}</div>
   </div>`;
+}
+
+function wireGapDetailsToggles() {
+  document.querySelectorAll(".gap-details-toggle").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const details = btn.parentElement.querySelector(".gap-details");
+      const isHidden = details.hidden;
+      details.hidden = !isHidden;
+      btn.textContent = isHidden ? t("btn_hide_details") : t("btn_details");
+    });
+  });
 }
 
 async function exploreCommercialOpportunity(client) {
@@ -1076,10 +1116,15 @@ async function exploreCommercialOpportunity(client) {
 
   const hasNewGaps = !!(scanResult && scanResult.found && scanResult.gaps.length);
   const hasExisting = existingOpportunities.length > 0;
+  const shareholdersHtml = renderShareholdersSection(client);
 
   if (!hasExisting && !hasNewGaps && !scanError) {
-    panel.innerHTML = `<div class="client-modal-section"><h3>${t("client_opportunities_title")}</h3>${renderNoOpportunityBanner()}</div>`;
+    panel.innerHTML = `
+      <div class="client-modal-section"><h3>${t("client_opportunities_title")}</h3>${renderNoOpportunityBanner()}</div>
+      ${shareholdersHtml}
+    `;
     panel.dataset.loaded = "true";
+    wireShareholderConvertButtons(client);
     return;
   }
 
@@ -1111,9 +1156,12 @@ async function exploreCommercialOpportunity(client) {
     </div>`
         : ""
     }
+    ${shareholdersHtml}
     ${errorHtml}
   `;
   panel.dataset.loaded = "true";
+  wireShareholderConvertButtons(client);
+  wireGapDetailsToggles();
 }
 
 async function renderAIStatus() {

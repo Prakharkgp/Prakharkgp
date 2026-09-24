@@ -597,6 +597,13 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
   letter-spacing: 0.03em;
 }
 .gap-row .ge { color: var(--red); font-size: 12px; margin-top: 4px; }
+.synthesis-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.synthesis-headline { margin: 6px 0 8px; font-size: 13px; color: var(--text); }
+.gap-details { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border); }
+.other-shareholders-entity { margin-bottom: 14px; }
+.other-shareholders-entity:last-child { margin-bottom: 0; }
+.other-shareholders-entity-name { font-weight: 700; font-size: 13px; }
+.other-shareholders-entity .other-shareholders { margin-left: 0; }
 .agent-step { margin-top: 8px; }
 .agent-step-label {
   font-size: 10px;

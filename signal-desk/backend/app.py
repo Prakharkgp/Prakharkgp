@@ -119,7 +119,7 @@ def seed(conn):
             """,
             (
                 e["category"], e["event_type"], e["entity_name"], e["client_id"],
-                e["source_id"], e["priority"], e["description"], e.get("status", "New"),
+                e["source_id"], e["priority"], e["description"], e.get("status", "Under Review"),
                 detected_at, e.get("decline_reason"),
             ),
         )
@@ -171,7 +171,7 @@ class StatusUpdate(BaseModel):
     reason: Optional[str] = None
 
 
-VALID_STATUSES = {"New", "Under Review", "Actioned", "Dismissed"}
+VALID_STATUSES = {"Under Review", "Actioned", "Dismissed"}
 
 
 class AIConfigIn(BaseModel):
@@ -295,12 +295,14 @@ def analyze_event(event_id: int):
                 status_code=502,
                 detail=f"{provider.name} call failed: {type(exc).__name__}: {exc}",
             ) from exc
+        new_priority = result.get("priority") if event["category"] == "Commercial Opportunity" else None
         conn.execute(
             """
-            UPDATE events SET ai_summary = ?, ai_suggested_action = ?, ai_confidence = ?, ai_provider_used = ?
+            UPDATE events SET ai_summary = ?, ai_suggested_action = ?, ai_confidence = ?, ai_provider_used = ?,
+                priority = COALESCE(?, priority)
             WHERE id = ?
             """,
-            (result["summary"], result["suggested_action"], result["confidence"], provider.name, event_id),
+            (result["summary"], result["suggested_action"], result["confidence"], provider.name, new_priority, event_id),
         )
         conn.commit()
         row = conn.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
@@ -381,7 +383,7 @@ def scan_client_opportunities(client_id: str):
                     category, event_type, entity_name, client_id, source_id, priority,
                     description, status, detected_at, ai_summary, ai_suggested_action,
                     ai_confidence, ai_provider_used, decline_reason
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'New', ?, NULL, NULL, NULL, NULL, NULL)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'Under Review', ?, NULL, NULL, NULL, NULL, NULL)
                 """,
                 (
                     "Commercial Opportunity", "Potential missed opportunity", gap["name"],
@@ -404,10 +406,11 @@ def scan_client_opportunities(client_id: str):
                 )
                 conn.execute(
                     """
-                    UPDATE events SET ai_summary = ?, ai_suggested_action = ?, ai_confidence = ?, ai_provider_used = ?
+                    UPDATE events SET ai_summary = ?, ai_suggested_action = ?, ai_confidence = ?, ai_provider_used = ?,
+                        priority = COALESCE(?, priority)
                     WHERE id = ?
                     """,
-                    (analysis["summary"], analysis["suggested_action"], analysis["confidence"], provider.name, new_event_id),
+                    (analysis["summary"], analysis["suggested_action"], analysis["confidence"], provider.name, analysis.get("priority"), new_event_id),
                 )
                 conn.commit()
             except Exception as exc:
@@ -496,7 +499,7 @@ def convert_shareholder_to_prospect(client_id: str, payload: ShareholderConvertI
                 category, event_type, entity_name, client_id, source_id, priority,
                 description, status, detected_at, ai_summary, ai_suggested_action,
                 ai_confidence, ai_provider_used, decline_reason
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'New', ?, NULL, NULL, NULL, NULL, NULL)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'Under Review', ?, NULL, NULL, NULL, NULL, NULL)
             """,
             (
                 "Commercial Opportunity", "New prospect identified via shareholder network", entity["name"],
@@ -519,10 +522,11 @@ def convert_shareholder_to_prospect(client_id: str, payload: ShareholderConvertI
             )
             conn.execute(
                 """
-                UPDATE events SET ai_summary = ?, ai_suggested_action = ?, ai_confidence = ?, ai_provider_used = ?
+                UPDATE events SET ai_summary = ?, ai_suggested_action = ?, ai_confidence = ?, ai_provider_used = ?,
+                    priority = COALESCE(?, priority)
                 WHERE id = ?
                 """,
-                (analysis["summary"], analysis["suggested_action"], analysis["confidence"], provider.name, new_event_id),
+                (analysis["summary"], analysis["suggested_action"], analysis["confidence"], provider.name, analysis.get("priority"), new_event_id),
             )
             conn.commit()
         except Exception as exc:

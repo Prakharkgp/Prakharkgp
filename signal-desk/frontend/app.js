@@ -15,8 +15,7 @@ const I18N = {
     priority_high: "High",
     priority_medium: "Medium",
     priority_low: "Low",
-    status_new: "New",
-    status_review: "Under Review",
+    status_review: "Pending",
     status_actioned: "Actioned",
     status_dismissed: "Dismissed",
     btn_search: "Search",
@@ -46,17 +45,14 @@ const I18N = {
     col_linked_entities: "Linked entities",
     kpi_total: "Total signals",
     kpi_high: "High priority",
-    kpi_new: "Awaiting triage",
-    kpi_risk: "Risk & compliance",
+    kpi_pending: "Pending",
     kpi_opportunities: "Commercial opportunities",
     client_type_client: "Client",
     client_type_prospect: "Prospect",
     clients_kpi_clients: "Existing clients",
     clients_kpi_prospects: "Prospects",
     cat_commercial: "Commercial Opportunity",
-    cat_credit: "Corporate & Credit",
     cat_kyc: "KYC Update",
-    cat_risk: "Risk & Compliance",
     entity_unlinked: "unlinked, screening match",
     ai_summary_label: "AI summary",
     ai_action_prefix: "Suggested action:",
@@ -125,6 +121,9 @@ const I18N = {
     decline_reason_label: "Reason for not pursuing this opportunity",
     decline_reason_placeholder: "e.g. client not interested, insufficient fit…",
     decline_reason_prefix: "Decline reason:",
+    action_comment_label: "Comment on this action",
+    action_comment_placeholder: "e.g. client onboarded, proposal sent…",
+    action_comment_prefix: "Action comment:",
     btn_confirm: "Confirm",
     btn_cancel: "Cancel",
     scan_call_error_prefix: "Check failed:",
@@ -167,7 +166,6 @@ const I18N = {
     priority_high: "Élevée",
     priority_medium: "Moyenne",
     priority_low: "Faible",
-    status_new: "Nouveau",
     status_review: "En cours d'examen",
     status_actioned: "Traité",
     status_dismissed: "Rejeté",
@@ -198,17 +196,14 @@ const I18N = {
     col_linked_entities: "Entités liées",
     kpi_total: "Signaux totaux",
     kpi_high: "Priorité élevée",
-    kpi_new: "En attente de tri",
-    kpi_risk: "Risque & conformité",
+    kpi_pending: "En attente",
     kpi_opportunities: "Opportunités commerciales",
     client_type_client: "Client",
     client_type_prospect: "Prospect",
     clients_kpi_clients: "Clients existants",
     clients_kpi_prospects: "Prospects",
     cat_commercial: "Opportunité Commerciale",
-    cat_credit: "Entreprise & Crédit",
     cat_kyc: "Mise à jour KYC",
-    cat_risk: "Risque & Conformité",
     entity_unlinked: "non lié, correspondance de filtrage",
     ai_summary_label: "Résumé IA",
     ai_action_prefix: "Action suggérée :",
@@ -277,6 +272,9 @@ const I18N = {
     decline_reason_label: "Motif de non-poursuite de cette opportunité",
     decline_reason_placeholder: "ex. : client non intéressé, profil non adapté…",
     decline_reason_prefix: "Motif du rejet :",
+    action_comment_label: "Commentaire sur cette action",
+    action_comment_placeholder: "ex. : client intégré, proposition envoyée…",
+    action_comment_prefix: "Commentaire :",
     btn_confirm: "Confirmer",
     btn_cancel: "Annuler",
     scan_call_error_prefix: "Échec de la vérification :",
@@ -320,33 +318,31 @@ const state = {
 
 const CATEGORY_CLASS = {
   "Commercial Opportunity": "cat-commercial",
-  "Corporate & Credit": "cat-credit",
   "KYC Update": "cat-kyc",
-  "Risk & Compliance": "cat-risk",
 };
 
 const CATEGORY_KEY = {
   "Commercial Opportunity": "cat_commercial",
-  "Corporate & Credit": "cat_credit",
   "KYC Update": "cat_kyc",
-  "Risk & Compliance": "cat_risk",
 };
 
 const PRIORITY_CLASS = { High: "pri-high", Medium: "pri-medium", Low: "pri-low" };
 const PRIORITY_KEY = { High: "priority_high", Medium: "priority_medium", Low: "priority_low" };
 
 const STATUS_CLASS = {
-  New: "status-new",
   "Under Review": "status-review",
   Actioned: "status-actioned",
   Dismissed: "status-dismissed",
 };
 const STATUS_KEY = {
-  New: "status_new",
   "Under Review": "status_review",
   Actioned: "status_actioned",
   Dismissed: "status_dismissed",
 };
+
+function statusCommentPrefix(status) {
+  return status === "Actioned" ? t("action_comment_prefix") : t("decline_reason_prefix");
+}
 
 const PROVIDER_KEY = {
   "Rule-based demo engine": "provider_mock",
@@ -438,15 +434,13 @@ function renderKPIs() {
   const total = state.events.length;
   const opportunities = state.events.filter((e) => e.category === "Commercial Opportunity").length;
   const high = state.events.filter((e) => e.priority === "High").length;
-  const newCount = state.events.filter((e) => e.status === "New").length;
-  const risk = state.events.filter((e) => e.category === "Risk & Compliance").length;
+  const pending = state.events.filter((e) => e.status === "Under Review").length;
 
   const kpis = [
     { value: total, label: t("kpi_total") },
-    { value: opportunities, label: t("kpi_opportunities"), accent: true },
+    { value: pending, label: t("kpi_pending") },
     { value: high, label: t("kpi_high") },
-    { value: newCount, label: t("kpi_new") },
-    { value: risk, label: t("kpi_risk") },
+    { value: opportunities, label: t("kpi_opportunities"), accent: true },
   ];
 
   document.getElementById("kpis").innerHTML = kpis
@@ -518,7 +512,7 @@ function renderEventDetailRow(event) {
     : "";
 
   const declineReasonHtml = event.declineReason
-    ? `<p class="decline-reason-note">${t("decline_reason_prefix")} ${escapeHtml(event.declineReason)}</p>`
+    ? `<p class="decline-reason-note${event.status === "Actioned" ? " actioned" : ""}">${statusCommentPrefix(event.status)} ${escapeHtml(event.declineReason)}</p>`
     : "";
 
   return `
@@ -530,7 +524,6 @@ function renderEventDetailRow(event) {
         <div class="detail-actions">
           <button class="btn-navy analyze-btn" data-id="${event.id}">${event.aiSummary ? t("btn_reanalyze") : t("btn_analyze")}</button>
           <select class="status-select" data-id="${event.id}">
-            <option value="New"${event.status === "New" ? " selected" : ""}>${t("status_new")}</option>
             <option value="Under Review"${event.status === "Under Review" ? " selected" : ""}>${t("status_review")}</option>
             <option value="Actioned"${event.status === "Actioned" ? " selected" : ""}>${t("status_actioned")}</option>
             <option value="Dismissed"${event.status === "Dismissed" ? " selected" : ""}>${t("status_dismissed")}</option>
@@ -616,12 +609,13 @@ function attachEventTableHandlers() {
       const id = Number(select.dataset.id);
       const newStatus = e.target.value;
 
-      if (newStatus === "Dismissed") {
+      if (newStatus === "Dismissed" || newStatus === "Actioned") {
+        const placeholder = newStatus === "Actioned" ? t("action_comment_placeholder") : t("decline_reason_placeholder");
         const slot = document.querySelector(`.decline-reason-slot[data-id="${id}"]`);
         if (slot) {
           slot.innerHTML = `
             <div class="decline-reason-box">
-              <input type="text" class="decline-reason-input" placeholder="${t("decline_reason_placeholder")}" />
+              <input type="text" class="decline-reason-input" placeholder="${placeholder}" />
               <button class="btn-navy decline-reason-confirm">${t("btn_confirm")}</button>
               <button class="btn btn-outline decline-reason-cancel" style="padding:5px 12px;font-size:12px;">${t("btn_cancel")}</button>
             </div>`;
@@ -883,8 +877,9 @@ function renderClientModalContent(client) {
           const dateStr = new Date(e.detectedAt).toLocaleDateString(state.lang === "fr" ? "fr-FR" : "en-US");
 
           if (LEGACY_STATUSES.has(e.status)) {
+            const reasonColor = e.status === "Dismissed" ? "var(--red)" : "var(--green)";
             const reason = e.declineReason
-              ? `<div class="om" style="color:var(--red);">${t("decline_reason_prefix")} ${escapeHtml(e.declineReason)}</div>`
+              ? `<div class="om" style="color:${reasonColor};">${statusCommentPrefix(e.status)} ${escapeHtml(e.declineReason)}</div>`
               : "";
             return `<div class="client-event-row client-event-row-legacy">
               <div class="legacy-review-line">

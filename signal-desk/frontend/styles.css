@@ -683,3 +683,4 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
   color: var(--red);
   font-style: italic;
 }
+.decline-reason-note.actioned { color: var(--green); }

@@ -1,0 +1,59 @@
+{
+  "client_name": "DOMAINE DE CHEZELLES",
+  "internal_records_found": 1,
+  "internal_records": [
+    {
+      "source_file": "test_2_pm.json",
+      "record_kind": "person",
+      "client_id": "301238697",
+      "client_name": "DOMAINE DE CHEZELLES",
+      "last_name": null,
+      "first_name": null,
+      "client_type": "Legal person",
+      "status": "Client",
+      "legal_form": "EI - Entreprise individuelle / Entreprise en nom personnel (1)",
+      "country": "France",
+      "business_activity": "Silviculture and other forestry activities",
+      "commercial": {
+        "productsAndServicesDetails": "Il ne s'intéresse à rien",
+        "potentialOtherBusinessLines": "Petit potentiel mais on le prend quand même",
+        "relationOtherBusinessLines": "TIM",
+        "expectedAssets1YearValue": "500 000 EUR - 5 000 000 EUR (2)",
+        "otherBanksRelations": "CAM",
+        "prospectConversionDate": "2024-03-06"
+      },
+      "bank_services": ["Corporate structures (02)"],
+      "bank_products": ["Private equity funds (07)"]
+    }
+  ],
+  "analysis": {
+    "summary": "Un signal public indique que DOMAINE DE CHEZELLES envisagerait de céder une filiale forestière. Information absente de la base interne : opportunité commerciale à qualifier.",
+    "new_information": [
+      {
+        "description": "Annonce de mise en vente d'une filiale d'exploitation forestière.",
+        "source": "google",
+        "date": "2024-05-14",
+        "is_new": true,
+        "relevance": "high",
+        "confidence": "medium",
+        "evidence": "Article de presse : 'Le groupe étudie la cession de son activité sylviculture.'"
+      }
+    ],
+    "opportunities": [
+      {
+        "type": "vente_entreprise",
+        "description": "Cession potentielle d'une filiale : besoin de conseil M&A et réemploi du produit de cession.",
+        "signal": "sell",
+        "relevance": "high",
+        "confidence": "medium",
+        "evidence": "Article de presse mentionnant l'étude d'une cession."
+      }
+    ],
+    "crm_alert": {
+      "should_contact": true,
+      "reason": "Opportunité de conseil sur cession et réinvestissement du produit ; information non présente en interne.",
+      "priority": "high"
+    }
+  }
+}
+

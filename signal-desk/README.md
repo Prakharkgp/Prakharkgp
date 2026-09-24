@@ -95,10 +95,12 @@ To enable Azure AI Foundry on the deployed instance, add
 Render's dashboard — the same free-tier caveats apply
 (SQLite resets on redeploy, service spins down when idle).
 
-`POST /api/veille` (called by **Explorer l'opportunité commerciale**) uses
-its own Azure OpenAI settings: set `AZURE_OPENAI_API_KEY`,
-`AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_DEPLOYMENT_NAME` on the service,
-otherwise the synthesis card shows that the veille is unavailable.
+`POST /api/veille` (called by **Explorer l'opportunité commerciale**)
+forwards `{"client_id": ...}` to the veille agent API. Set `VEILLE_API_URL`
+to that API's base URL (e.g. `https://veille-agent.example.com`; the app
+calls `$VEILLE_API_URL/api/veille`). If it is not set, the pipeline runs
+in-process and needs `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT` and
+`AZURE_OPENAI_DEPLOYMENT_NAME` instead.
 
 ## A note on the data
 

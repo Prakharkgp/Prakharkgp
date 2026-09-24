@@ -4,6 +4,7 @@ signals surfaced from public registries and (eventually) private
 intelligence sources, linked back to clients and entities."""
 
 import json
+import os
 import re
 import sqlite3
 import threading
@@ -12,6 +13,8 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -556,17 +559,48 @@ def start_agent_run(client_id: str):
     return {"runId": run_id}
 
 
+# The veille agent runs behind its own API (POST {VEILLE_API_URL}/api/veille).
+# Without VEILLE_API_URL the pipeline runs in-process instead.
+VEILLE_TIMEOUT_SECONDS = 300
+
+
+def _call_veille_api(base_url: str, client_id: str) -> str:
+    request = Request(
+        f"{base_url.rstrip('/')}/api/veille",
+        data=json.dumps({"client_id": client_id}).encode("utf-8"),
+        headers={"Content-Type": "application/json", "Accept": "application/json"},
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=VEILLE_TIMEOUT_SECONDS) as response:
+            return json.load(response)["synthese"]
+    except HTTPError as error:
+        try:
+            detail = json.load(error).get("detail") or error.reason
+        except ValueError:
+            detail = error.reason
+        raise HTTPException(status_code=502, detail=f"Veille API {error.code}: {detail}") from error
+    except (URLError, TimeoutError, ValueError, KeyError) as error:
+        raise HTTPException(status_code=502, detail=f"Veille API unreachable at {base_url}: {error}") from error
+
+
 @app.post("/api/veille", response_model=VeilleResponse)
 def run_veille(payload: VeilleRequest):
     """Lance le pipeline complet de veille commerciale + conformité KYC."""
-    if not payload.client_id.strip():
+    client_id = payload.client_id.strip()
+    if not client_id:
         raise HTTPException(status_code=400, detail="client_id est obligatoire.")
-    if get_internal_record(payload.client_id) is None:
+    if get_internal_record(client_id) is None:
         raise HTTPException(status_code=404, detail="Client not found")
+    base_url = os.getenv("VEILLE_API_URL", "").strip()
+    if base_url:
+        return {"synthese": _call_veille_api(base_url, client_id)}
     try:
-        return {"synthese": generate_veille(payload.client_id)}
+        return {"synthese": generate_veille(client_id)}
     except Exception as error:
-        raise HTTPException(status_code=502, detail=str(error)) from error
+        raise HTTPException(
+            status_code=502, detail=f"VEILLE_API_URL is not set and the local veille pipeline failed: {error}"
+        ) from error
 
 
 @app.get("/api/agent-runs/{run_id}")

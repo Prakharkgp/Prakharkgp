@@ -1,0 +1,594 @@
+import json
+import os
+import re
+from base64 import b64encode
+from html import unescape
+from typing import Any
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote_plus, urlencode
+from urllib.request import Request, urlopen
+from xml.etree import ElementTree
+
+from kyc.analyzer import analyze_client
+
+_STATE_RECHERCHES = []
+
+
+# ---------------------------------------------------------------------------
+# Chemin vers le dossier de données locales (bdd/)
+# ---------------------------------------------------------------------------
+BDD_DIR = os.path.join(os.path.dirname(__file__), 'bdd')
+
+
+# ---------------------------------------------------------------------------
+# Schémas JSON stricts des 5 outils
+# ---------------------------------------------------------------------------
+
+TOOLS = [
+    {
+        'type': 'function',
+        'name': 'analyser_conformite_kyc',
+        'description': (
+            "Analyse la conformité KYC d'un client en lisant silencieusement les résultats "
+            "des outils externes précédemment appelés. Retourne un rapport strict au format JSON."
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'client_id': {
+                    'type': 'string',
+                    'description': "L'identifiant unique du client (BP Key).",
+                },
+            },
+            'required': ['client_id'],
+            'additionalProperties': False,
+        },
+        'strict': True,
+    },
+    {
+        'type': 'function',
+        'name': 'consulter_base_interne',
+        'description': (
+            "Consulte la base de données interne de la banque pour récupérer "
+            "toutes les informations connues sur un client à partir de son ID. "
+            "Retourne une synthèse structurée : identité du Business Partner, "
+            "personne morale associée, bénéficiaire effectif, gérant, niveau "
+            "de risque AML, produits et services bancaires en cours."
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'client_id': {
+                    'type': 'string',
+                    'description': "L'identifiant unique du client (BP Key).",
+                },
+            },
+            'required': ['client_id'],
+            'additionalProperties': False,
+        },
+        'strict': True,
+    },
+    {
+        'type': 'function',
+        'name': 'search_google_business_events',
+        'description': (
+            'Search Google or Google News for recent business events about a company. '
+            'Use it for general news signals: partnerships, acquisitions, launches, '
+            'fundraising, leadership changes, expansion, restructuring, or awards.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'company_name': {
+                    'type': 'string',
+                    'description': 'Company name to research.',
+                },
+                'max_results': {
+                    'type': 'integer',
+                    'description': 'Number of results to return, from 1 to 10.',
+                    'minimum': 1,
+                    'maximum': 10,
+                },
+            },
+            'required': ['company_name', 'max_results'],
+            'additionalProperties': False,
+        },
+        'strict': True,
+    },
+    {
+        'type': 'function',
+        'name': 'search_pappers_company',
+        'description': (
+            'Search Pappers for official French company identity information. Use it '
+            'to retrieve SIREN/SIRET, legal name, legal form, headquarters, officers, '
+            'and registry-level information when available.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'query': {
+                    'type': 'string',
+                    'description': 'Company name, SIREN, SIRET, or search query.',
+                },
+                'max_results': {
+                    'type': 'integer',
+                    'description': 'Number of company results to return, from 1 to 20.',
+                    'minimum': 1,
+                    'maximum': 20,
+                },
+            },
+            'required': ['query', 'max_results'],
+            'additionalProperties': False,
+        },
+        'strict': True,
+    },
+    {
+        'type': 'function',
+        'name': 'search_bodacc_announcements',
+        'description': (
+            'Search BODACC commercial announcements for a French company. Use it for '
+            'official events such as creations, modifications, collective procedures, '
+            'sales/transfers, radiations, and accounts filings.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'query': {
+                    'type': 'string',
+                    'description': 'Company name, SIREN, SIRET, or BODACC search query.',
+                },
+                'max_results': {
+                    'type': 'integer',
+                    'description': 'Number of BODACC announcements to return, from 1 to 20.',
+                    'minimum': 1,
+                    'maximum': 20,
+                },
+            },
+            'required': ['query', 'max_results'],
+            'additionalProperties': False,
+        },
+        'strict': True,
+    },
+    {
+        'type': 'function',
+        'name': 'search_companies_house_company',
+        'description': (
+            'Search Companies House for official UK company registry information. '
+            'Use it for UK companies to retrieve company number, status, legal type, '
+            'registered address snippet, incorporation date, and registry profile links.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'query': {
+                    'type': 'string',
+                    'description': 'UK company name or company number search query.',
+                },
+                'max_results': {
+                    'type': 'integer',
+                    'description': 'Number of company results to return, from 1 to 20.',
+                    'minimum': 1,
+                    'maximum': 20,
+                },
+            },
+            'required': ['query', 'max_results'],
+            'additionalProperties': False,
+        },
+        'strict': True,
+    },
+]
+
+
+# ---------------------------------------------------------------------------
+# Helpers privés (HTTP, parsing, env)
+# ---------------------------------------------------------------------------
+
+def _get_env(name: str) -> str | None:
+    value = os.getenv(name)
+    return value.strip() if value else None
+
+
+def _strip_html(value: str) -> str:
+    return re.sub(r'<[^>]+>', '', unescape(value)).strip()
+
+
+def _truncate(value: Any, max_length: int = 600) -> Any:
+    if value is None:
+        return None
+    text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
+    return text if len(text) <= max_length else f'{text[:max_length]}...'
+
+
+def _load_json_url(url: str) -> dict[str, Any]:
+    try:
+        with urlopen(url, timeout=20) as response:
+            return json.load(response)
+    except HTTPError as error:
+        detail = error.read().decode('utf-8', errors='replace')
+        raise RuntimeError(f'HTTP request failed ({error.code}): {detail}') from error
+    except URLError as error:
+        raise RuntimeError(f'Unable to reach provider: {error.reason}') from error
+
+
+def _load_json_request(request: Request) -> dict[str, Any]:
+    try:
+        with urlopen(request, timeout=20) as response:
+            return json.load(response)
+    except HTTPError as error:
+        detail = error.read().decode('utf-8', errors='replace')
+        raise RuntimeError(f'HTTP request failed ({error.code}): {detail}') from error
+    except URLError as error:
+        raise RuntimeError(f'Unable to reach provider: {error.reason}') from error
+
+
+def _business_event_query(company_name: str) -> str:
+    return (
+        f'"{company_name.strip()}" (cession OR acquisition OR IPO OR "retrait de cote" '
+        'OR delisting OR dividende OR "levée de fonds" OR fundraising OR immobilier '
+        'OR nomination OR démission OR "franchissement de seuil" OR actionnariat '
+        'OR "parts sociales")'
+    )
+
+
+# ---------------------------------------------------------------------------
+# Outil 1 – Consultation de la base de données interne
+# ---------------------------------------------------------------------------
+
+def consulter_base_interne(client_id: str) -> str:
+    """Lit les fichiers JSON locaux du dossier bdd/ et retourne une synthèse
+    formatée de la situation du client."""
+
+    if client_id != "1532378":
+        return f"ERREUR : Aucun client trouvé avec l'ID {client_id}."
+
+    # --- Lecture des fichiers JSON ---
+    try:
+        with open(os.path.join(BDD_DIR, 'test_1_bp.json'), 'r', encoding='utf-8') as f:
+            bp_data = json.load(f)
+        with open(os.path.join(BDD_DIR, 'test_2_pm.json'), 'r', encoding='utf-8') as f:
+            pm_data = json.load(f)
+        with open(os.path.join(BDD_DIR, 'test_3_be.json'), 'r', encoding='utf-8') as f:
+            be_data = json.load(f)
+        with open(os.path.join(BDD_DIR, 'test_5_gerant.json'), 'r', encoding='utf-8') as f:
+            gerant_data = json.load(f)
+    except FileNotFoundError as e:
+        return f"ERREUR : Fichier de données introuvable – {e}"
+
+    # --- Extraction des informations clés ---
+    bp = bp_data['result']['bpData']['bpDetails']
+    bp_tax = bp_data['result']['bpData']['bpTax']
+    ownerships = bp_data['result']['bpData']['relations']['ownerships']
+
+    pm_ident = pm_data['result']['personData']['identification']
+    pm_business = pm_data['result']['personData']['businessActivity']
+    pm_commercial = pm_data['result']['personData']['commercial']
+    pm_aml = pm_data['result']['personData']['aml']
+
+    be_ident = be_data['result']['personData']['identification']
+    be_risk = be_data['result']['personData']['riskFactors']
+    be_wealth = be_data['result']['personData']['wealthDetails']
+
+    gerant_ident = gerant_data['result']['personData']['identification']
+
+    # --- Construction de la synthèse ---
+    synthese = (
+        f"=== SYNTHÈSE BASE INTERNE – Client ID: {client_id} ===\n\n"
+
+        f"1. BUSINESS PARTNER (BP)\n"
+        f"   - Nom BP : {bp['bpName']}\n"
+        f"   - Clé BP : {bp['bpKey']}\n"
+        f"   - Date d'ouverture : {bp['openDate']}\n"
+        f"   - Type client : {bp['customerTypeValue']}\n"
+        f"   - BU : {bp['subBuValue']}\n"
+        f"   - Pays de domicile : {bp['countryOfDomicileValue']}\n"
+        f"   - CRM : {bp['crmName']}\n"
+        f"   - Risque AML validé : {bp_tax['amlValidatedRiskLevelValue']}\n"
+        f"   - Statut PEP : {bp_tax['pepAccountValue']}\n\n"
+
+        f"2. PERSONNE MORALE (Registered Owner)\n"
+        f"   - Nom : {pm_ident['fullName']}\n"
+        f"   - Person Key : {pm_ident['personKey']}\n"
+        f"   - Type : {pm_ident['personTypeValue']}\n"
+        f"   - Forme juridique : {pm_ident.get('legalFormValue', 'N/A')}\n"
+        f"   - Pays d'enregistrement : {pm_ident.get('registrationCountryValue', 'N/A')}\n"
+        f"   - Date d'enregistrement : {pm_ident.get('registrationDate', 'N/A')}\n"
+        f"   - Secteur d'activité : {pm_business['businessActivity11Value']}\n"
+        f"   - CA : {pm_business.get('turnover', 'N/A')}\n"
+        f"   - Bilan total : {pm_business.get('totalBalanceSheet', 'N/A')}\n"
+        f"   - Risque AML : {pm_aml['validatedAMLRiskLevelValue']}\n"
+        f"   - Produits bancaires : {', '.join(p['productValue'] for p in pm_commercial.get('bankProducts', []))}\n"
+        f"   - Services bancaires : {', '.join(s['serviceValue'] for s in pm_commercial.get('bankServices', []))}\n\n"
+
+        f"3. BÉNÉFICIAIRE EFFECTIF (Ultimate Beneficial Owner)\n"
+        f"   - Nom : {be_ident['fullName']}\n"
+        f"   - Person Key : {be_ident['personKey']}\n"
+        f"   - Type : {be_ident['personTypeValue']}\n"
+        f"   - Date de naissance : {be_ident.get('birthDate', 'N/A')}\n"
+        f"   - Nationalité : {be_ident.get('nationalityValue', 'N/A')}\n"
+        f"   - Pays de domicile : {be_ident.get('countryOfDomicileValue', 'N/A')}\n"
+        f"   - Qualification PEP : {be_risk['pepQualificationValue']}\n"
+        f"   - Fonction PEP : {be_risk.get('pepFunctionValue', 'N/A')}\n"
+        f"   - Patrimoine estimé : {be_wealth['totalEstimatedWealthValue']}\n"
+        f"   - Source de richesse : {', '.join(s['sourceOfWealthValue'] for s in be_wealth.get('sourceOfWealth', []))}\n\n"
+
+        f"4. GÉRANT\n"
+        f"   - Nom : {gerant_ident['fullName']}\n"
+        f"   - Person Key : {gerant_ident['personKey']}\n"
+        f"   - Type : {gerant_ident['personTypeValue']}\n"
+        f"   - Statut : {gerant_ident['personStatusValue']}\n"
+        f"   - Date de naissance : {gerant_ident.get('birthDate', 'N/A')}\n\n"
+
+        f"5. RELATIONS D'ACTIONNARIAT\n"
+    )
+
+    for own in ownerships:
+        synthese += (
+            f"   - {own['ownershipTypeValue']} : {own['personFullName']} "
+            f"(Rôle: {own['ownershipRoleValue']}, "
+            f"Risque AML: {own.get('validatedAmlRiskValue', 'N/A')})\n"
+        )
+
+    return synthese
+
+
+# ---------------------------------------------------------------------------
+# Outil 2 – Recherche Google News / Custom Search
+# ---------------------------------------------------------------------------
+
+def search_google_business_events(company_name: str, max_results: int = 5) -> str:
+    if not company_name.strip():
+        raise ValueError('company_name cannot be empty')
+    if not 1 <= max_results <= 10:
+        raise ValueError('max_results must be between 1 and 10')
+    max_results = min(max_results, 5)
+
+    provider = os.getenv('GOOGLE_SEARCH_PROVIDER', 'google_news').strip().lower()
+    query = _business_event_query(company_name)
+    print(f'Google provider: {provider}')
+
+    if provider in {'google_news', 'google_news_rss', 'news'}:
+        url = (
+            'https://news.google.com/rss/search?'
+            f'q={quote_plus(query)}&hl=fr&gl=FR&ceid=FR:fr'
+        )
+        try:
+            with urlopen(url, timeout=20) as response:
+                root = ElementTree.fromstring(response.read())
+        except URLError as error:
+            raise RuntimeError(f'Unable to reach Google News: {error.reason}') from error
+
+        results = [
+            {
+                'title': item.findtext('title', default=''),
+                'url': item.findtext('link', default=''),
+                'summary': _strip_html(item.findtext('description', default='')),
+                'published_at': item.findtext('pubDate', default=''),
+                'provider': 'google_news_rss',
+            }
+            for item in root.findall('./channel/item')[:max_results]
+        ]
+        return json.dumps({'company_name': company_name, 'results': results}, ensure_ascii=False)
+
+    if provider in {'custom_search', 'google_custom_search'}:
+        api_key = _get_env('GOOGLE_SEARCH_API_KEY')
+        search_engine_id = _get_env('GOOGLE_SEARCH_ENGINE_ID')
+        if not api_key or not search_engine_id:
+            raise RuntimeError(
+                'Google Custom Search requires GOOGLE_SEARCH_API_KEY and '
+                'GOOGLE_SEARCH_ENGINE_ID.'
+            )
+        parameters = urlencode({
+            'key': api_key,
+            'cx': search_engine_id,
+            'q': query,
+            'num': max_results,
+            'dateRestrict': 'y1',
+        })
+        payload = _load_json_url(f'https://www.googleapis.com/customsearch/v1?{parameters}')
+        results = [
+            {
+                'title': item.get('title', ''),
+                'url': item.get('link', ''),
+                'summary': item.get('snippet', ''),
+                'published_at': item.get('pagemap', {}).get('metatags', [{}])[0].get(
+                    'article:published_time',
+                    item.get('pagemap', {}).get('metatags', [{}])[0].get('date', ''),
+                ),
+                'provider': 'google_custom_search',
+            }
+            for item in payload.get('items', [])
+        ]
+        return json.dumps({'company_name': company_name, 'results': results}, ensure_ascii=False)
+
+    raise ValueError('Unknown GOOGLE_SEARCH_PROVIDER. Expected google_news or custom_search.')
+
+
+# ---------------------------------------------------------------------------
+# Outil 3 – Recherche Pappers (identité entreprise FR)
+# ---------------------------------------------------------------------------
+
+def search_pappers_company(query: str, max_results: int = 5) -> str:
+    if not query.strip():
+        raise ValueError('query cannot be empty')
+    if not 1 <= max_results <= 20:
+        raise ValueError('max_results must be between 1 and 20')
+    max_results = min(max_results, 5)
+
+    api_token = _get_env('PAPPERS_API_TOKEN')
+    if not api_token:
+        raise RuntimeError('Pappers requires PAPPERS_API_TOKEN in the environment.')
+
+    parameters = urlencode({
+        'api_token': api_token,
+        'q': query.strip(),
+        'par_page': max_results,
+    })
+    payload = _load_json_url(f'https://api.pappers.fr/v2/recherche?{parameters}')
+    entreprises = payload.get('resultats', [])[:max_results]
+    results = [
+        {
+            'nom_entreprise': item.get('nom_entreprise'),
+            'denomination': item.get('denomination'),
+            'siren': item.get('siren'),
+            'siret_siege': item.get('siege', {}).get('siret') if item.get('siege') else None,
+            'forme_juridique': item.get('forme_juridique'),
+            'date_creation': item.get('date_creation'),
+            'ville': item.get('siege', {}).get('ville') if item.get('siege') else None,
+            'code_postal': item.get('siege', {}).get('code_postal') if item.get('siege') else None,
+            'code_naf': item.get('code_naf'),
+            'libelle_code_naf': item.get('libelle_code_naf'),
+            'dirigeants': item.get('dirigeants', [])[:5],
+            'provider': 'pappers',
+        }
+        for item in entreprises
+    ]
+    return json.dumps({'query': query, 'results': results}, ensure_ascii=False)
+
+
+# ---------------------------------------------------------------------------
+# Outil 4 – Annonces légales BODACC
+# ---------------------------------------------------------------------------
+
+def search_bodacc_announcements(query: str, max_results: int = 5) -> str:
+    if not query.strip():
+        raise ValueError('query cannot be empty')
+    if not 1 <= max_results <= 20:
+        raise ValueError('max_results must be between 1 and 20')
+    max_results = min(max_results, 5)
+
+    selected_fields = ','.join([
+        'id',
+        'dateparution',
+        'familleavis_lib',
+        'typeavis_lib',
+        'commercant',
+        'ville',
+        'registre',
+        'tribunal',
+        'jugement',
+        'acte',
+        'modificationsgenerales',
+        'radiationaurcs',
+        'depot',
+        'url_complete',
+    ])
+    parameters = urlencode({
+        'select': selected_fields,
+        'where': f'search("{query.strip()}")',
+        'order_by': 'dateparution desc',
+        'limit': max_results,
+    })
+    url = (
+        'https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/'
+        f'datasets/annonces-commerciales/records?{parameters}'
+    )
+    payload = _load_json_url(url)
+    results = []
+    for item in payload.get('results', []):
+        results.append({
+            'id': item.get('id'),
+            'dateparution': item.get('dateparution'),
+            'familleavis': item.get('familleavis_lib'),
+            'typeavis': item.get('typeavis_lib'),
+            'commercant': item.get('commercant'),
+            'ville': item.get('ville'),
+            'registre': item.get('registre'),
+            'tribunal': item.get('tribunal'),
+            'details': _truncate(item.get('jugement') or item.get('acte')
+            or item.get('modificationsgenerales') or item.get('radiationaurcs')
+            or item.get('depot')),
+            'url': item.get('url_complete'),
+            'provider': 'bodacc',
+        })
+
+    return json.dumps({'query': query, 'results': results}, ensure_ascii=False)
+
+
+# ---------------------------------------------------------------------------
+# Outil 5 – Registre UK Companies House
+# ---------------------------------------------------------------------------
+
+def search_companies_house_company(query: str, max_results: int = 5) -> str:
+    if not query.strip():
+        raise ValueError('query cannot be empty')
+    if not 1 <= max_results <= 20:
+        raise ValueError('max_results must be between 1 and 20')
+    max_results = min(max_results, 5)
+
+    api_key = _get_env('COMPANIES_HOUSE_API_KEY')
+    if not api_key:
+        raise RuntimeError(
+            'Companies House requires COMPANIES_HOUSE_API_KEY in the environment.'
+        )
+
+    token = b64encode(f'{api_key}:'.encode('utf-8')).decode('ascii')
+    parameters = urlencode({
+        'q': query.strip(),
+        'items_per_page': max_results,
+    })
+    request = Request(
+        f'https://api.company-information.service.gov.uk/search/companies?{parameters}',
+        headers={'Authorization': f'Basic {token}'},
+    )
+    payload = _load_json_request(request)
+    results = []
+    for item in payload.get('items', [])[:max_results]:
+        company_number = item.get('company_number')
+        results.append({
+            'title': item.get('title'),
+            'company_number': company_number,
+            'company_status': item.get('company_status'),
+            'company_type': item.get('company_type'),
+            'date_of_creation': item.get('date_of_creation'),
+            'address_snippet': item.get('address_snippet'),
+            'description': item.get('description'),
+            'description_identifier': item.get('description_identifier'),
+            'profile_url': (
+                f'https://find-and-update.company-information.service.gov.uk/company/{company_number}'
+                if company_number else None
+            ),
+            'provider': 'companies_house',
+        })
+
+    return json.dumps({'query': query, 'results': results}, ensure_ascii=False)
+
+
+# ---------------------------------------------------------------------------
+# Outil 6 – Analyse de Conformité KYC
+# ---------------------------------------------------------------------------
+
+def analyser_conformite_kyc(client_id: str) -> str:
+    """Appelle le module KYC en lui passant les résultats des recherches précédentes."""
+    result = analyze_client(client_id, _STATE_RECHERCHES)
+    _STATE_RECHERCHES.clear()
+    return json.dumps(result, ensure_ascii=False)
+
+
+# ---------------------------------------------------------------------------
+# Routeur d'exécution des outils
+# ---------------------------------------------------------------------------
+
+def execute_tool(name: str, arguments: str) -> str:
+    """Route l'appel vers la fonction outil appropriée."""
+    args = json.loads(arguments)
+
+    if name == 'consulter_base_interne':
+        return consulter_base_interne(**args)
+
+    if name == 'analyser_conformite_kyc':
+        return analyser_conformite_kyc(**args)
+
+    output = ""
+    if name == 'search_google_business_events':
+        output = search_google_business_events(**args)
+    elif name == 'search_pappers_company':
+        output = search_pappers_company(**args)
+    elif name == 'search_bodacc_announcements':
+        output = search_bodacc_announcements(**args)
+    elif name == 'search_companies_house_company':
+        output = search_companies_house_company(**args)
+    else:
+        raise ValueError(f'Outil inconnu : {name}')
+
+    _STATE_RECHERCHES.append(json.loads(output))
+    return output

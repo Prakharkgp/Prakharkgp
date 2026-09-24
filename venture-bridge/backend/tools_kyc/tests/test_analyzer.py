@@ -11,9 +11,22 @@ def _fake_agent(_messages):
     return json.dumps(
         {
             "summary": "ok",
-            "new_information": [],
-            "opportunities": [],
-            "crm_alert": {"should_contact": False, "reason": "", "priority": "low"},
+            "identity_check": {
+                "status": "a_verifier",
+                "internal_identity": {"name": None, "legal_form": None, "siren": None},
+                "external_identity": {"name": None, "legal_form": None, "siren": None},
+                "discrepancies": [],
+                "homonymy_risk": "low",
+                "evidence": "",
+            },
+            "kyc_deltas": [],
+            "aml_assessment": {
+                "current_risk": "unknown",
+                "pep_status": "unknown",
+                "reassessment_required": False,
+                "reason": "",
+            },
+            "kyc_alert": {"should_review": False, "reason": "", "priority": "low"},
         }
     )
 
@@ -52,7 +65,8 @@ def test_analyze_client_returns_structured_result():
     )
     assert result["client_name"] == "DOMAINE DE CHEZELLES"
     assert result["internal_records_found"] >= 1
-    assert "crm_alert" in result["analysis"]
+    assert "kyc_alert" in result["analysis"]
+    assert "identity_check" in result["analysis"]
 
 
 def test_strip_sensitive_removes_personal_fields():

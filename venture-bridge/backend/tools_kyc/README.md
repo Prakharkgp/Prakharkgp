@@ -1,12 +1,15 @@
 # tools_kyc
 
-Module d'analyse KYC de veille commerciale. Il croise les **données internes**
-du client (aujourd'hui `data/test_*.json`, demain les *Containers* Azure Blob)
-avec le **résultat des API externes** produit par `tools_calling` (Google,
-Pappers, BODACC, Companies House), puis appelle l'**Agent Lifecycle Management**
-(déploiement Azure OpenAI) pour produire une analyse structurée.
+Module d'analyse des **impacts KYC**. Il croise les **données internes** du
+client (aujourd'hui `data/test_*.json`, demain les *Containers* Azure Blob) avec
+le **résultat des API externes** produit par `tools_calling` (Google, Pappers,
+BODACC, Companies House), puis appelle l'**Agent Lifecycle Management**
+(déploiement Azure OpenAI) pour évaluer la cohérence d'identité, détecter les
+écarts KYC et signaler les revues AML/PEP nécessaires.
 
-Ce module est autonome et ne modifie pas `tools_calling`.
+Le module cible les impacts KYC (contrôle d'identité, homonymies, deltas de
+registre, réévaluation AML), et non les opportunités commerciales. Il est
+autonome et ne modifie pas `tools_calling`.
 
 ## Utilisation
 
@@ -26,10 +29,11 @@ result = analyze_client(
 | `client_name` | Nom recherché |
 | `internal_records_found` | Nombre d'enregistrements internes trouvés |
 | `internal_records` | Champs commerciaux internes (sans données sensibles) |
-| `analysis.summary` | Résumé français |
-| `analysis.new_information[]` | Faits absents de la base interne (`is_new`, `relevance`) |
-| `analysis.opportunities[]` | Signaux `buy`/`sell` (achat/vente d'entreprise, immobilier…) fondés sur preuve |
-| `analysis.crm_alert` | `should_contact`, `reason`, `priority` pour alerter le CRM |
+| `analysis.summary` | Résumé français des impacts KYC |
+| `analysis.identity_check` | Cohérence d'identité interne/externe : `status`, identités comparées, `discrepancies`, `homonymy_risk` |
+| `analysis.kyc_deltas[]` | Écarts par champ (`field`, `internal_value`, `external_value`, `status`, `action`, `severity`) fondés sur preuve |
+| `analysis.aml_assessment` | `current_risk`, `pep_status`, `reassessment_required`, `reason` |
+| `analysis.kyc_alert` | `should_review`, `reason`, `priority` pour déclencher une revue KYC |
 
 ## Configuration
 

@@ -27,31 +27,61 @@
     }
   ],
   "analysis": {
-    "summary": "Un signal public indique que DOMAINE DE CHEZELLES envisagerait de céder une filiale forestière. Information absente de la base interne : opportunité commerciale à qualifier.",
-    "new_information": [
+    "summary": "Homonymie détectée : les registres externes remontent DOMAINE APICOLE DE CHEZELLES (SASU, SIREN 775193071), distincte de l'entité interne DOMAINE DE CHEZELLES (EI). Identité à fiabiliser avant toute conclusion KYC. Profil déjà classé AML High / PEP : revue KYC renforcée recommandée.",
+    "identity_check": {
+      "status": "incoherent",
+      "internal_identity": {
+        "name": "DOMAINE DE CHEZELLES",
+        "legal_form": "EI - Entreprise individuelle",
+        "siren": null
+      },
+      "external_identity": {
+        "name": "DOMAINE APICOLE DE CHEZELLES",
+        "legal_form": "SASU",
+        "siren": "775193071"
+      },
+      "discrepancies": ["nom", "forme_juridique", "registre", "siren"],
+      "homonymy_risk": "high",
+      "evidence": "Pappers/BODACC renvoient DOMAINE APICOLE DE CHEZELLES, SIREN 775193071, forme SASU."
+    },
+    "kyc_deltas": [
       {
-        "description": "Annonce de mise en vente d'une filiale d'exploitation forestière.",
-        "source": "google",
-        "date": "2024-05-14",
-        "is_new": true,
-        "relevance": "high",
-        "confidence": "medium",
-        "evidence": "Article de presse : 'Le groupe étudie la cession de son activité sylviculture.'"
+        "field": "siren",
+        "internal_value": null,
+        "external_value": "775193071",
+        "status": "unverified",
+        "action": "a_completer",
+        "severity": "high",
+        "evidence": "Aucun SIREN interne ; SIREN externe rattaché à une entité potentiellement distincte."
+      },
+      {
+        "field": "forme_juridique",
+        "internal_value": "EI - Entreprise individuelle",
+        "external_value": "SASU",
+        "status": "conflicting",
+        "action": "a_corriger",
+        "severity": "high",
+        "evidence": "Écart majeur EI (interne) vs SASU (externe)."
+      },
+      {
+        "field": "beneficiaire_effectif",
+        "internal_value": "Marie-Cécile Hernaez",
+        "external_value": null,
+        "status": "unverified",
+        "action": "a_verifier",
+        "severity": "medium",
+        "evidence": "Aucune confirmation externe du bénéficiaire effectif interne."
       }
     ],
-    "opportunities": [
-      {
-        "type": "vente_entreprise",
-        "description": "Cession potentielle d'une filiale : besoin de conseil M&A et réemploi du produit de cession.",
-        "signal": "sell",
-        "relevance": "high",
-        "confidence": "medium",
-        "evidence": "Article de presse mentionnant l'étude d'une cession."
-      }
-    ],
-    "crm_alert": {
-      "should_contact": true,
-      "reason": "Opportunité de conseil sur cession et réinvestissement du produit ; information non présente en interne.",
+    "aml_assessment": {
+      "current_risk": "high",
+      "pep_status": "PEP",
+      "reassessment_required": true,
+      "reason": "Profil AML High et PEP combiné à une homonymie et à des modifications d'administration observées sur l'entité externe : revue KYC renforcée nécessaire."
+    },
+    "kyc_alert": {
+      "should_review": true,
+      "reason": "Lever l'ambiguïté d'identité entre DOMAINE DE CHEZELLES et DOMAINE APICOLE DE CHEZELLES avant toute action, et fiabiliser SIREN/forme juridique.",
       "priority": "high"
     }
   }

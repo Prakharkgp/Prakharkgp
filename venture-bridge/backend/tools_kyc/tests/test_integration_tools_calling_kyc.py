@@ -1,14 +1,16 @@
 """Test d'intégration bout-en-bout : tools_calling -> tools_kyc.
 
 Vérifie que les résultats produits par les tools externes de `tools_calling`
-(starter) alimentent correctement l'analyse KYC de `tools_kyc`, en croisant les
-données internes et en filtrant les champs sensibles. Le test est 100 % hors
-ligne : la couche réseau de `tools_calling` est simulée via monkeypatch, et
-l'agent Azure OpenAI est remplacé par un runner factice.
+(starter) alimentent l'analyse des impacts KYC de `tools_kyc` : croisement avec
+la base interne, détection d'écart d'identité / homonymie, et filtrage des champs
+sensibles. Le test est 100 % hors ligne : la couche réseau de `tools_calling` est
+simulée via monkeypatch, et l'agent Azure OpenAI est remplacé par un runner
+factice.
 """
 import importlib.util
 import json
 from pathlib import Path
+from urllib.request import Request
 
 from tools_kyc.analyzer import analyze_client
 
@@ -36,33 +38,50 @@ class _FakeHttpResponse:
         return self._payload
 
 
-_FAKE_GOOGLE_NEWS_RSS = b"""<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
-  <channel>
-    <item>
-      <title>DOMAINE DE CHEZELLES etudie la cession de sa filiale forestiere</title>
-      <link>https://news.example/chezelles-cession</link>
-      <description>&lt;p&gt;Le groupe etudie une cession de son activite sylviculture.&lt;/p&gt;</description>
-      <pubDate>Tue, 14 May 2024 08:00:00 GMT</pubDate>
-    </item>
-  </channel>
-</rss>"""
+# Registre officiel simulé : une entité HOMONYME (SIREN et forme juridique
+# distincts de l'entité interne DOMAINE DE CHEZELLES / EI).
+_FAKE_PAPPERS_JSON = json.dumps(
+    {
+        "resultats": [
+            {
+                "nom_entreprise": "DOMAINE APICOLE DE CHEZELLES",
+                "denomination": "DOMAINE APICOLE DE CHEZELLES",
+                "siren": "775193071",
+                "siege": {"siret": "77519307100013", "ville": "Chezelles", "code_postal": "36500"},
+                "forme_juridique": "SASU",
+                "date_creation": "1973-01-01",
+                "code_naf": "01.49Z",
+                "libelle_code_naf": "Elevage d'autres animaux",
+                "dirigeants": [],
+            }
+        ]
+    }
+).encode()
 
 
-def test_tools_calling_output_feeds_tools_kyc(monkeypatch):
-    # 1. tools_calling : produit un signal business externe, hors ligne.
-    monkeypatch.setattr(tools_calling, "urlopen", lambda *a, **k: _FakeHttpResponse(_FAKE_GOOGLE_NEWS_RSS))
-    monkeypatch.setenv("GOOGLE_SEARCH_PROVIDER", "google_news")
+def _fake_urlopen(target, *_args, **_kwargs):
+    """Répartit la réponse simulée selon l'URL appelée par tools_calling."""
+    url = target.full_url if isinstance(target, Request) else str(target)
+    if "pappers" in url:
+        return _FakeHttpResponse(_FAKE_PAPPERS_JSON)
+    return _FakeHttpResponse(b"{}")
+
+
+def test_tools_calling_identity_feeds_tools_kyc(monkeypatch):
+    # 1. tools_calling : récupère l'identité registre externe, hors ligne.
+    monkeypatch.setattr(tools_calling, "urlopen", _fake_urlopen)
+    monkeypatch.setenv("PAPPERS_API_TOKEN", "token-de-test")
 
     raw = tools_calling.execute_tool(
-        "search_google_business_events",
-        json.dumps({"company_name": "DOMAINE DE CHEZELLES", "max_results": 3}),
+        "search_pappers_company",
+        json.dumps({"query": "DOMAINE DE CHEZELLES", "max_results": 3}),
     )
     external = json.loads(raw)
-    assert external["results"], "tools_calling doit renvoyer au moins un signal"
+    assert external["results"], "tools_calling doit renvoyer au moins une entité"
+    assert external["results"][0]["siren"] == "775193071"
 
     # Champ sensible ajouté volontairement pour vérifier le filtrage de tools_kyc.
-    external["results"][0]["passportId"] = "NE-DOIT-PAS-FUITER"
+    external["results"][0]["dirigeantEmail"] = "NE-DOIT-PAS-FUITER"
 
     # 2. tools_kyc : agent factice capturant le prompt réellement transmis.
     captured: dict[str, str] = {}
@@ -71,31 +90,43 @@ def test_tools_calling_output_feeds_tools_kyc(monkeypatch):
         captured["prompt"] = messages[-1]["content"]
         return json.dumps(
             {
-                "summary": "Signal public de cession detecte pour un client connu.",
-                "new_information": [
+                "summary": "Homonymie detectee : entite externe de registre distinct.",
+                "identity_check": {
+                    "status": "incoherent",
+                    "internal_identity": {
+                        "name": "DOMAINE DE CHEZELLES",
+                        "legal_form": "EI",
+                        "siren": None,
+                    },
+                    "external_identity": {
+                        "name": "DOMAINE APICOLE DE CHEZELLES",
+                        "legal_form": "SASU",
+                        "siren": "775193071",
+                    },
+                    "discrepancies": ["nom", "forme_juridique", "siren"],
+                    "homonymy_risk": "high",
+                    "evidence": "Pappers renvoie SIREN 775193071, forme SASU.",
+                },
+                "kyc_deltas": [
                     {
-                        "description": "Etude de cession d'une filiale forestiere.",
-                        "source": "google",
-                        "date": "2024-05-14",
-                        "is_new": True,
-                        "relevance": "high",
-                        "confidence": "medium",
-                        "evidence": "Article de presse.",
+                        "field": "forme_juridique",
+                        "internal_value": "EI",
+                        "external_value": "SASU",
+                        "status": "conflicting",
+                        "action": "a_corriger",
+                        "severity": "high",
+                        "evidence": "Ecart EI vs SASU.",
                     }
                 ],
-                "opportunities": [
-                    {
-                        "type": "vente_entreprise",
-                        "description": "Conseil M&A sur cession et reemploi du produit.",
-                        "signal": "sell",
-                        "relevance": "high",
-                        "confidence": "medium",
-                        "evidence": "Article mentionnant l'etude d'une cession.",
-                    }
-                ],
-                "crm_alert": {
-                    "should_contact": True,
-                    "reason": "Opportunite de conseil sur cession.",
+                "aml_assessment": {
+                    "current_risk": "high",
+                    "pep_status": "PEP",
+                    "reassessment_required": True,
+                    "reason": "Homonymie et profil PEP High.",
+                },
+                "kyc_alert": {
+                    "should_review": True,
+                    "reason": "Lever l'ambiguite d'identite avant toute action.",
                     "priority": "high",
                 },
             }
@@ -106,21 +137,23 @@ def test_tools_calling_output_feeds_tools_kyc(monkeypatch):
     # 3. Les deux modules ont contribué au résultat final.
     assert result["client_name"] == "DOMAINE DE CHEZELLES"
     assert result["internal_records_found"] >= 1  # tools_kyc : base interne croisée
-    assert "cession" in captured["prompt"].lower()  # tools_calling : signal transmis à l'analyse
+    assert "775193071" in captured["prompt"]  # tools_calling : identité registre transmise
+    assert "SASU" in captured["prompt"]  # tools_calling : forme juridique externe transmise
     assert "NE-DOIT-PAS-FUITER" not in captured["prompt"]  # tools_kyc : champ sensible filtré
-    assert result["analysis"]["crm_alert"]["should_contact"] is True
-    assert result["analysis"]["opportunities"][0]["signal"] == "sell"
+    assert result["analysis"]["identity_check"]["status"] == "incoherent"
+    assert result["analysis"]["kyc_alert"]["should_review"] is True
+    assert result["analysis"]["kyc_deltas"][0]["severity"] == "high"
 
 
 def test_tools_calling_provider_error_still_analyzed(monkeypatch):
     """Si un provider tools_calling échoue, l'erreur structurée reste analysable."""
-    monkeypatch.setattr(tools_calling, "urlopen", lambda *a, **k: _FakeHttpResponse(_FAKE_GOOGLE_NEWS_RSS))
-    monkeypatch.setenv("GOOGLE_SEARCH_PROVIDER", "google_news")
+    monkeypatch.setattr(tools_calling, "urlopen", _fake_urlopen)
+    monkeypatch.setenv("PAPPERS_API_TOKEN", "token-de-test")
 
-    google = json.loads(
+    pappers = json.loads(
         tools_calling.execute_tool(
-            "search_google_business_events",
-            json.dumps({"company_name": "DOMAINE DE CHEZELLES", "max_results": 2}),
+            "search_pappers_company",
+            json.dumps({"query": "DOMAINE DE CHEZELLES", "max_results": 2}),
         )
     )
     # Companies House sans clé d'API : renvoie une erreur structurée (comportement client.py).
@@ -134,18 +167,32 @@ def test_tools_calling_provider_error_still_analyzed(monkeypatch):
     except RuntimeError as error:
         companies_house = {"error": str(error)}
 
-    api_results = {"google": google, "companies_house": companies_house}
+    api_results = {"pappers": pappers, "companies_house": companies_house}
 
     def _fake_agent(_messages):
         return json.dumps(
             {
                 "summary": "Analyse partielle : un provider indisponible.",
-                "new_information": [],
-                "opportunities": [],
-                "crm_alert": {"should_contact": False, "reason": "", "priority": "low"},
+                "identity_check": {
+                    "status": "a_verifier",
+                    "internal_identity": {"name": None, "legal_form": None, "siren": None},
+                    "external_identity": {"name": None, "legal_form": None, "siren": None},
+                    "discrepancies": [],
+                    "homonymy_risk": "low",
+                    "evidence": "",
+                },
+                "kyc_deltas": [],
+                "aml_assessment": {
+                    "current_risk": "unknown",
+                    "pep_status": "unknown",
+                    "reassessment_required": False,
+                    "reason": "",
+                },
+                "kyc_alert": {"should_review": False, "reason": "", "priority": "low"},
             }
         )
 
     result = analyze_client("DOMAINE DE CHEZELLES", api_results, agent_runner=_fake_agent)
     assert result["internal_records_found"] >= 1
-    assert "crm_alert" in result["analysis"]
+    assert "kyc_alert" in result["analysis"]
+    assert "identity_check" in result["analysis"]

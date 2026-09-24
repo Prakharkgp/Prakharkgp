@@ -157,6 +157,13 @@ def _build_query(
         add(analysis.get("opportunities"), 6)
         add(analysis.get("summary"), 4)
         add(analysis.get("crm_alert"), 3)
+        # Current KYC output contract used by agents/kyc. Keep the future
+        # new_information contract above, but retrieve useful knowledge for the
+        # payload that is produced by the merged orchestrator today as well.
+        add(analysis.get("kyc_deltas"), 6)
+        add(analysis.get("identity_check"), 3)
+        add(analysis.get("aml_assessment"), 2)
+        add(analysis.get("kyc_alert"), 3)
 
     for key, value in kyc_delta.items():
         normalized_key = _normalize(str(key))

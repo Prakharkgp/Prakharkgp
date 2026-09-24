@@ -68,7 +68,12 @@ class FoundryClient:
                 # --- Exécution avec gestion d'erreur ---
                 print(f'Executing tool: {item.name}')
                 try:
-                    tool_output = execute_tool(item.name, item.arguments)
+                    tool_output = execute_tool(
+                        item.name,
+                        item.arguments,
+                        llm_client=self.client,
+                        deployment_name=self.deployment_name,
+                    )
                 except Exception as error:
                     tool_output = json.dumps(
                         {

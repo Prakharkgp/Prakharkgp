@@ -3,8 +3,8 @@
 import json
 from typing import Any, Dict, Optional
 
-from proposition.knowledge_base import retrieve_relevant_knowledge
-from proposition.prompts import (
+from agents.proposition.knowledge_base import retrieve_relevant_knowledge
+from agents.proposition.prompts import (
     PROPOSE_ACTIONS_PROMPT,
     SYNTHESIZE_NEW_INFORMATION_PROMPT,
 )

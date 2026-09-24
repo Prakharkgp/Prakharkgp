@@ -11,9 +11,9 @@ Le projet doit permettre de detecter rapidement des signaux utiles autour d'un c
 - Le dossier parent `venture-bridge/` contient deja un socle applicatif avec un backend et un frontend.
 - Le frontend existe mais n'est pas encore connecte au flux de veille commerciale cible.
 - Le backend principal expose aujourd'hui une application de suivi existante.
-- Un sous-projet `backend/tools_calling/` a ete ajoute pour le hackathon.
-- `backend/tools_calling/starter/` sert de point de depart pour appeler Azure AI Foundry et orchestrer des tools.
-- Le fichier `backend/tools_calling/starter/tools.py` contient un tool local `calculate` qui sert de smoke test pour verifier que Foundry appelle bien des tools.
+- L'orchestration Azure AI Foundry et tous les tools sont integres dans `backend/agents/`.
+- `backend/agents/tools.py` regroupe les tools de recherche, KYC, synthese et propositions.
+- `backend/agents/proposition/` contient les prompts et services propositionnels ; `backend/agents/data/` contient la knowledge base SGPB.
 
 ## Use case cible
 
@@ -128,14 +128,13 @@ API + Frontend
 - Charger ou stocker une base de clients.
 - Exposer une route pour lister les clients.
 - Exposer une route pour lancer la veille sur un client.
-- Connecter le backend principal avec le code de `tools_calling` ou rapatrier les pieces utiles.
+- Maintenir l'orchestration et les tools dans `backend/agents/`.
 - Normaliser les resultats de tools dans un schema commun.
 - Ajouter une persistance simple des evenements detectes si necessaire.
 
-### Tools calling
+### Agents / Tools
 
 - Stabiliser le contrat des tools.
-- Garder `calculate` comme test technique minimal du tool calling local.
 - Eviter de mettre un appel provider externe directement dans un tool Python local si le provider doit etre appele derriere Foundry.
 - Ajouter un schema de sortie commun pour les providers.
 - Gerer les erreurs provider proprement.
@@ -161,7 +160,7 @@ API + Frontend
 ## Decisions a prendre
 
 - Source initiale de la base clients : CSV, SQLite existant, JSON seed, API, saisie manuelle.
-- Emplacement final de l'orchestration LLM : backend principal ou sous-projet `tools_calling` integre.
+- L'orchestration LLM est integree dans `backend/agents/`.
 - Niveau de persistance attendu pour les evenements : memoire, fichier, SQLite, Cosmos DB.
 - Providers externes retenus pour la demo.
 - Format exact du schema evenement.
@@ -177,8 +176,8 @@ API + Frontend
 - [x] Brancher l'appel Azure AI Foundry avec tool calling local minimal.
 - [ ] Identifier le type exact de tool heberge/grounding expose par Foundry pour la recherche web.
 - [ ] Tester la veille commerciale avec un appel provider porte par Foundry.
-- [x] Ajouter des tools locaux Google, Pappers, BODACC et Companies House dans `backend/tools_calling/starter/tools.py`.
-- [x] Valider un smoke test multi-provider avec synthese Foundry via `backend/tools_calling/starter/main.py`.
+- [x] Ajouter les tools locaux Google, Pappers, BODACC et Companies House dans `backend/agents/tools.py`.
+- [x] Integrer la synthese KYC et les propositions bancaires dans `backend/agents/`.
 - [ ] Retourner une liste d'evenements business structures.
 - [ ] Afficher les resultats dans le frontend.
 
@@ -213,7 +212,7 @@ API + Frontend
 - Creation du dossier de connaissance projet.
 - Clarification du use case : veille commerciale par client, providers externes, orchestration LLM, restitution d'evenements business.
 - Exploration initiale d'un tool Python local appelant Google, puis abandon de cette piste car l'objectif est de faire porter l'appel provider par Foundry.
-- Validation de la connexion Azure Foundry avec le tool local `calculate` via `backend/tools_calling/starter/test_calculate_foundry.py` : Foundry appelle bien les tools et retourne une reponse finale.
-- Changement de cap : suppression du tool Python local qui appelait Google directement. La cible est desormais un provider de recherche heberge/configure cote Foundry, teste via `backend/tools_calling/starter/test_foundry_web_search.py`.
-- Ajout de `backend/tools_calling/starter/test_pappers_foundry_tool.py` pour creer temporairement un agent Foundry avec un tool OpenAPI Pappers authentifie par la connexion `PAPPERS_CALLER`. Premier run bloque sur l'absence d'authentification Entra locale, ce qui est attendu avec `azure-ai-projects`.
+- Validation initiale de la connexion Azure Foundry et du function calling local.
+- Exploration puis abandon du provider de recherche heberge cote Foundry, faute de capacite a creer des agents pendant le hackathon.
+- Integration finale de tous les tools dans `backend/agents/`, sans sous-projet d'orchestration separe.
 - Pivot final pour le hackathon : pas de creation d'agents. Ajout de tools locaux `search_google_business_events`, `search_pappers_company`, `search_bodacc_announcements`, `search_companies_house_company`. Validation : le modele appelle les providers, continue si un token manque, puis genere un recapitulatif d'evenements business.

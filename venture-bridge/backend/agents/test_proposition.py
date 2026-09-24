@@ -4,8 +4,8 @@ import json
 import unittest
 from types import SimpleNamespace
 
-from proposition.knowledge_base import retrieve_relevant_knowledge
-from tools import TOOLS, execute_tool
+from agents.proposition.knowledge_base import retrieve_relevant_knowledge
+from agents.tools import TOOLS, execute_tool
 
 
 class FakeResponses:
@@ -47,6 +47,7 @@ class PropositionToolsTest(unittest.TestCase):
             'propose_banking_actions',
             json.dumps({
                 'kyc_delta': {'analysis': {'new_information': []}},
+                'new_information_summary': {'new_information': []},
                 'knowledge_base': {'services': ['example service']},
             }),
             llm_client=fake_client,
@@ -84,6 +85,11 @@ class PropositionToolsTest(unittest.TestCase):
                         }],
                     },
                 },
+                'new_information_summary': {
+                    'new_information': [{
+                        'summary': 'Liquidités à réinvestir après une cession',
+                    }],
+                },
             }),
             llm_client=fake_client,
             deployment_name='test-deployment',
@@ -96,6 +102,17 @@ class PropositionToolsTest(unittest.TestCase):
         self.assertLessEqual(knowledge_base['entry_count'], 15)
         self.assertIn('kb_entry_id', knowledge_base['entries'][0])
         self.assertIn('source_file', knowledge_base['entries'][0])
+
+    def test_action_tool_requires_synthesis_first(self):
+        fake_client = FakeClient('{"business_proposals": []}')
+
+        with self.assertRaisesRegex(ValueError, 'new_information_summary'):
+            execute_tool(
+                'propose_banking_actions',
+                json.dumps({'kyc_delta': {'analysis': {}}}),
+                llm_client=fake_client,
+                deployment_name='test-deployment',
+            )
 
     def test_flexible_delta_accepts_explicit_database_changes(self):
         fake_client = FakeClient('{"new_information": [], "database_factual_changes": []}')
@@ -115,6 +132,40 @@ class PropositionToolsTest(unittest.TestCase):
         )
 
         self.assertIn('database_factual_changes', json.loads(result))
+
+    def test_current_kyc_output_contract_is_supported(self):
+        fake_client = FakeClient(
+            '{"new_information": [], "database_factual_changes": [], '
+            '"contact_priority": "High"}'
+        )
+        result = execute_tool(
+            'synthesize_kyc_new_information',
+            json.dumps({
+                'kyc_delta': {
+                    'client_name': 'DOMAINE DE CHEZELLES',
+                    'analysis': {
+                        'summary': 'Une divergence doit etre verifiee.',
+                        'kyc_deltas': [{
+                            'field': 'forme_juridique',
+                            'internal_value': 'EI',
+                            'external_value': 'SASU',
+                            'severity': 'high',
+                        }],
+                        'kyc_alert': {
+                            'should_review': True,
+                            'priority': 'high',
+                        },
+                    },
+                },
+            }),
+            llm_client=fake_client,
+            deployment_name='test-deployment',
+        )
+
+        self.assertEqual(json.loads(result)['contact_priority'], 'High')
+        instructions = fake_client.responses.calls[0]['instructions']
+        self.assertIn('analysis.kyc_deltas', instructions)
+        self.assertIn('analysis.kyc_alert', instructions)
 
     def test_knowledge_retrieval_is_bounded(self):
         result = retrieve_relevant_knowledge({

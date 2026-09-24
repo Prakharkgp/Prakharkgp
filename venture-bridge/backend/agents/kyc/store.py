@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-DATA_DIRECTORY = Path(__file__).resolve().parents[2] / "data"
+DATA_DIRECTORY = Path(__file__).resolve().parents[1] / "bdd"
 
 # Champs commerciaux autorisés à être transmis au modèle.
 _COMMERCIAL_KEYS = (
@@ -124,6 +124,8 @@ def search_internal_records(client_name: str) -> list[dict[str, Any]]:
             record.get("first_name"),
             " ".join(filter(None, [record.get("first_name"), record.get("last_name")])),
         ]
-        if _name_matches(client_name, candidate_names):
+        if _normalise(client_name) == _normalise(record["client_id"]) or _name_matches(
+            client_name, candidate_names
+        ):
             matches.append(record)
     return matches

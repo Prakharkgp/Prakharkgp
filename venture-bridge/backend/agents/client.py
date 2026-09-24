@@ -5,7 +5,13 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from tools import TOOLS, execute_tool
 
-load_dotenv(Path(__file__).resolve().parent / '.env')
+_agents_dir = Path(__file__).resolve().parent
+_backend_dir = _agents_dir.parent
+
+# Charge le .env du dossier backend/ (parent) en priorité,
+# puis celui de agents/ en fallback s'il existe.
+load_dotenv(_backend_dir / '.env')
+load_dotenv(_agents_dir / '.env')
 
 
 class FoundryClient:
@@ -58,21 +64,53 @@ class FoundryClient:
                         indent=2,
                     ),
                 )
+
+                # --- Exécution avec gestion d'erreur ---
+                print(f'Executing tool: {item.name}')
+                try:
+                    tool_output = execute_tool(item.name, item.arguments)
+                except Exception as error:
+                    tool_output = json.dumps(
+                        {
+                            'tool': item.name,
+                            'error_type': type(error).__name__,
+                            'error': str(error),
+                        },
+                        ensure_ascii=False,
+                    )
+                    print(f'Tool failed: {type(error).__name__}: {error}')
+
+                print(f'Tool output ready: {len(tool_output)} characters')
                 tool_outputs.append({
                     'type': 'function_call_output',
                     'call_id': item.call_id,
-                    'output': execute_tool(item.name, item.arguments),
+                    'output': tool_output,
                 })
 
             if not tool_outputs:
                 break
 
-            response = self.client.responses.create(
-                model=self.deployment_name,
-                instructions=system_prompt,
-                previous_response_id=response.id,
-                input=tool_outputs,
-                tools=TOOLS,
-            )
+            print('Sending tool outputs back to Foundry...')
+            try:
+                response = self.client.responses.create(
+                    model=self.deployment_name,
+                    instructions=system_prompt,
+                    previous_response_id=response.id,
+                    input=tool_outputs,
+                    tools=TOOLS,
+                )
+                print('Foundry response received')
+            except Exception as error:
+                print(f'Foundry synthesis failed: {type(error).__name__}: {error}')
+                return json.dumps(
+                    {
+                        'warning': 'Foundry synthesis failed after tool execution.',
+                        'error_type': type(error).__name__,
+                        'error': str(error),
+                        'tool_outputs': tool_outputs,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
 
         return response.output_text

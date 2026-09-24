@@ -14,13 +14,12 @@ try:
 except ImportError:
     from kyc.analyzer import analyze_client
 
+try:
+    from .bdd_store import get_document as _get_bdd_document
+except ImportError:
+    from bdd_store import get_document as _get_bdd_document
+
 _STATE_RECHERCHES = []
-
-
-# ---------------------------------------------------------------------------
-# Chemin vers le dossier de données locales (bdd/)
-# ---------------------------------------------------------------------------
-BDD_DIR = os.path.join(os.path.dirname(__file__), 'bdd')
 
 
 # ---------------------------------------------------------------------------
@@ -238,24 +237,20 @@ def _business_event_query(company_name: str) -> str:
 # ---------------------------------------------------------------------------
 
 def consulter_base_interne(client_id: str) -> str:
-    """Lit les fichiers JSON locaux du dossier bdd/ et retourne une synthèse
-    formatée de la situation du client."""
+    """Lit les documents bdd/*.json stockés en base SQLite et retourne une
+    synthèse formatée de la situation du client."""
 
     if client_id != "1532378":
         return f"ERREUR : Aucun client trouvé avec l'ID {client_id}."
 
-    # --- Lecture des fichiers JSON ---
+    # --- Lecture des documents depuis SQLite (bdd_documents) ---
     try:
-        with open(os.path.join(BDD_DIR, 'test_1_bp.json'), 'r', encoding='utf-8') as f:
-            bp_data = json.load(f)
-        with open(os.path.join(BDD_DIR, 'test_2_pm.json'), 'r', encoding='utf-8') as f:
-            pm_data = json.load(f)
-        with open(os.path.join(BDD_DIR, 'test_3_be.json'), 'r', encoding='utf-8') as f:
-            be_data = json.load(f)
-        with open(os.path.join(BDD_DIR, 'test_5_gerant.json'), 'r', encoding='utf-8') as f:
-            gerant_data = json.load(f)
+        bp_data = _get_bdd_document('test_1_bp.json')
+        pm_data = _get_bdd_document('test_2_pm.json')
+        be_data = _get_bdd_document('test_3_be.json')
+        gerant_data = _get_bdd_document('test_5_gerant.json')
     except FileNotFoundError as e:
-        return f"ERREUR : Fichier de données introuvable – {e}"
+        return f"ERREUR : Document introuvable en base – {e}"
 
     # --- Extraction des informations clés ---
     bp = bp_data['result']['bpData']['bpDetails']

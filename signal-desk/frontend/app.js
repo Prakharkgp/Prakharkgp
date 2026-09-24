@@ -146,9 +146,6 @@ const I18N = {
     convert_already_client: (name) => `${name} is already a tracked client.`,
     this_client_label: "this client",
     unidentified_stake: "Unidentified shareholders",
-    col_opportunity_prospects: "Opportunity prospects",
-    opportunity_prospects_count: (n) => `${n} prospect${n > 1 ? "s" : ""}`,
-    opportunity_prospects_hint: "Co-shareholders not yet tracked as clients — open the dashboard to convert them.",
     clients_kpi_opportunity_prospects: "Opportunity prospects identified",
     crm_review_date_prefix: "CRM review:",
   },
@@ -299,9 +296,6 @@ const I18N = {
     convert_already_client: (name) => `${name} est déjà un client suivi.`,
     this_client_label: "ce client",
     unidentified_stake: "Actionnaires non identifiés",
-    col_opportunity_prospects: "Prospects opportunité",
-    opportunity_prospects_count: (n) => `${n} prospect${n > 1 ? "s" : ""}`,
-    opportunity_prospects_hint: "Co-actionnaires pas encore suivis comme clients — ouvrez le tableau de bord pour les convertir.",
     clients_kpi_opportunity_prospects: "Prospects opportunité identifiés",
     crm_review_date_prefix: "Revue CRM :",
   },
@@ -740,11 +734,6 @@ function renderClients() {
         <td>${escapeHtml(c.segment)}</td>
         <td>${escapeHtml(c.rmOwner)}</td>
         <td>${c.linkedEntities ? c.linkedEntities.length : 0}</td>
-        <td>${
-          c.potentialProspectCount
-            ? `<span class="opportunity-prospect-badge" title="${escapeHtml(t("opportunity_prospects_hint"))}">${t("opportunity_prospects_count", c.potentialProspectCount)}</span>`
-            : `<span class="opportunity-prospect-none">—</span>`
-        }</td>
         <td><button class="btn-navy client-view-btn" data-id="${c.id}">${t("btn_dashboard")}</button></td>
       </tr>`
     )

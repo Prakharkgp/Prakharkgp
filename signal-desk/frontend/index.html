@@ -23,8 +23,6 @@
       <nav class="tabs" id="tabs">
         <button class="tab active" data-tab="clients" data-i18n="tab_clients">Clients</button>
         <button class="tab" data-tab="dashboard" data-i18n="tab_dashboard">Répertoire des signaux</button>
-        <button class="tab" data-tab="sources" data-i18n="tab_sources">Sources</button>
-        <button class="tab" data-tab="ai" data-i18n="tab_ai">Moteur IA</button>
       </nav>
     </header>
 
@@ -49,7 +47,6 @@
                 <th data-i18n="col_segment">Segment</th>
                 <th data-i18n="col_rm">Chargé de relation</th>
                 <th data-i18n="col_linked_entities">Entités liées</th>
-                <th data-i18n="col_opportunity_prospects">Prospects opportunité</th>
                 <th data-i18n="col_action">Action</th>
               </tr>
             </thead>
@@ -89,7 +86,6 @@
               <span data-i18n="filter_status">Statut</span>
               <select id="filter-status">
                 <option value="" data-i18n="filter_all">&lt;&lt; Tous &gt;&gt;</option>
-                <option value="New" data-i18n="status_new">Nouveau</option>
                 <option value="Under Review" data-i18n="status_review">En cours d'examen</option>
                 <option value="Actioned" data-i18n="status_actioned">Traité</option>
                 <option value="Dismissed" data-i18n="status_dismissed">Rejeté</option>
@@ -213,7 +209,7 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
   <script src="app.js"></script>
 </body>

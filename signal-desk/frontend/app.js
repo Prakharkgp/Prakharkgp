@@ -15,8 +15,7 @@ const I18N = {
     priority_high: "High",
     priority_medium: "Medium",
     priority_low: "Low",
-    status_new: "New",
-    status_review: "Under Review",
+    status_review: "Pending",
     status_actioned: "Actioned",
     status_dismissed: "Dismissed",
     btn_search: "Search",
@@ -24,9 +23,6 @@ const I18N = {
     btn_export: "Export",
     btn_view: "View",
     btn_hide: "Hide",
-    btn_analyze: "Analyze with AI",
-    btn_reanalyze: "Re-analyze",
-    btn_analyzing: "Analyzing…",
     col_category: "Category",
     col_event_type: "Event type",
     col_entity: "Entity / client",
@@ -46,17 +42,14 @@ const I18N = {
     col_linked_entities: "Linked entities",
     kpi_total: "Total signals",
     kpi_high: "High priority",
-    kpi_new: "Awaiting triage",
-    kpi_risk: "Risk & compliance",
+    kpi_pending: "Pending",
     kpi_opportunities: "Commercial opportunities",
     client_type_client: "Client",
     client_type_prospect: "Prospect",
     clients_kpi_clients: "Existing clients",
     clients_kpi_prospects: "Prospects",
     cat_commercial: "Commercial Opportunity",
-    cat_credit: "Corporate & Credit",
     cat_kyc: "KYC Update",
-    cat_risk: "Risk & Compliance",
     entity_unlinked: "unlinked, screening match",
     ai_summary_label: "AI summary",
     ai_action_prefix: "Suggested action:",
@@ -108,36 +101,45 @@ const I18N = {
     ai_config_saved: "Saved. The Analyze button now uses this configuration.",
     ai_config_cleared: "Cleared. Reverted to environment variables (if any) or the demo engine.",
     ai_config_error: "Couldn't save — please try again.",
-    ai_call_error_prefix: "Analysis failed:",
     shareholder_structure_title: "Shareholder structure",
     explore_opportunity_btn: "Explore commercial opportunity",
     scan_loading_title: "Agent sequence running…",
-    progress_step_search: "1/1 Online search",
-    progress_step_kyc: "2/2 Internal KYC data comparison",
-    progress_step_synthesis: "3/3 Synthetic commercial opportunity report",
+    progress_step_search: "1/1 Multi-sources web searches",
+    progress_step_kyc: "2/2 Person KYC data comparison",
+    progress_step_synthesis: "3/3 Commercial opportunities synthesis preparation",
     no_opportunity_title: "No opportunity for this legal entity",
     no_opportunity_body: "The AI agent cross-checked the shareholder structure against tracked signals and found nothing new.",
-    agent_findings_title: "Agent findings",
-    gap_found_intro: "The agent found linked entities with no signal on file yet:",
-    client_opportunities_title: "Commercial opportunity signals",
     client_opportunities_empty: "No commercial opportunity signals on file for this client.",
     linked_signals_empty_short: "No linked signals.",
     decline_reason_label: "Reason for not pursuing this opportunity",
     decline_reason_placeholder: "e.g. client not interested, insufficient fit…",
     decline_reason_prefix: "Decline reason:",
+    action_comment_label: "Comment on this action",
+    action_comment_placeholder: "e.g. client onboarded, proposal sent…",
+    action_comment_prefix: "Action comment:",
     btn_confirm: "Confirm",
     btn_cancel: "Cancel",
     scan_call_error_prefix: "Check failed:",
     btn_dashboard: "Signals",
     gap_added_tag: "Added to the Signal Directory",
-    step_search_online: "1. Online search",
-    step_search_online_placeholder: "No additional public source reachable from this demo environment.",
-    step_kyc_check: "2. Internal KYC data check",
-    step_kyc_check_result: (relation, jurisdiction) => `No signal on file for this entity yet (${relation}, ${jurisdiction}) — internal referential updated.`,
-    step_synthesis: "3. Synthetic summary",
-    step_commercial_proposal: "4. Commercial proposal",
     other_shareholders_label: "Other shareholders",
     already_client_tag: "Already a client",
+    btn_details: "Details",
+    btn_hide_details: "Hide details",
+    rating_label: "Level",
+    synthesis_title: "Commercial opportunity synthesis",
+    synthesis_text: (n, type, entity) => `${n} pending commercial opportunit${n > 1 ? "ies" : "y"} — main one: ${type} (${entity}).`,
+    level_high: "High",
+    level_medium: "Medium",
+    level_low: "Low",
+    details_sources_title: "Sources identified by the agents",
+    details_opportunities_title: "Opportunities detected",
+    details_updates_title: "Proposed referential updates",
+    referential_update_line: (name, stake, entity, source) => `${name} (${stake}) found as a shareholder of ${entity} via ${source} — missing from our referential.`,
+    btn_apply_update: "Apply update",
+    update_applied: (name) => `Referential updated — ${name} added to the shareholder structure.`,
+    no_sources: "No source identified.",
+    veille_unavailable: "AI monitoring synthesis unavailable:",
     convert_to_client_btn: "Make this shareholder a client",
     converting_label: "Converting…",
     convert_success: (name) => `${name} was added as a new prospect — a commercial opportunity signal was created and analyzed. See the Clients tab.`,
@@ -145,9 +147,6 @@ const I18N = {
     convert_already_client: (name) => `${name} is already a tracked client.`,
     this_client_label: "this client",
     unidentified_stake: "Unidentified shareholders",
-    col_opportunity_prospects: "Opportunity prospects",
-    opportunity_prospects_count: (n) => `${n} prospect${n > 1 ? "s" : ""}`,
-    opportunity_prospects_hint: "Co-shareholders not yet tracked as clients — open the dashboard to convert them.",
     clients_kpi_opportunity_prospects: "Opportunity prospects identified",
     crm_review_date_prefix: "CRM review:",
   },
@@ -167,7 +166,6 @@ const I18N = {
     priority_high: "Élevée",
     priority_medium: "Moyenne",
     priority_low: "Faible",
-    status_new: "Nouveau",
     status_review: "En cours d'examen",
     status_actioned: "Traité",
     status_dismissed: "Rejeté",
@@ -176,9 +174,6 @@ const I18N = {
     btn_export: "Exporter",
     btn_view: "Visualiser",
     btn_hide: "Masquer",
-    btn_analyze: "Analyser avec l'IA",
-    btn_reanalyze: "Réanalyser",
-    btn_analyzing: "Analyse en cours…",
     col_category: "Catégorie",
     col_event_type: "Type d'événement",
     col_entity: "Entité / client",
@@ -198,17 +193,14 @@ const I18N = {
     col_linked_entities: "Entités liées",
     kpi_total: "Signaux totaux",
     kpi_high: "Priorité élevée",
-    kpi_new: "En attente de tri",
-    kpi_risk: "Risque & conformité",
+    kpi_pending: "En cours d'examen",
     kpi_opportunities: "Opportunités commerciales",
     client_type_client: "Client",
     client_type_prospect: "Prospect",
     clients_kpi_clients: "Clients existants",
     clients_kpi_prospects: "Prospects",
     cat_commercial: "Opportunité Commerciale",
-    cat_credit: "Entreprise & Crédit",
     cat_kyc: "Mise à jour KYC",
-    cat_risk: "Risque & Conformité",
     entity_unlinked: "non lié, correspondance de filtrage",
     ai_summary_label: "Résumé IA",
     ai_action_prefix: "Action suggérée :",
@@ -260,36 +252,45 @@ const I18N = {
     ai_config_saved: "Enregistré. Le bouton Analyser utilise désormais cette configuration.",
     ai_config_cleared: "Réinitialisé. Retour aux variables d'environnement (le cas échéant) ou au moteur de démonstration.",
     ai_config_error: "Impossible d'enregistrer — veuillez réessayer.",
-    ai_call_error_prefix: "Échec de l'analyse :",
     shareholder_structure_title: "Structure actionnariale",
     explore_opportunity_btn: "Explorer l'opportunité commerciale",
     scan_loading_title: "Séquence d'agents en cours…",
-    progress_step_search: "1/1 Recherche en ligne",
-    progress_step_kyc: "2/2 Comparaison des données KYC internes",
-    progress_step_synthesis: "3/3 Rapport de synthèse d'opportunité commerciale",
+    progress_step_search: "1/1 Recherches web multi-sources",
+    progress_step_kyc: "2/2 Comparaison des données KYC des référentiels",
+    progress_step_synthesis: "3/3 Préparation de la synthèse des opportunités commerciales",
     no_opportunity_title: "Aucune opportunité pour cette entité juridique",
     no_opportunity_body: "L'agent IA a comparé la structure actionnariale aux signaux suivis et n'a rien trouvé de nouveau.",
-    agent_findings_title: "Résultats de l'agent",
-    gap_found_intro: "L'agent a trouvé des entités liées sans signal enregistré :",
-    client_opportunities_title: "Signaux d'opportunité commerciale",
     client_opportunities_empty: "Aucun signal d'opportunité commerciale enregistré pour ce client.",
     linked_signals_empty_short: "Aucun signal lié.",
     decline_reason_label: "Motif de non-poursuite de cette opportunité",
     decline_reason_placeholder: "ex. : client non intéressé, profil non adapté…",
     decline_reason_prefix: "Motif du rejet :",
+    action_comment_label: "Commentaire sur cette action",
+    action_comment_placeholder: "ex. : client intégré, proposition envoyée…",
+    action_comment_prefix: "Commentaire :",
     btn_confirm: "Confirmer",
     btn_cancel: "Annuler",
     scan_call_error_prefix: "Échec de la vérification :",
     btn_dashboard: "Veille",
     gap_added_tag: "Ajouté au répertoire des signaux",
-    step_search_online: "1. Recherche en ligne",
-    step_search_online_placeholder: "Aucune source publique supplémentaire accessible depuis cet environnement de démonstration.",
-    step_kyc_check: "2. Vérification KYC interne",
-    step_kyc_check_result: (relation, jurisdiction) => `Aucun signal enregistré pour cette entité (${relation}, ${jurisdiction}) — référentiel interne mis à jour.`,
-    step_synthesis: "3. Synthèse",
-    step_commercial_proposal: "4. Proposition commerciale",
     other_shareholders_label: "Autres actionnaires",
     already_client_tag: "Déjà client",
+    btn_details: "Détails",
+    btn_hide_details: "Masquer les détails",
+    rating_label: "Niveau",
+    synthesis_title: "Synthèse de l'opportunité commerciale",
+    synthesis_text: (n, type, entity) => `${n} opportunité${n > 1 ? "s" : ""} commerciale${n > 1 ? "s" : ""} en cours — principale : ${type} (${entity}).`,
+    level_high: "Élevé",
+    level_medium: "Moyen",
+    level_low: "Faible",
+    details_sources_title: "Sources identifiées par les agents",
+    details_opportunities_title: "Opportunités détectées",
+    details_updates_title: "Mises à jour proposées du référentiel",
+    referential_update_line: (name, stake, entity, source) => `${name} (${stake}) identifié comme actionnaire de ${entity} via ${source} — absent de notre référentiel.`,
+    btn_apply_update: "Appliquer la mise à jour",
+    update_applied: (name) => `Référentiel mis à jour — ${name} ajouté à la structure actionnariale.`,
+    no_sources: "Aucune source identifiée.",
+    veille_unavailable: "Synthèse de veille IA indisponible :",
     convert_to_client_btn: "Faire de cet actionnaire un client",
     converting_label: "Conversion en cours…",
     convert_success: (name) => `${name} a été ajouté comme nouveau prospect — un signal d'opportunité commerciale a été créé et analysé. Voir l'onglet Clients.`,
@@ -297,9 +298,6 @@ const I18N = {
     convert_already_client: (name) => `${name} est déjà un client suivi.`,
     this_client_label: "ce client",
     unidentified_stake: "Actionnaires non identifiés",
-    col_opportunity_prospects: "Prospects opportunité",
-    opportunity_prospects_count: (n) => `${n} prospect${n > 1 ? "s" : ""}`,
-    opportunity_prospects_hint: "Co-actionnaires pas encore suivis comme clients — ouvrez le tableau de bord pour les convertir.",
     clients_kpi_opportunity_prospects: "Prospects opportunité identifiés",
     crm_review_date_prefix: "Revue CRM :",
   },
@@ -315,39 +313,36 @@ const state = {
   pageSize: 10,
   expandedEventId: null,
   modalClient: null,
-  veilleByClientId: {},
   lang: localStorage.getItem("sd_lang") || "fr",
 };
 
 const CATEGORY_CLASS = {
   "Commercial Opportunity": "cat-commercial",
-  "Corporate & Credit": "cat-credit",
   "KYC Update": "cat-kyc",
-  "Risk & Compliance": "cat-risk",
 };
 
 const CATEGORY_KEY = {
   "Commercial Opportunity": "cat_commercial",
-  "Corporate & Credit": "cat_credit",
   "KYC Update": "cat_kyc",
-  "Risk & Compliance": "cat_risk",
 };
 
 const PRIORITY_CLASS = { High: "pri-high", Medium: "pri-medium", Low: "pri-low" };
 const PRIORITY_KEY = { High: "priority_high", Medium: "priority_medium", Low: "priority_low" };
 
 const STATUS_CLASS = {
-  New: "status-new",
   "Under Review": "status-review",
   Actioned: "status-actioned",
   Dismissed: "status-dismissed",
 };
 const STATUS_KEY = {
-  New: "status_new",
   "Under Review": "status_review",
   Actioned: "status_actioned",
   Dismissed: "status_dismissed",
 };
+
+function statusCommentPrefix(status) {
+  return status === "Actioned" ? t("action_comment_prefix") : t("decline_reason_prefix");
+}
 
 const PROVIDER_KEY = {
   "Rule-based demo engine": "provider_mock",
@@ -374,36 +369,36 @@ async function api(path, options) {
   return res.json();
 }
 
-function normalizeKycClient(client) {
-  return {
-    id: client.client_id,
-    name: client.client_name,
-    segment: [client.client_type, client.status].filter(Boolean).join(" · ") || "Client",
-    rmOwner: client.relationship_manager || "—",
-    isProspect: client.status !== "Client",
-    linkedEntities: [],
-    potentialProspectCount: 0,
-    source: "kyc",
-    country: client.country,
-    activity: client.business_activity || client.legal_form,
-  };
+function renderMarkdown(markdown) {
+  if (window.marked && window.DOMPurify) {
+    return window.DOMPurify.sanitize(window.marked.parse(markdown || ""));
+  }
+  return `<pre>${escapeHtml(markdown || "")}</pre>`;
 }
 
-function normalizeClient(client) {
-  return client.client_id ? normalizeKycClient(client) : client;
+// POST /api/veille — the commercial monitoring + KYC pipeline. Resolves with
+// {synthese} on success, {notFound} when the client is not in the internal KYC
+// referential (the demo clients), or {error} when the pipeline fails.
+async function runVeille(clientId) {
+  try {
+    const res = await fetch("/api/veille", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_id: clientId }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.ok) return { synthese: body.synthese };
+    if (res.status === 404) return { notFound: true };
+    return { error: body.detail || `/api/veille failed: ${res.status}` };
+  } catch (e) {
+    return { error: e.message };
+  }
 }
 
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str ?? "";
   return div.innerHTML;
-}
-
-function renderMarkdown(markdown) {
-  if (window.marked && window.DOMPurify) {
-    return window.DOMPurify.sanitize(window.marked.parse(markdown || ""));
-  }
-  return `<pre>${escapeHtml(markdown || "")}</pre>`;
 }
 
 function setupClientModal() {
@@ -465,15 +460,13 @@ function renderKPIs() {
   const total = state.events.length;
   const opportunities = state.events.filter((e) => e.category === "Commercial Opportunity").length;
   const high = state.events.filter((e) => e.priority === "High").length;
-  const newCount = state.events.filter((e) => e.status === "New").length;
-  const risk = state.events.filter((e) => e.category === "Risk & Compliance").length;
+  const pending = state.events.filter((e) => e.status === "Under Review").length;
 
   const kpis = [
     { value: total, label: t("kpi_total") },
-    { value: opportunities, label: t("kpi_opportunities"), accent: true },
+    { value: pending, label: t("kpi_pending") },
     { value: high, label: t("kpi_high") },
-    { value: newCount, label: t("kpi_new") },
-    { value: risk, label: t("kpi_risk") },
+    { value: opportunities, label: t("kpi_opportunities"), accent: true },
   ];
 
   document.getElementById("kpis").innerHTML = kpis
@@ -539,13 +532,8 @@ function renderEventDetailRow(event) {
       </div>`
     : "";
 
-  const errorMessage = state.analyzeErrors && state.analyzeErrors[event.id];
-  const errorHtml = errorMessage
-    ? `<p class="ai-error">${t("ai_call_error_prefix")} ${escapeHtml(errorMessage)}</p>`
-    : "";
-
   const declineReasonHtml = event.declineReason
-    ? `<p class="decline-reason-note">${t("decline_reason_prefix")} ${escapeHtml(event.declineReason)}</p>`
+    ? `<p class="decline-reason-note${event.status === "Actioned" ? " actioned" : ""}">${statusCommentPrefix(event.status)} ${escapeHtml(event.declineReason)}</p>`
     : "";
 
   return `
@@ -553,11 +541,8 @@ function renderEventDetailRow(event) {
       <td colspan="8">
         <p class="detail-desc">${escapeHtml(event.description)}</p>
         ${aiHtml}
-        ${errorHtml}
         <div class="detail-actions">
-          <button class="btn-navy analyze-btn" data-id="${event.id}">${event.aiSummary ? t("btn_reanalyze") : t("btn_analyze")}</button>
           <select class="status-select" data-id="${event.id}">
-            <option value="New"${event.status === "New" ? " selected" : ""}>${t("status_new")}</option>
             <option value="Under Review"${event.status === "Under Review" ? " selected" : ""}>${t("status_review")}</option>
             <option value="Actioned"${event.status === "Actioned" ? " selected" : ""}>${t("status_actioned")}</option>
             <option value="Dismissed"${event.status === "Dismissed" ? " selected" : ""}>${t("status_dismissed")}</option>
@@ -616,39 +601,19 @@ function attachEventTableHandlers() {
     });
   });
 
-  document.querySelectorAll(".analyze-btn").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = Number(btn.dataset.id);
-      btn.disabled = true;
-      btn.textContent = t("btn_analyzing");
-      state.analyzeErrors = state.analyzeErrors || {};
-      delete state.analyzeErrors[id];
-      try {
-        const updated = await api(`/api/events/${id}/analyze`, { method: "POST" });
-        const idx = state.events.findIndex((ev) => ev.id === updated.id);
-        state.events[idx] = updated;
-        renderEventTable();
-      } catch (e) {
-        state.analyzeErrors[id] = e.message;
-        renderEventTable();
-      } finally {
-        btn.disabled = false;
-      }
-    });
-  });
-
   document.querySelectorAll(".status-select").forEach((select) => {
     select.dataset.prevValue = select.value;
     select.addEventListener("change", async (e) => {
       const id = Number(select.dataset.id);
       const newStatus = e.target.value;
 
-      if (newStatus === "Dismissed") {
+      if (newStatus === "Dismissed" || newStatus === "Actioned") {
+        const placeholder = newStatus === "Actioned" ? t("action_comment_placeholder") : t("decline_reason_placeholder");
         const slot = document.querySelector(`.decline-reason-slot[data-id="${id}"]`);
         if (slot) {
           slot.innerHTML = `
             <div class="decline-reason-box">
-              <input type="text" class="decline-reason-input" placeholder="${t("decline_reason_placeholder")}" />
+              <input type="text" class="decline-reason-input" placeholder="${placeholder}" />
               <button class="btn-navy decline-reason-confirm">${t("btn_confirm")}</button>
               <button class="btn btn-outline decline-reason-cancel" style="padding:5px 12px;font-size:12px;">${t("btn_cancel")}</button>
             </div>`;
@@ -797,11 +762,6 @@ function renderClients() {
         <td>${escapeHtml(c.segment)}</td>
         <td>${escapeHtml(c.rmOwner)}</td>
         <td>${c.linkedEntities ? c.linkedEntities.length : 0}</td>
-        <td>${
-          c.potentialProspectCount
-            ? `<span class="opportunity-prospect-badge" title="${escapeHtml(t("opportunity_prospects_hint"))}">${t("opportunity_prospects_count", c.potentialProspectCount)}</span>`
-            : `<span class="opportunity-prospect-none">—</span>`
-        }</td>
         <td><button class="btn-navy client-view-btn" data-id="${c.id}">${t("btn_dashboard")}</button></td>
       </tr>`
     )
@@ -813,7 +773,7 @@ function renderClients() {
 }
 
 async function openClientModal(clientId) {
-  const client = await api(`/api/clients/${encodeURIComponent(clientId)}`);
+  const client = await api(`/api/clients/${clientId}`);
   state.modalClient = client;
   renderClientModalContent(client);
   document.getElementById("client-modal-overlay").hidden = false;
@@ -887,32 +847,55 @@ function renderShareholdersBlock(entity) {
 }
 
 function renderClientModalContent(client) {
-  const veille = state.veilleByClientId[client.id] || "";
   const chain = client.linkedEntities.length
     ? `<ul class="ownership-chain">${client.linkedEntities
         .map(
           (e) => `<li>
             <div class="ownership-chain-row"><span>${escapeHtml(e.name)}</span><span class="relation">${escapeHtml(e.relation)} · ${escapeHtml(e.jurisdiction)}</span></div>
             ${renderOwnershipBreakdown(client, e)}
-            ${
-              e.other_shareholders && e.other_shareholders.length
-                ? `<div class="other-shareholders-label">${t("other_shareholders_label")}</div>${renderShareholdersBlock(e)}`
-                : ""
-            }
           </li>`
         )
         .join("")}</ul>`
     : `<p style="font-size:13px;color:var(--muted);">${t("no_linked_entities")}</p>`;
 
+  document.getElementById("client-modal-content").innerHTML = `
+    <div class="client-modal-header">
+      <h2>${escapeHtml(client.name)}</h2>
+      <div class="segment">${escapeHtml(client.segment)}</div>
+      <div class="rm">RM: ${escapeHtml(client.rmOwner)}</div>
+    </div>
+
+    <div class="client-modal-section">
+      <h3>${t("shareholder_structure_title")}</h3>
+      ${chain}
+    </div>
+
+    <div class="client-modal-actions">
+      <button class="btn btn-primary" id="explore-opportunity-btn">${t("explore_opportunity_btn")}</button>
+    </div>
+
+    <div id="explore-opportunity-panel" hidden></div>
+
+    <div class="client-modal-section">
+      <h3>${t("linked_signals_title")}</h3>
+      <div id="linked-signals-list">${renderLinkedSignals(client)}</div>
+    </div>
+  `;
+
+  document.getElementById("explore-opportunity-btn").addEventListener("click", () => exploreCommercialOpportunity(client));
+}
+
+function renderLinkedSignals(client) {
   const LEGACY_STATUSES = new Set(["Actioned", "Dismissed"]);
-  const signals = client.events && client.events.length
+  return client.events && client.events.length
     ? client.events
         .map((e) => {
           const dateStr = new Date(e.detectedAt).toLocaleDateString(state.lang === "fr" ? "fr-FR" : "en-US");
 
           if (LEGACY_STATUSES.has(e.status)) {
+            const reasonColor = e.status === "Dismissed" ? "var(--red)" : "var(--green)";
             const reason = e.declineReason
-              ? `<div class="om" style="color:var(--red);">${t("decline_reason_prefix")} ${escapeHtml(e.declineReason)}</div>`
+              ? `<div class="om" style="color:${reasonColor};">${statusCommentPrefix(e.status)} ${escapeHtml(e.declineReason)}</div>`
               : "";
             return `<div class="client-event-row client-event-row-legacy">
               <div class="legacy-review-line">
@@ -928,39 +911,6 @@ function renderClientModalContent(client) {
         })
         .join("")
     : `<p style="font-size:13px;color:var(--muted);">${t("no_signals_recorded")}</p>`;
-
-  document.getElementById("client-modal-content").innerHTML = `
-    <div class="client-modal-header">
-      <h2>${escapeHtml(client.name)}</h2>
-      <div class="segment">${escapeHtml(client.segment)}</div>
-      <div class="rm">RM: ${escapeHtml(client.rmOwner)}</div>
-      ${client.source === "kyc" ? `<div class="rm">Country: ${escapeHtml(client.country || "—")} · Activity: ${escapeHtml(client.activity || "—")}</div>` : ""}
-    </div>
-
-    <div class="client-modal-section">
-      <h3>${t("shareholder_structure_title")}</h3>
-      ${chain}
-      <p class="shareholder-convert-status" id="shareholder-convert-status"></p>
-    </div>
-
-    <div class="client-modal-actions">
-      <button class="btn btn-primary" id="explore-opportunity-btn">${t("explore_opportunity_btn")}</button>
-    </div>
-
-    <div id="explore-opportunity-panel"${veille ? "" : " hidden"}>
-      ${veille ? `<div class="client-modal-section veille-result"><h3>${t("client_opportunities_title")}</h3>${renderMarkdown(veille)}</div>` : ""}
-    </div>
-
-    <div class="client-modal-section">
-      <h3>${t("linked_signals_title")}</h3>
-      ${signals}
-    </div>
-  `;
-
-  document.getElementById("explore-opportunity-btn").addEventListener("click", () => exploreCommercialOpportunity(client));
-  if (client.source !== "kyc") {
-    wireShareholderConvertButtons(client);
-  }
 }
 
 function wireShareholderConvertButtons(client) {
@@ -995,6 +945,9 @@ async function convertShareholderToClient(client, btn) {
         })
       );
     }
+    const entity = client.linkedEntities.find((e) => e.name === entityName);
+    const holder = entity && (entity.other_shareholders || []).find((h) => h.name === shareholderName);
+    if (holder) holder.isClient = true;
     statusEl.textContent = t("convert_success", shareholderName);
     statusEl.className = "shareholder-convert-status ok";
 
@@ -1018,27 +971,21 @@ async function convertShareholderToClient(client, btn) {
 
 async function refreshClients() {
   const clients = await api("/api/clients");
-  state.clients = clients.map(normalizeClient);
+  state.clients = clients;
   renderClientKPIs();
   renderClients();
 }
 
-function renderNoOpportunityBanner() {
-  return `
-    <div class="no-opportunity-banner">
-      <strong>${t("no_opportunity_title")}</strong>
-      ${t("no_opportunity_body")}
-    </div>`;
-}
-
 const AGENT_PROGRESS_STEPS = ["progress_step_search", "progress_step_kyc", "progress_step_synthesis"];
+const LEVEL_KEY = { High: "level_high", Medium: "level_medium", Low: "level_low" };
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function renderAgentProgress(panel, completedCount) {
   const rows = AGENT_PROGRESS_STEPS.map((key, i) => {
     const stepNum = i + 1;
     const isDone = stepNum <= completedCount;
     const isActive = stepNum === completedCount + 1;
-    const icon = isDone ? '<span class="agent-progress-check">✓</span>' : isActive ? '<span class="agent-progress-spinner"></span>' : "";
+    const icon = isDone ? '<span class="agent-progress-check">✓</span>' : isActive ? '<span class="agent-progress-spinner">↻</span>' : "";
     return `<div class="agent-progress-row${isDone ? " done" : ""}${isActive ? " active" : ""}">
       ${icon}
       <span class="agent-progress-label">${escapeHtml(t(key))}</span>
@@ -1047,31 +994,132 @@ function renderAgentProgress(panel, completedCount) {
   panel.innerHTML = `<div class="client-modal-section"><h3>${t("scan_loading_title")}</h3><div class="agent-progress">${rows}</div></div>`;
 }
 
-function renderAgentFindingCard(g) {
-  const body = g.error
-    ? `<div class="ge">${t("scan_call_error_prefix")} ${escapeHtml(g.error)}</div>`
-    : `
-      <div class="agent-step">
-        <div class="agent-step-label">${t("step_search_online")}</div>
-        <p>${escapeHtml(t("step_search_online_placeholder"))}</p>
-      </div>
-      <div class="agent-step">
-        <div class="agent-step-label">${t("step_kyc_check")}</div>
-        <p>${escapeHtml(t("step_kyc_check_result", g.relation, g.jurisdiction))}</p>
-      </div>
-      <div class="agent-step">
-        <div class="agent-step-label">${t("step_synthesis")}</div>
-        <p>${escapeHtml(g.aiSummary)}</p>
-      </div>
-      <div class="agent-step">
-        <div class="agent-step-label">${t("step_commercial_proposal")}</div>
-        <p>${escapeHtml(g.aiSuggestedAction)}</p>
-      </div>`;
-  return `<div class="gap-row">
-    <div class="ot">${escapeHtml(g.entityName)} — ${escapeHtml(g.relation)} · ${escapeHtml(g.jurisdiction)}</div>
-    <div class="gap-added-tag">${t("gap_added_tag")}</div>
-    ${body}
+function renderSynthesis(client, result, detailsOpen) {
+  const opps = result.opportunities || [];
+  const top = opps[0];
+  const veille = result.veille || {};
+  const level = result.level || (veille.synthese ? null : "Low");
+  const headline = top
+    ? `${t("synthesis_text", opps.length, top.eventType, top.entityName)} ${top.aiSuggestedAction || ""}`
+    : `${t("no_opportunity_title")} — ${t("no_opportunity_body")}`;
+  const fmtDate = (d) => new Date(d).toLocaleDateString(state.lang === "fr" ? "fr-FR" : "en-US");
+
+  const sourcesHtml = opps.length
+    ? `<ul class="details-list">${opps
+        .map((o) => `<li><strong>${escapeHtml(o.sourceName)}</strong> · ${fmtDate(o.detectedAt)} — ${escapeHtml(o.description)}</li>`)
+        .join("")}</ul>`
+    : `<p class="details-empty">${t("no_sources")}</p>`;
+
+  const oppsHtml = opps.length
+    ? opps
+        .map(
+          (o) => `<div class="opportunity-row">
+            <div class="synthesis-header">
+              <div class="ot">${escapeHtml(o.eventType)} — ${escapeHtml(o.entityName)}</div>
+              <span class="pill ${PRIORITY_CLASS[o.priority] || ""}">${escapeHtml(t(PRIORITY_KEY[o.priority] || o.priority))}</span>
+            </div>
+            ${o.isNew ? `<div class="gap-added-tag">${t("gap_added_tag")}</div>` : ""}
+            <div class="om">${escapeHtml(o.aiSummary || o.description)}</div>
+            ${o.aiSuggestedAction ? `<div class="ga">→ ${escapeHtml(o.aiSuggestedAction)}</div>` : ""}
+          </div>`
+        )
+        .join("")
+    : `<p class="details-empty">${t("client_opportunities_empty")}</p>`;
+
+  const updates = result.referentialUpdates || [];
+  const updatesHtml = updates.length
+    ? `<div class="details-section">
+        <h4>${t("details_updates_title")}</h4>
+        ${updates
+          .map(
+            (u) => `<div class="referential-update-row">
+              <span>${escapeHtml(t("referential_update_line", u.name, u.stake, u.entityName, u.sourceName))}</span>
+              <button class="btn btn-outline btn-small apply-update-btn" data-entity="${escapeHtml(u.entityName)}" data-shareholder="${escapeHtml(u.name)}">${t("btn_apply_update")}</button>
+            </div>`
+          )
+          .join("")}
+      </div>`
+    : "";
+
+  const holderEntities = (client.linkedEntities || []).filter((e) => e.other_shareholders && e.other_shareholders.length);
+  const holdersHtml = holderEntities.length
+    ? `<div class="details-section">
+        <h4>${t("other_shareholders_label")}</h4>
+        ${holderEntities
+          .map(
+            (e) => `<div class="other-shareholders-entity">
+              <div class="other-shareholders-entity-name">${escapeHtml(e.name)}</div>
+              ${renderShareholdersBlock(e)}
+            </div>`
+          )
+          .join("")}
+      </div>`
+    : "";
+
+  return `<div class="client-modal-section synthesis-card">
+    <div class="synthesis-header">
+      <h3>${t("synthesis_title")}</h3>
+      ${level ? `<span class="pill ${PRIORITY_CLASS[level] || ""}">${escapeHtml(t("rating_label"))} : ${escapeHtml(t(LEVEL_KEY[level]))}</span>` : ""}
+    </div>
+    ${veille.synthese
+      ? `<div class="veille-result">${renderMarkdown(veille.synthese)}</div>`
+      : `<p class="synthesis-headline">${escapeHtml(headline)}</p>`}
+    ${veille.error ? `<p class="veille-error">${t("veille_unavailable")} ${escapeHtml(veille.error)}</p>` : ""}
+    <button class="btn btn-outline btn-small gap-details-toggle">${detailsOpen ? t("btn_hide_details") : t("btn_details")}</button>
+    <div class="gap-details"${detailsOpen ? "" : " hidden"}>
+      <div class="details-section"><h4>${t("details_sources_title")}</h4>${sourcesHtml}</div>
+      <div class="details-section"><h4>${t("details_opportunities_title")}</h4>${oppsHtml}</div>
+      ${updatesHtml}
+      ${holdersHtml}
+      <p class="shareholder-convert-status" id="shareholder-convert-status"></p>
+    </div>
   </div>`;
+}
+
+function showExploreResult(client, result, detailsOpen) {
+  const panel = document.getElementById("explore-opportunity-panel");
+  panel.hidden = false;
+  panel.innerHTML = renderSynthesis(client, result, detailsOpen);
+  panel.dataset.loaded = "true";
+
+  const toggle = panel.querySelector(".gap-details-toggle");
+  toggle.addEventListener("click", () => {
+    const details = panel.querySelector(".gap-details");
+    details.hidden = !details.hidden;
+    toggle.textContent = details.hidden ? t("btn_details") : t("btn_hide_details");
+  });
+  wireShareholderConvertButtons(client);
+  panel.querySelectorAll(".apply-update-btn").forEach((btn) => {
+    btn.addEventListener("click", () => applyReferentialUpdate(client, result, btn));
+  });
+}
+
+async function applyReferentialUpdate(client, result, btn) {
+  const entityName = btn.dataset.entity;
+  const shareholderName = btn.dataset.shareholder;
+  btn.disabled = true;
+  try {
+    const updated = await api(`/api/clients/${client.id}/referential-updates/apply`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entityName, shareholderName }),
+    });
+    result.referentialUpdates = result.referentialUpdates.filter(
+      (u) => !(u.entityName === entityName && u.name === shareholderName)
+    );
+    Object.assign(client, updated);
+    renderClientModalContent(client);
+    showExploreResult(client, result, true);
+    const statusEl = document.getElementById("shareholder-convert-status");
+    statusEl.textContent = t("update_applied", shareholderName);
+    statusEl.className = "shareholder-convert-status ok";
+    await refreshClients();
+  } catch (e) {
+    btn.disabled = false;
+    const statusEl = document.getElementById("shareholder-convert-status");
+    statusEl.textContent = `${t("scan_call_error_prefix")} ${e.message}`;
+    statusEl.className = "shareholder-convert-status error";
+  }
 }
 
 async function exploreCommercialOpportunity(client) {
@@ -1081,23 +1129,62 @@ async function exploreCommercialOpportunity(client) {
     panel.hidden = true;
     return;
   }
-
   panel.hidden = false;
-  panel.innerHTML = `<div class="client-modal-section"><h3>${t("client_opportunities_title")}</h3><p>Generating veille…</p></div>`;
+  if (panel.dataset.loaded === "true") return;
 
+  renderAgentProgress(panel, 0);
+  // The veille pipeline runs alongside the agent run; step 3 (synthesis)
+  // stays ongoing until it answers.
+  const veillePromise = runVeille(client.id);
+  let run;
   try {
-    const response = await api("/api/veille", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ client_id: client.id }),
-    });
-    state.veilleByClientId[client.id] = response.synthese;
-    panel.innerHTML = `<div class="client-modal-section veille-result"><h3>${t("client_opportunities_title")}</h3>${renderMarkdown(response.synthese)}</div>`;
-    panel.dataset.loaded = "true";
-  } catch (error) {
-    panel.innerHTML = `<div class="client-modal-section"><p class="ai-error">${escapeHtml(error.message)}</p></div>`;
-    panel.dataset.loaded = "true";
+    const { runId } = await api(`/api/clients/${client.id}/agent-runs`, { method: "POST" });
+    // Poll the run row; each completed step is recorded in the DB by the
+    // backend. Advance one step per tick so every checkmark is visible even
+    // when a step finishes faster than the poll interval.
+    let shown = 0;
+    for (;;) {
+      await sleep(400);
+      run = await api(`/api/agent-runs/${runId}`);
+      if (run.step > shown) {
+        shown += 1;
+        renderAgentProgress(panel, shown);
+      }
+      if (run.status !== "running" && shown >= run.step) break;
+      if (shown === AGENT_PROGRESS_STEPS.length - 1) {
+        // hold the synthesis step until the veille pipeline has answered
+        await veillePromise;
+      }
+    }
+  } catch (e) {
+    panel.innerHTML = `<p class="ai-error">${t("scan_call_error_prefix")} ${escapeHtml(e.message)}</p>`;
+    return;
   }
+  if (run.status === "error") {
+    panel.innerHTML = `<p class="ai-error">${t("scan_call_error_prefix")} ${escapeHtml(run.error || "")}</p>`;
+    return;
+  }
+  const result = run.result;
+  result.veille = await veillePromise;
+  await sleep(400);
+
+  const changed = result.changedEvents || [];
+  if (changed.length) {
+    client.events = client.events || [];
+    changed.forEach((ev) => {
+      const i = state.events.findIndex((x) => x.id === ev.id);
+      if (i === -1) state.events.push(ev);
+      else state.events[i] = ev;
+      const j = client.events.findIndex((x) => x.id === ev.id);
+      if (j === -1) client.events.unshift(ev);
+      else client.events[j] = ev;
+    });
+    const list = document.getElementById("linked-signals-list");
+    if (list) list.innerHTML = renderLinkedSignals(client);
+    renderKPIs();
+    renderEventTable();
+  }
+  showExploreResult(client, result, false);
 }
 
 async function renderAIStatus() {
@@ -1198,7 +1285,7 @@ async function init() {
   state.categories = meta.categories;
   state.events = events;
   state.sources = sources;
-  state.clients = clients.map(normalizeClient);
+  state.clients = clients;
 
   renderAll();
   renderAIStatus();

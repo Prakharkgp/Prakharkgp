@@ -79,6 +79,8 @@ the Foundry endpoint via `base_url`.
 | GET | `/api/clients/{id}` | Client detail: ownership chain + linked signals |
 | POST | `/api/clients/{id}/kyc` | Run KYC analysis against supplied external data |
 | POST | `/api/veille` | Run commercial monitoring for an internal client |
+| POST | `/api/clients/{id}/agent-runs` | Start the explore-opportunity agent run |
+| GET | `/api/agent-runs/{run_id}` | Agent run progress and result |
 | GET | `/api/ai/status` | Which AI engine is currently active |
 
 ## Deploy (Render)
@@ -92,6 +94,11 @@ To enable Azure AI Foundry on the deployed instance, add
 `AZURE_AI_FOUNDRY_DEPLOYMENT` as environment variables on that service in
 Render's dashboard — the same free-tier caveats apply
 (SQLite resets on redeploy, service spins down when idle).
+
+`POST /api/veille` (called by **Explorer l'opportunité commerciale**) uses
+its own Azure OpenAI settings: set `AZURE_OPENAI_API_KEY`,
+`AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_DEPLOYMENT_NAME` on the service,
+otherwise the synthesis card shows that the veille is unavailable.
 
 ## A note on the data
 

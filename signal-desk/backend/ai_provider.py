@@ -23,7 +23,24 @@ class AIProvider(ABC):
 
     @abstractmethod
     def analyze(self, event: dict) -> dict:
-        """Return {"summary": str, "suggested_action": str, "confidence": float}."""
+        """Return {"summary": str, "suggested_action": str, "confidence": float,
+        "priority": Optional[str]}. "priority" (High/Medium/Low) is the
+        agent's own assessment and is only applied by the caller for
+        Commercial Opportunity signals — everything else keeps its
+        rule-based priority."""
+
+
+_HIGH_PRIORITY_KEYWORDS = ("ipo", "listing", "acquisition", "stake sale", "shareholding sale", "sale")
+_LOW_PRIORITY_KEYWORDS = ("appointment", "board member")
+
+
+def _infer_opportunity_priority(event_type: str, description: str) -> str:
+    text = f"{event_type} {description}".lower()
+    if any(k in text for k in _HIGH_PRIORITY_KEYWORDS):
+        return "High"
+    if any(k in text for k in _LOW_PRIORITY_KEYWORDS):
+        return "Low"
+    return "Medium"
 
 
 class MockAIProvider(AIProvider):
@@ -31,9 +48,7 @@ class MockAIProvider(AIProvider):
 
     _ACTIONS = {
         "Commercial Opportunity": "Flag to the RM for outreach — potential liquidity or wealth-planning event.",
-        "Corporate & Credit": "Route to the credit team for an exposure review.",
         "KYC Update": "Refresh the KYC file and notify onboarding / compliance.",
-        "Risk & Compliance": "Escalate to Compliance for immediate review.",
     }
 
     def analyze(self, event: dict) -> dict:
@@ -42,10 +57,16 @@ class MockAIProvider(AIProvider):
         event_type = (event.get("event_type") or "an event").lower()
         source = event.get("source_name") or "a monitored source"
         summary = f"{entity} — {event_type} detected via {source}. {event.get('description', '')}".strip()
+        priority = (
+            _infer_opportunity_priority(event.get("event_type", ""), event.get("description", ""))
+            if category == "Commercial Opportunity"
+            else None
+        )
         return {
             "summary": summary,
             "suggested_action": self._ACTIONS.get(category, "Review manually."),
             "confidence": 0.72,
+            "priority": priority,
         }
 
 
@@ -68,10 +89,12 @@ class AzureFoundryProvider(AIProvider):
 
     def analyze(self, event: dict) -> dict:
         prompt = (
-            "You are a private-banking signal analyst. Reply with exactly two "
+            "You are a private-banking signal analyst. Reply with exactly three "
             "lines and no other text:\n"
             "Summary: <one-sentence summary of the event for a relationship manager>\n"
-            "Suggested action: <one short recommended next action>\n\n"
+            "Suggested action: <one short recommended next action>\n"
+            "Priority: <High, Medium, or Low — how urgently a relationship manager "
+            "should act on this>\n\n"
             f"Category: {event.get('category')}\n"
             f"Type: {event.get('event_type')}\n"
             f"Entity: {event.get('entity_name')}\n"
@@ -81,15 +104,24 @@ class AzureFoundryProvider(AIProvider):
         response = self.client.responses.create(model=self.deployment, input=prompt)
         text = (response.output_text or "").strip()
 
-        summary, suggested_action = text, ""
+        summary, suggested_action, priority = text, "", None
         for line in text.splitlines():
             stripped = line.strip()
             if stripped.lower().startswith("summary:"):
                 summary = stripped[len("summary:"):].strip()
             elif stripped.lower().startswith("suggested action:"):
                 suggested_action = stripped[len("suggested action:"):].strip()
+            elif stripped.lower().startswith("priority:"):
+                candidate = stripped[len("priority:"):].strip().title()
+                if candidate in ("High", "Medium", "Low"):
+                    priority = candidate
 
-        return {"summary": summary, "suggested_action": suggested_action, "confidence": 0.9}
+        return {
+            "summary": summary,
+            "suggested_action": suggested_action,
+            "confidence": 0.9,
+            "priority": priority if event.get("category") == "Commercial Opportunity" else None,
+        }
 
 
 def get_provider(endpoint: str = "", api_key: str = "", deployment: str = "") -> AIProvider:

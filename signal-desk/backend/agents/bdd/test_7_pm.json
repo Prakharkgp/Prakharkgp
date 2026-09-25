@@ -1,0 +1,1157 @@
+{
+  "result": {
+    "statusId": 0,
+    "statusText": null,
+    "personData": {
+      "identification": {
+        "personKey": "301238697",
+        "openDate": "2024-03-06",
+        "personTypeKey": "person_legal",
+        "personTypeValue": "Legal person",
+        "personStatusKey": "activ",
+        "personStatusValue": "Client",
+        "titleKey": null,
+        "titleValue": null,
+        "lastName": null,
+        "firstName": null,
+        "middleName": null,
+        "fullName": "CEFIMECA",
+        "birthDate": null,
+        "birthPlace": null,
+        "birthCountryKey": null,
+        "birthCountryValue": null,
+        "nationalityKey": "FRA",
+        "nationalityValue": "France",
+        "otherNationalities": [
+          {
+            "countryKey": "DEU",
+            "countryValue": "Germany"
+          }
+        ],
+        "genderKey": null,
+        "genderValue": null,
+        "maritalStatusKey": null,
+        "maritalStatusValue": null,
+        "maritalStatusFrom": null,
+        "matrimonialRegimeKey": null,
+        "matrimonialRegimeValue": null,
+        "legallyIncapacitated": false,
+        "countryOfDomicileKey": "FRA",
+        "countryOfDomicileValue": "France",
+        "taxResidenceKey": "FRA",
+        "taxResidenceValue": "France",
+        "alias": null,
+        "passportId": null,
+        "nationalInsuranceNumber": null,
+        "birthname": null,
+        "expatriate": false,
+        "closeDate": null,
+        "numberOfDependants": null,
+        "deathDate": null,
+        "deathAnnouncementDate": null,
+        "sourceOfDeathAnnouncement": null,
+        "keyNote": "No specific note",
+        "minor": false,
+        "languageKey": null,
+        "languageValue": null,
+        "otherLanguages": [],
+        "registrationDate": "2022-07-04",
+        "registrationCountryKey": "FRA",
+        "registrationCountryValue": "France",
+        "legalFormKey": "ps$pers_ei",
+        "legalFormValue": "EI - Entreprise individuelle / Entreprise en nom personnel (1)",
+        "globalVisibilityKey": "ps$public_y",
+        "globalVisibilityValue": "Yes (01)",
+        "nationalIdentificationNumber": null,
+        "nationalIdentificationNumberTypeKey": null,
+        "nationalIdentificationNumberTypeValue": null,
+        "lei": "456",
+        "leiEndDate": "2024-09-07",
+        "giin": null,
+        "registeredCompanyNumber": "383972478",
+        "marketSegmentKey": "ps$ms_wms",
+        "marketSegmentValue": "1a - Wealth management structures (1)",
+        "nonCoreJustification": "Non justification to be provided",
+        "amlStructureTypeKey": "ps$pers_leg_fm_ws_uo",
+        "amlStructureTypeValue": "Wealth structure - Undivided ownership (joint ownership..) (01)",
+        "typeVehicleKey": "ps$pers_soparfi",
+        "typeVehicleValue": "SOPARFI - Financial Participation Company (01)",
+        "gdprStatusKey": null,
+        "gdprStatusValue": null,
+        "personLegacyKey": null,
+        "localStructureTypeKey": "ps$struct_type_na",
+        "localStructureTypeValue": "Non Applicable (22)",
+        "fimEmployeeKey": null,
+        "fimEmployeeValue": null,
+        "remark": [
+          {
+            "remarkTypeKey": "ps$aml_sync_rem",
+            "remarkTypeValue": "AML Syncronization Remark",
+            "remarkSubTypeKey": "ps$ubo_aml_sync",
+            "remarkSubTypeValue": "Riskiest UBO AML Data Synchronization",
+            "remarkText": "New riskiest UBO has been detected: Functional key of the UBO: 301238693 UBO Name: Mr François Madelon UBO Following AML attributess have been synchronized : Sector Level 3 to Target (LP)",
+            "remarkUser": "K",
+            "remarkValidTo": null,
+            "remarkCreationDate": "2024-03-22T06:35:22Z"
+          },
+          {
+            "remarkTypeKey": "ps$aml_sync_rem",
+            "remarkTypeValue": "AML Syncronization Remark",
+            "remarkSubTypeKey": "ps$ubo_aml_sync",
+            "remarkSubTypeValue": "Riskiest UBO AML Data Synchronization",
+            "remarkText": "New riskiest UBO has been detected: Functional key of the UBO: 301238693 UBO Name: Mr François Madelon UBO Following AML attributess have been synchronized : Country of domicile of the UBO ,Tax Residence (of the UBO if any) ,Adverse information (other than negative tax information) (UBO) ,Wealth creation/Business sectors 2 - Level 1 ,Wealth creation/Business sectors 2 - Level 2 ,Wealth creation/Business sectors 2 - Level 3 ,Wealth creation/Business sectors 3 - Level 1 ,Wealth creation/Business sectors 3 - Level 2 ,Wealth creation/Business sectors 3 - Level 3 ,Sector Level 3 to Target (LP) ,Total estimated personal wealth ,Total AUM in the relevant entity ,Total Liabilities in the relevant entity ,Self-certification of tax compliance ,Number of tax residence according to CRS ,Automated exchange of information (CRS) ,Other nationalities ,Source of wealth of the client/prospect? ,PEP/SPO function and activity (past/current)",
+            "remarkUser": "K",
+            "remarkValidTo": "2024-03-22",
+            "remarkCreationDate": "2024-03-22T06:35:21Z"
+          },
+          {
+            "remarkTypeKey": "ps$person_rem",
+            "remarkTypeValue": "Person Remark",
+            "remarkSubTypeKey": "ps$pep_act_desc",
+            "remarkSubTypeValue": "PEP/SPO function and activity (past/current)",
+            "remarkText": "Chef du monde",
+            "remarkUser": "K",
+            "remarkValidTo": null,
+            "remarkCreationDate": "2024-03-21T20:25:23Z"
+          },
+          {
+            "remarkTypeKey": "ps$person_rem",
+            "remarkTypeValue": "Person Remark",
+            "remarkSubTypeKey": "ps$adv_justify",
+            "remarkSubTypeValue": "Details for Adverse news",
+            "remarkText": "Tata",
+            "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)",
+            "remarkValidTo": null,
+            "remarkCreationDate": "2024-02-14T14:58:20Z"
+          },
+          {
+            "remarkTypeKey": "ps$person_rem",
+            "remarkTypeValue": "Person Remark",
+            "remarkSubTypeKey": "ps$pos_res_det",
+            "remarkSubTypeValue": "Details of positive results",
+            "remarkText": "Toto",
+            "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)",
+            "remarkValidTo": null,
+            "remarkCreationDate": "2024-02-14T14:58:19Z"
+          },
+          {
+            "remarkTypeKey": "ps$person_rem",
+            "remarkTypeValue": "Person Remark",
+            "remarkSubTypeKey": "ps$des_src_wlth",
+            "remarkSubTypeValue": "Comment on source of wealth",
+            "remarkText": "Grace à la chance tout ça",
+            "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)",
+            "remarkValidTo": null,
+            "remarkCreationDate": "2024-02-14T14:58:18Z"
+          },
+          {
+            "remarkTypeKey": "ps$person_rem",
+            "remarkTypeValue": "Person Remark",
+            "remarkSubTypeKey": "ps$othr_bus_pot",
+            "remarkSubTypeValue": "Comment on Potential for other business lines",
+            "remarkText": "Petit potentiel mais on le prend quand même",
+            "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)",
+            "remarkValidTo": null,
+            "remarkCreationDate": "2024-02-14T14:58:17Z"
+          },
+          {
+            "remarkTypeKey": "ps$person_rem",
+            "remarkTypeValue": "Person Remark",
+            "remarkSubTypeKey": "ps$xpln_no_ctct",
+            "remarkSubTypeValue": "Explain 'do not contact'",
+            "remarkText": "He does not want to be contacted",
+            "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)",
+            "remarkValidTo": null,
+            "remarkCreationDate": "2024-02-14T14:34:27Z"
+          },
+          {
+            "remarkTypeKey": "ps$pers_note",
+            "remarkTypeValue": "Key Note",
+            "remarkSubTypeKey": null,
+            "remarkSubTypeValue": null,
+            "remarkText": "No specific note",
+            "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)",
+            "remarkValidTo": null,
+            "remarkCreationDate": "2024-02-14T14:34:26Z"
+          },
+          {
+            "remarkTypeKey": "ps$person_rem",
+            "remarkTypeValue": "Person Remark",
+            "remarkSubTypeKey": "ps$owner_struc_det",
+            "remarkSubTypeValue": "Organisational and ownership structure",
+            "remarkText": "Structure juridique",
+            "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)",
+            "remarkValidTo": null,
+            "remarkCreationDate": "2024-02-14T14:34:25Z"
+          },
+          {
+            "remarkTypeKey": "ps$person_rem",
+            "remarkTypeValue": "Person Remark",
+            "remarkSubTypeKey": "ps$n_core_jstfy",
+            "remarkSubTypeValue": "Justification if non-core",
+            "remarkText": "Non justification to be provided",
+            "remarkUser": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)",
+            "remarkValidTo": null,
+            "remarkCreationDate": "2024-02-14T14:34:24Z"
+          }
+        ],
+        "birthDepartmentKey": null,
+        "birthDepartmentValue": null,
+        "hasOtherNationalities": true,
+        "taxNomad": false,
+        "identityDocumentTypeKey": null,
+        "identityDocumentTypeValue": null,
+        "identityDocumentNumber": null,
+        "hasActivityKey": "ps$no",
+        "italianWithholdingTaxServiceKey": null,
+        "italianWithholdingTaxServiceValue": null,
+        "identityDocumentDeliveredBy": null,
+        "identityDocumentIssueDate": null,
+        "identityDocumentDueDate": null,
+        "uifSubGroup": null,
+        "uifCategory": null,
+        "uifAtecoCode": null,
+        "uifSector": null,
+        "birthDepartmentItalyKey": null,
+        "birthDepartmentItalyValue": null,
+        "purgeExtension": false,
+        "purgeDate": null,
+        "purgeComment": null,
+        "rctCode": null
+      },
+      "businessActivity": {
+        "professionKey": null,
+        "professionValue": null,
+        "flagLpSect3Key": "ps$no",
+        "flagLpSect3Value": "No",
+        "flagNpSect3Key": null,
+        "flagNpSect3Value": null,
+        "businessActivity11Key": "mb0_profess_1",
+        "businessActivity11Value": "Agriculture, Forestry and Fishing (1)",
+        "businessActivity12Key": "ps$pers_sctr_1_1_2",
+        "businessActivity12Value": "Forestry and logging (02)",
+        "businessActivity13Key": "ps$pers_sctr_1_0210y",
+        "businessActivity13Value": "Silviculture and other forestry activities",
+        "businessActivity21Key": "ps$sector_mining",
+        "businessActivity21Value": "Mining and quarrying (2)",
+        "businessActivity22Key": "ps$pers_sctr_2_2_2",
+        "businessActivity22Value": "Extraction of crude petroleum and natural gas (05)",
+        "businessActivity23Key": "ps$pers_sctr_2_0610y",
+        "businessActivity23Value": "Extraction of crude petroleum",
+        "businessActivity31Key": "ps$sector_water_2",
+        "businessActivity31Value": "Water supply, Sewerage, Waste management and Remediation activities (5)",
+        "businessActivity32Key": "ps$pers_sctr_3_5_2",
+        "businessActivity32Value": "Sewerage (38)",
+        "businessActivity33Key": "ps$pers_sctr_3_3700y",
+        "businessActivity33Value": "Sewerage",
+        "businessActivityDetails": null,
+        "totalBalanceSheet": 987.0,
+        "turnover": 562.0,
+        "annualNetProfit": 12.0,
+        "significantTurnoverInPublicSectorKey": "ps$turnover_yes",
+        "significantTurnoverInPublicSectorValue": "Yes (30% of the total turnover or more) (02)",
+        "listedCompanyKey": "ps$comp_stex_n",
+        "listedCompanyValue": "No (02)",
+        "stockExchange": "not listed",
+        "structureInvolveNomineeShareholdersKey": "ps$shr_nomi_hgh_rsk",
+        "structureInvolveNomineeShareholdersValue": "Yes, in a Med high or High risk country (02)",
+        "structureInvolveBearerSharesKey": "ps$cp_bearer_share_n",
+        "structureInvolveBearerSharesValue": "No (02)",
+        "whereBearerSharesHeldKey": "ps$bearer_sgpb",
+        "whereBearerSharesHeldValue": "SG Private Banking (02)",
+        "typeOfTrustOrFoundationKey": null,
+        "typeOfTrustOrFoundationValue": null,
+        "purposeOfTrust": null,
+        "classOfBeneficiaries": null,
+        "fimTypeKey": "ps$mifid_cif",
+        "fimTypeValue": "CIF except FR",
+        "localRegulatorOfFim": [],
+        "specificLocalRegulatorOfFim": null,
+        "organisationalAndOwnershipStructure": "Structure juridique",
+        "countriesBusinessIsRun": [
+          {
+            "countryKey": "FRA",
+            "countryValue": "France"
+          }
+        ],
+        "multipleShareholderWithoutSignificantParticipationKey": "ps$ade_yes",
+        "multipleShareholderWithoutSignificantParticipationValue": "Yes (01)",
+        "structureInOwnershipRegisteredInUsaKey": "ps$pers_stuct_usa_y",
+        "structureInOwnershipRegisteredInUsaValue": "Yes (01)",
+        "structureInOwnershipRegisteredOutsideSeglListKey": "ps$pers_struct_segl_n",
+        "structureInOwnershipRegisteredOutsideSeglListValue": "No (02)",
+        "maxLevelsBetweenAoAndUbosKey": "ps$ubo_lvl_2_3",
+        "maxLevelsBetweenAoAndUbosValue": "2 to 3 (2)"
+      },
+      "address": {
+        "addresses": [
+          {
+            "addressFunctionalKey": "2062187",
+            "addressKey": "214230",
+            "openDate": "2024-03-06",
+            "mediumKey": "postal",
+            "mediumValue": "Postal",
+            "street": "3 rue mademoiselle",
+            "additionalStreet1": null,
+            "additionalStreet2": null,
+            "poBox": null,
+            "zipCode": "75018",
+            "city": "Paris",
+            "countryKey": "FRA",
+            "countryValue": "France",
+            "fullAddress": "Legal Angular \n3 rue mademoiselle \n75018 Paris \nFrance",
+            "fullAddressAuto": true,
+            "electronicAddress": null,
+            "addressTypeKey": "postal",
+            "addressTypeValue": "Physical address",
+            "isDomicile": true,
+            "modifType": null,
+            "addressNatureKey": null,
+            "addressNatureValue": null,
+            "fullName": null,
+            "fullNameAuto": true,
+            "careOf": null,
+            "remark": "remark 18",
+            "closeDate": null
+          }
+        ],
+        "usages": []
+      },
+      "documents": [],
+      "contactDetails": {
+        "clientMetIndKey": null,
+        "clientMetIndValue": null,
+        "clientMetBy": "John Doe",
+        "dayToDayContactMethod": [
+          {
+            "mediumKey": "ps$method_phone",
+            "mediumValue": "Phone",
+            "dayToDay": false
+          },
+          {
+            "mediumKey": "ps$method_fax",
+            "mediumValue": "Fax",
+            "dayToDay": false
+          },
+          {
+            "mediumKey": "ps$method_email",
+            "mediumValue": "E-mail",
+            "dayToDay": false
+          },
+          {
+            "mediumKey": "ps$method_bulk_email",
+            "mediumValue": "Bulk E-mail",
+            "dayToDay": false
+          },
+          {
+            "mediumKey": "ps$method_mail",
+            "mediumValue": "Letter / Postal mail",
+            "dayToDay": false
+          },
+          {
+            "mediumKey": "ps$method_fim",
+            "mediumValue": "Contact through the related FIM",
+            "dayToDay": false
+          }
+        ],
+        "doNotContact": true,
+        "doNotContactReason": "He does not want to be contacted",
+        "clientIntroductionTypeKey": "ps$clt_intro_crm",
+        "clientIntroductionTypeValue": "By CRM (1)",
+        "lastContactDate": "2022-06-21",
+        "meetingDate": "2013-05-13",
+        "meetingDetails": "John Doe",
+        "remoteContactKey": "ps$pers_ctact_rmc_no",
+        "remoteContactValue": "No (02)",
+        "preferredCorrespondenceTypeKey": "ps$corr_wout_head",
+        "preferredCorrespondenceTypeValue": "Without Header (02)",
+        "crmIntroducerKey": "00002225"
+      },
+      "tax": {
+        "taxAuthority": null,
+        "crsResidenceStatusKey": "ps$not_resid",
+        "crsResidenceStatusValue": "Non-resident for CRS purpose (02)",
+        "crsResidenceStatusAuto": true,
+        "crsAccountHolderStatusKey": "ps$ent_temporary",
+        "crsAccountHolderStatusValue": "Entity - Temporary status (017)",
+        "crsAccountHolderStatusAuto": true,
+        "crsReportableStatusKey": "ps$not_report",
+        "crsReportableStatusValue": "CRS Non reportable (02)",
+        "crsReportableStatusAuto": false,
+        "usFatcaGlobalIndiciaKey": null,
+        "usFatcaGlobalIndiciaValue": null,
+        "usFatcaGlobalIndiciaAuto": true,
+        "usFatcaCalculatedStatusKey": null,
+        "usFatcaCalculatedStatusValue": null,
+        "usFatcaCalculatedStatusAuto": true,
+        "usFatcaFinalStatusKey": null,
+        "usFatcaFinalStatusValue": null,
+        "usFatcaFinalStatusAuto": true,
+        "finalFatcaStatusReason": null,
+        "annualCampaignComment": null,
+        "taxResidenceKey": "FRA",
+        "taxResidenceValue": "France",
+        "residentNonDomiciledStatusKey": "ps$resi_non_domi_n",
+        "residentNonDomiciledStatus": "No (02)",
+        "taxComplianceStatusKey": "ps$tax_comp_cert",
+        "taxComplianceStatusValue": "Tax compliance is certain (green indicia) (03)",
+        "usTinNumber": null,
+        "nonUsTinNumber": null,
+        "crsHistory": [
+          {
+            "crsAccountBalance": "450",
+            "highValue": null,
+            "crsReviewDate": "2023-12-21"
+          }
+        ],
+        "crsFatcaDocumentsHistory": [],
+        "taxResidenceCountry": [
+          {
+            "taxResidenceCountryTechnicalId": 1,
+            "countryKey": "FRA",
+            "countryValue": "France",
+            "countryReportableStatusKey": "ps$report",
+            "countryReportableStatusValue": "CRS reportable",
+            "tin": "999999",
+            "validFrom": "2023-12-21",
+            "validTo": null,
+            "relevantSelfCertificationKey": "yes",
+            "relevantSelfCertificationValue": "Yes",
+            "relevantIndicia": null,
+            "validSelfCertificationIndicia": {
+              "group": "Tax Residence Country details",
+              "hasIndiciaKey": "yes",
+              "hasIndiciaValue": "Yes",
+              "searcherKey": "00002225",
+              "searcher": "ALEXANDRE CHAPELIER (ALEXANDRE.CHAPELIER)",
+              "searchSourceKey": "ps$paper",
+              "searchSourceValue": "Paper Search",
+              "indiciaStatusKey": "ps$relev",
+              "indiciaStatusValue": "Relevant",
+              "rationale": null
+            },
+            "testFailedSelfCertificationIndicia": null,
+            "privateBankerKnowledgeIndicia": null,
+            "telephoneNumberIndicia": null,
+            "physicalAdressIndicia": null,
+            "holdMailIndicia": null,
+            "inCareOfIndicia": null,
+            "powerOfAttorneyIndicia": null,
+            "standingInstructionsIndicia": null,
+            "taxResidenceCountryIndicia": null,
+            "usCitizenshipIndicia": null,
+            "usPlaceOfBirthIndicia": null,
+            "usGreenCardIndicia": null,
+            "changeOfCircumstancesDate": null,
+            "modifType": null
+          }
+        ],
+        "transparentTaxRegimeKey": null,
+        "transparentTaxRegimeValue": null,
+        "vatNumber": null,
+        "entityIsSponsoredKey": null,
+        "entityIsSponsoredValue": null,
+        "sponsorKey": null,
+        "sponsorValue": null,
+        "giinSponsorOrSponsored": null,
+        "usFatcaStatusKey": "ps$us_spec",
+        "usFatcaStatusValue": "Specified US (000000018)",
+        "usFatcaSubStatusKey": "ps$spec_us",
+        "usFatcaSubStatusValue": "Specified US (44)",
+        "numberOfTaxResidenceAccordingToCrsKey": null,
+        "numberOfTaxResidenceAccordingToCrsValue": null,
+        "numberOfTaxResidenceAccordingToCrsAuto": null,
+        "automatedExchangeOfCrsInformationKey": null,
+        "automatedExchangeOfCrsInformationValue": null,
+        "automatedExchangeOfCrsInformationAuto": null,
+        "selfCertificationStatusKey": null,
+        "selfCertificationStatusValue": null,
+        "selfCertificationStatusAuto": null,
+        "usPersonAccordingToFatcaKey": null,
+        "usPersonAccordingToFatcaValue": null,
+        "usPersonAccordingToFatcaAuto": null,
+        "crsStatusOfEntityKey": "ps$crs_sts_na",
+        "crsStatusOfEntityValue": "Not specified (07)",
+        "crsStatusOfEntityAuto": true,
+        "transferPricingRiskKey": "ps$trans_pric_risk_n",
+        "transferPricingRiskValue": "No difference between the establishment and activity countries (02)",
+        "qiAgreementNumber": null,
+        "subjectToVatKey": null,
+        "subjectToVatValue": null,
+        "publicNegativeTaxInformation": [
+          {
+            "publicNegativeTaxInformationKey": "ps$publi_no_suspi",
+            "publicNegativeTaxInformationValue": "The CRM confirms that there is no evidence or information that could raise a suspicion in terms of tax non-compliance regarding the assets of the client and/or UBO (03)"
+          }
+        ],
+        "publicNegativeTaxInformationUbo": [
+          {
+            "publicNegativeTaxInformationKey": "ps$publi_no_suspi",
+            "publicNegativeTaxInformationValue": "The CRM confirms that there is no evidence or information that could raise a suspicion in terms of tax non-compliance regarding the assets of the client and/or UBO (03)"
+          }
+        ]
+      },
+      "commercial": {
+        "productsAndServicesDetails": "Il ne s'intéresse à rien",
+        "complexOrRiskyTransactionsKey": "ps$high_vol_trans_y",
+        "complexOrRiskyTransactionsValue": "Yes (1)",
+        "potentialOtherBusinessLines": "Petit potentiel mais on le prend quand même",
+        "relationOtherBusinessLines": "TIM",
+        "relationOtherSgpbValue": "pas de relation particulière",
+        "expectedAssets1YearKey": "ps$ass_1y_500_1m",
+        "expectedAssets1YearValue": "500 000 EUR - 5 000 000 EUR (2)",
+        "otherBanksRelations": "CAM",
+        "hobbies": [],
+        "prospectMaturityKey": null,
+        "prospectMaturityValue": null,
+        "prospectConversionDate": "2024-03-06",
+        "reasonForRefusal": null,
+        "identifyingQuestions": [],
+        "bankServices": [
+          {
+            "serviceKey": "ps$wp_corporate_struct",
+            "serviceValue": "Corporate structures (02)",
+            "validFrom": "2023-12-21",
+            "validTo": null
+          }
+        ],
+        "bankProducts": [
+          {
+            "productKey": "ps$wp_equity_funds",
+            "productValue": "Private equity funds (07)",
+            "validFrom": "2023-12-21",
+            "validTo": null
+          }
+        ],
+        "communities": [
+          {
+            "communityKey": "ps$sgpb_feminin",
+            "communityValue": "SGPB Au Féminin (01)"
+          },
+          {
+            "communityKey": "ps$leaders_op",
+            "communityValue": "Leaders d'opinion (02)"
+          },
+          {
+            "communityKey": "ps$entrep",
+            "communityValue": "Entrepreneurs (03)"
+          },
+          {
+            "communityKey": "ps$seniors",
+            "communityValue": "Seniors (04)"
+          },
+          {
+            "communityKey": "ps$now_gen",
+            "communityValue": "NowGen (05)"
+          }
+        ]
+      },
+      "aml": {
+        "amlRiskScore": null,
+        "calcAMLRiskLevelKey": "ps$aml_calc_na",
+        "calcAMLRiskLevelValue": "Not Calculated (05)",
+        "validatedAMLRiskLevelKey": "ps$aml_vali_higher",
+        "validatedAMLRiskLevelValue": "High Risk (04)",
+        "validatedAMLRiskLevelAuto": true,
+        "validatedAMLRiskLevelJustification": null,
+        "taxComplianceKey": "ps$tax_comp_cert",
+        "taxComplianceValue": "Tax compliance is certain (green indicia) (03)",
+        "mostRiskyUboKey": null,
+        "specificUboSimulationFlag": false
+      },
+      "riskFactors": {
+        "insiderKey": null,
+        "insiderValue": null,
+        "relatedInsiderKey": "ps$pers_rel_inside_y",
+        "relatedInsiderValue": "Yes (01)",
+        "insiderCompany": [],
+        "insiderDetails": null,
+        "pepQualificationKey": "ps$pep_qualif_high",
+        "pepQualificationValue": "PEP (01)",
+        "relatedPEPQualificationKey": "ps$pep_asso_v_high",
+        "relatedPEPQualificationValue": "PEP (01)",
+        "relatedPEPQualificationAuto": true,
+        "pepFunctionsAndActivities": "Chef du monde",
+        "relatedPEPRelationshipDetails": null,
+        "suspiciousActivities": [],
+        "positiveNewsDetails": "Toto",
+        "adverseNewsDetails": "Tata",
+        "reputationChecks": "Il ne s'est pas rancardé",
+        "pepFunctionKey": null,
+        "pepFunctionValue": null,
+        "adverseInformationKey": "ps$adverse_res_unc",
+        "adverseInformationValue": "Adverse news without prosecution / unconfirmed (02)",
+        "adverseInformationUboKey": "ps$adverse_res_unc_ubo",
+        "adverseInformationUboValue": "Adverse news without prosecution / unconfirmed (02)",
+        "complianceIncidentKey": "ps$pers_cpl_inc_nc",
+        "complianceIncidentValue": "No incident (02)",
+        "complianceIncidentUboKey": "ps$pers_cpl_inc_nc",
+        "complianceIncidentUboValue": "No incident (02)",
+        "sanctionEmbargoKey": "ps$adv_sanc_emb_nc",
+        "sanctionEmbargoValue": "Client is not mentioned or linked to a person mentioned in a list of sanctions (02)",
+        "sanctionEmbargoUboKey": "ps$adv_sanc_emb_nc",
+        "sanctionEmbargoUboValue": "Client is not mentioned or linked to a person mentioned in a list of sanctions (02)",
+        "pepQualificationLegalKey": "ps$pep_qualif_high",
+        "pepQualificationLegalValue": "PEP (01)",
+        "relatedPEPQualificationLegalKey": "ps$pep_asso_no",
+        "relatedPEPQualificationLegalValue": "No (04)",
+        "relatedPEPQualificationLegalAuto": true,
+        "adverseNegativeCorruptKey": "ps$neg_corrupt_no",
+        "adverseNegativeCorruptValue": "No",
+        "flagAbcKey": "ps$flag_abc_nc",
+        "flagAbcValue": "Not Calculated",
+        "flagAbcRule": "PEP",
+        "adverseNegativeCorruptUboKey": "ps$neg_corrupt_ubo_no",
+        "adverseNegativeCorruptUboValue": "No"
+      },
+      "wealthDetails": {
+        "totalEstimatedWealthKey": "ps$tot_est_wealth_4",
+        "totalEstimatedWealthValue": "> 30 000 000 EUR (4)",
+        "totalAUMKey": "ps$tot_aum_5m",
+        "totalAUMValue": "500 000 EUR - 5 000 000 EUR (2)",
+        "wealthRepartitionKey": "ps$mov_ass_sup_50",
+        "wealthRepartitionValue": "Movable assets (excluding financial assets) > 50% of total wealth (01)",
+        "sourceOfWealth": [
+          {
+            "sourceOfWealthKey": "ps$wealth_donation",
+            "sourceOfWealthValue": "Donation (04)"
+          }
+        ],
+        "sourceOfWealthDetails": "Grace à la chance tout ça",
+        "sourceOfWealthCountries": [
+          {
+            "sourceOfWealthCountryKey": "DEU",
+            "sourceOfWealthCountryValue": "Germany"
+          }
+        ],
+        "flagLpSect3Key": null,
+        "flagLpSect3Value": null,
+        "flagNpSect3Key": "ps$no",
+        "flagNpSect3Value": "No",
+        "wealthCreationBusinessSector11Key": "mb0_industr_2",
+        "wealthCreationBusinessSector11Value": "Construction (02)",
+        "wealthCreationBusinessSector12Key": "ps$industry_type_2_41",
+        "wealthCreationBusinessSector12Value": "Construction of buildings (41)",
+        "wealthCreationBusinessSector13Key": "ps$wlth_sctr_1_4100h",
+        "wealthCreationBusinessSector13Value": "Construction of other buildings",
+        "wealthCreationBusinessSector21Key": "ps$wlth_manu_1",
+        "wealthCreationBusinessSector21Value": "Manufacturing (03)",
+        "wealthCreationBusinessSector22Key": "ps$wlth_sctr_2_3_1",
+        "wealthCreationBusinessSector22Value": "Manufacture of food products (09)",
+        "wealthCreationBusinessSector23Key": "ps$wlth_sctr_2_1052y",
+        "wealthCreationBusinessSector23Value": "Manufacture of ice cream and other edible ice",
+        "wealthCreationBusinessSector31Key": "ps$wlth_food_2",
+        "wealthCreationBusinessSector31Value": "Accomodation and food service activities (09)",
+        "wealthCreationBusinessSector32Key": "ps$wlth_sctr_3_9_1",
+        "wealthCreationBusinessSector32Value": "Accommodation (59)",
+        "wealthCreationBusinessSector33Key": "ps$wlth_sctr_3_5530y",
+        "wealthCreationBusinessSector33Value": "Camping grounds and recreational vehicle parks",
+        "sourceOfWealthCheck": "par internet",
+        "totalLiabilitiesKey": "ps$tot_liab_500k",
+        "totalLiabilitiesValue": "< 500 000 EUR (1)",
+        "totalAnnualIncomeKey": "ps$inc_500_1m",
+        "totalAnnualIncomeValue": "500 000 EUR - 1 000 000 EUR (2)",
+        "referenceCurrencyKey": "EUR",
+        "referenceCurrencyValue": "Euro",
+        "assets": [
+          {
+            "assetTypeKey": "ps$asset_life_insur",
+            "assetTypeValue": "Financial assets - Life insurance",
+            "assetDetails": "test insurance",
+            "assetAmount": 658.0
+          }
+        ],
+        "liabilities": [
+          {
+            "liabilityTypeKey": "ps$liab_real_estate",
+            "liabilityTypeValue": "Real estate loans",
+            "liabilityDetails": "prêt immo",
+            "outstandingAmount": 190.0,
+            "term": null
+          }
+        ],
+        "incomes": [
+          {
+            "incomeTypeKey": "ps$income_finance",
+            "incomeTypeValue": "Financial and movable wealth income",
+            "incomeDetails": "test",
+            "incomeAmount": 555.0
+          }
+        ],
+        "expenses": [
+          {
+            "expenseTypeKey": "ps$exp_recurring",
+            "expenseTypeValue": "Annualised recurring expenses",
+            "expenseDetails": "details",
+            "expenseAmount": 14.0
+          }
+        ],
+        "financialFiguresDate": null
+      },
+      "mifid": {
+        "dateLastQuestionnaire": "2004-06-15",
+        "clientCategoryKey": "ps$pers_mifid_cat_prof",
+        "clientCategoryValue": "Professional (02)",
+        "investorProfileKey": "ps$mifid_risk_4",
+        "investorProfileValue": "3",
+        "capacityToWithstandLossKey": "ps$pers_loss_capa_4",
+        "capacityToWithstandLossValue": "Losses beyond capital (04)",
+        "sustainableAnnualLossKey": "ps$5y_58_perc",
+        "sustainableAnnualLossValue": "5% - 8%",
+        "assetClass": [
+          {
+            "assetClassKey": "ps$mifid_dyn_mkt",
+            "assetClassValue": "Cash investment / Monetary funds",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$mifid_inv_grd",
+            "assetClassValue": "Bonds & bond funds",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$mifid_complex",
+            "assetClassValue": "Complex bonds & bond funds",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$mifid_convert",
+            "assetClassValue": "Convertible bonds & bond funds",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$mifid_hgh_yld",
+            "assetClassValue": "High-yield / emerging bonds & bond funds",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$pers_mifid_cat_eq",
+            "assetClassValue": "Equities and equity or mixed funds",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$mifid_emerge",
+            "assetClassValue": "Emerging-country equities & equity funds",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$mifid_strup_w",
+            "assetClassValue": "100% capital guaranteed struct. Products",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$mifid_strup_n",
+            "assetClassValue": "not 100% capital guar. struct. Products",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$mifid_alt_inv",
+            "assetClassValue": "Alternative investment products",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$mifid_priv_eq",
+            "assetClassValue": "Private equity products",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$mifid_prec",
+            "assetClassValue": "Physical precious metals",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$mifid_commod",
+            "assetClassValue": "Products indexed on metals & other commo",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$pers_mifid_cat_fx",
+            "assetClassValue": "Forward foreign exchange",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$mifid_deriv",
+            "assetClassValue": "Derivatives",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$mifid_proprty",
+            "assetClassValue": "Real estate funds or company",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$mifid_abs",
+            "assetClassValue": "Asset-backed securities (ABS)",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          },
+          {
+            "assetClassKey": "ps$mifid_crpd",
+            "assetClassValue": "Crypto Data",
+            "hasKnowledgeKey": null,
+            "hasKnowledgeValue": null,
+            "hasExperienceKey": null,
+            "hasExperienceValue": null,
+            "knowledgeProfileKey": null,
+            "knowledgeProfileValue": null,
+            "knowledgeExperienceProfileKey": null,
+            "knowledgeExperienceProfileValue": null
+          }
+        ],
+        "objectives": [
+          {
+            "objectivesKey": "ps$objctv_growth",
+            "objectivesValue": "Growth"
+          }
+        ],
+        "specificObjectives": [
+          {
+            "specificObjectivesKey": "ps$spec_obj_esg",
+            "specificObjectivesValue": "Environmental Investment"
+          }
+        ],
+        "portionAnnualFinancialIncomeKey": null,
+        "portionAnnualFinancialIncomeValue": null,
+        "professionalTreasuryKey": "no",
+        "professionalTreasuryValue": "No",
+        "educationEconomyFinanceKey": null,
+        "educationEconomyFinanceValue": null,
+        "mifidQuestionnaire": []
+      },
+      "esg": null,
+      "relations": {
+        "personRelationships": [
+          {
+            "relationTypeKey": "netw",
+            "relationTypeValue": "Other relationships",
+            "relationRoleKey": "netw$ps$bus_relation_h",
+            "relationRoleValue": "has a business relationship with",
+            "relationSubRoleKey": null,
+            "relationSubRoleValue": null,
+            "targetPersonKey": "301200757",
+            "validFrom": null,
+            "validTo": null,
+            "percentage": null,
+            "amount": null,
+            "currencyKey": null,
+            "currencyValue": null,
+            "remark": null,
+            "personRelationshipsTechnicalKey": "3012007571811102-JAN-471231-DEC-4712"
+          },
+          {
+            "relationTypeKey": "repr",
+            "relationTypeValue": "Business main organization",
+            "relationRoleKey": "repr$ps$manager_h",
+            "relationRoleValue": "has a manager called",
+            "relationSubRoleKey": null,
+            "relationSubRoleValue": null,
+            "targetPersonKey": "301203700",
+            "validFrom": null,
+            "validTo": null,
+            "percentage": null,
+            "amount": null,
+            "currencyKey": null,
+            "currencyValue": null,
+            "remark": null,
+            "personRelationshipsTechnicalKey": "301203700814202-JAN-471231-DEC-4712"
+          }
+        ],
+        "ownerships": [
+          {
+            "ownershipTypeKey": "acc_owner",
+            "ownershipTypeValue": "Account Owner",
+            "ownershipRoleKey": "acc_owner",
+            "ownershipRoleValue": "Account Owner",
+            "businessPartnerKey": "1532378",
+            "validFrom": null,
+            "validTo": null,
+            "percentage": null,
+            "primaryContact": true
+          },
+          {
+            "ownershipTypeKey": "reg_owner",
+            "ownershipTypeValue": "Registered Owner",
+            "ownershipRoleKey": "reg_owner",
+            "ownershipRoleValue": "Registered Owner",
+            "businessPartnerKey": "1532378",
+            "validFrom": null,
+            "validTo": null,
+            "percentage": null,
+            "primaryContact": true
+          }
+        ],
+        "authorities": [],
+        "responsibilities": [
+          {
+            "responsibilityTypeKey": "ps$visib_by_tm",
+            "responsibilityTypeValue": "Is visible by Team",
+            "targetBankEmployeeKey": "00002036",
+            "targetBankEmployeeName": null,
+            "validFrom": "2023-12-21",
+            "validTo": null
+          },
+          {
+            "responsibilityTypeKey": "ps$visib_by_tm",
+            "responsibilityTypeValue": "Is visible by Team",
+            "targetBankEmployeeKey": "00002036",
+            "targetBankEmployeeName": null,
+            "validFrom": "2023-12-21",
+            "validTo": null
+          },
+          {
+            "responsibilityTypeKey": "ps$visib_by",
+            "responsibilityTypeValue": "Is visible by",
+            "targetBankEmployeeKey": "00002225",
+            "targetBankEmployeeName": null,
+            "validFrom": "2023-12-21",
+            "validTo": null
+          },
+          {
+            "responsibilityTypeKey": "ps$visib_by",
+            "responsibilityTypeValue": "Is visible by",
+            "targetBankEmployeeKey": "00002225",
+            "targetBankEmployeeName": null,
+            "validFrom": "2023-12-21",
+            "validTo": null
+          }
+        ]
+      },
+      "kycDocs": {
+        "kycMemoDoc": [
+          {
+            "kycId": 12763745,
+            "kycStatusKey": "done",
+            "kycStatusValue": "Done",
+            "userKey": "00002424",
+            "bpKeys": [],
+            "taskSubTypeKey": "ps$kyc_memo_adhoc",
+            "taskSubTypeValue": "ADHOC",
+            "openDate": "2024-03-06",
+            "archiveDate": "2024-03-14"
+          },
+          {
+            "kycId": 12763749,
+            "kycStatusKey": "kyc_compl",
+            "kycStatusValue": "Compliance Approval",
+            "userKey": "00002225",
+            "bpKeys": [],
+            "taskSubTypeKey": "ps$kyc_memo_op",
+            "taskSubTypeValue": "Operation",
+            "openDate": "2024-03-06",
+            "archiveDate": "2024-03-14"
+          },
+          {
+            "kycId": 12764702,
+            "kycStatusKey": "done",
+            "kycStatusValue": "Done",
+            "userKey": "00002225",
+            "bpKeys": [],
+            "taskSubTypeKey": "ps$kyc_memo_sdu",
+            "taskSubTypeValue": "SDU",
+            "openDate": "2024-03-06",
+            "archiveDate": "2024-03-15"
+          },
+          {
+            "kycId": 12762714,
+            "kycStatusKey": "done",
+            "kycStatusValue": "Done",
+            "userKey": "00002225",
+            "bpKeys": [],
+            "taskSubTypeKey": "ps$kyc_memo_onb",
+            "taskSubTypeValue": "Onboarding",
+            "openDate": "2024-03-06",
+            "archiveDate": "2024-03-13"
+          },
+          {
+            "kycId": 12763722,
+            "kycStatusKey": "open",
+            "kycStatusValue": "Open",
+            "userKey": "00002225",
+            "bpKeys": [],
+            "taskSubTypeKey": "ps$kyc_memo_onb",
+            "taskSubTypeValue": "Onboarding",
+            "openDate": "2024-03-06",
+            "archiveDate": "2024-03-14"
+          },
+          {
+            "kycId": 12763750,
+            "kycStatusKey": "open",
+            "kycStatusValue": "Open",
+            "userKey": "00002225",
+            "bpKeys": [],
+            "taskSubTypeKey": "ps$kyc_memo_onb",
+            "taskSubTypeValue": "Onboarding",
+            "openDate": "2024-03-06",
+            "archiveDate": "2024-03-14"
+          },
+          {
+            "kycId": 12762697,
+            "kycStatusKey": "open",
+            "kycStatusValue": "Open",
+            "userKey": "00002225",
+            "bpKeys": [],
+            "taskSubTypeKey": "ps$kyc_memo_onb",
+            "taskSubTypeValue": "Onboarding",
+            "openDate": "2024-03-06",
+            "archiveDate": "2024-03-13"
+          },
+          {
+            "kycId": 12899820,
+            "kycStatusKey": "open",
+            "kycStatusValue": "Open",
+            "userKey": "00002511",
+            "bpKeys": [
+              {
+                "bpKey": "1532378",
+                "bpName": "DOMAINE DE CHEZELLES BP"
+              }
+            ],
+            "taskSubTypeKey": "ps$kyc_memo_pcr",
+            "taskSubTypeValue": "Review",
+            "openDate": "2024-06-18",
+            "archiveDate": "2024-06-18"
+          }
+        ]
+      },
+      "orderGiverPortfolios": null
+    },
+    "wfc": [
+      {
+        "wfcId": 20041,
+        "intlId": "ps$send_modif",
+        "name": "Send for Approval"
+      },
+      {
+        "wfcId": 20091,
+        "intlId": "rejected_discard1",
+        "name": "Discard"
+      },
+      {
+        "wfcId": 200200,
+        "intlId": "ps$open_store",
+        "name": "Store"
+      }
+    ],
+    "postit": [],
+    "orderDetails": null
+  },
+  "bu": "luxembourg"
+}

@@ -1,4 +1,4 @@
-"""tools_kyc : analyse KYC croisant données internes et résultats d'API externes."""
+"""Analyse KYC croisant données internes et résultats des tools externes."""
 
 from .analyzer import analyze_client
 

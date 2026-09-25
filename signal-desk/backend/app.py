@@ -23,6 +23,7 @@ from pydantic import BaseModel
 from ai_provider import get_provider
 from agents.kyc.store import get_internal_record, list_internal_records
 from agents.veille import generate_veille
+from agents.bdd_store import list_documents as list_bdd_documents
 from seed_data import CATEGORIES, CLIENTS, EVENTS, SOURCES
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -110,6 +111,21 @@ def init_db():
             )
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS veille_runs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                client_id TEXT NOT NULL,
+                client_name TEXT,
+                created_at TEXT NOT NULL,
+                level TEXT,
+                provider TEXT,
+                synthese BLOB,
+                result BLOB NOT NULL,
+                error TEXT
+            )
+            """
+        )
         conn.commit()
         if conn.execute("SELECT COUNT(*) FROM sources").fetchone()[0] == 0:
             seed(conn)
@@ -186,6 +202,21 @@ def client_row_to_dict(row: sqlite3.Row) -> dict:
     }
 
 
+def veille_run_row_to_dict(row: sqlite3.Row) -> dict:
+    synthese = bytes(row["synthese"]).decode("utf-8") if row["synthese"] is not None else None
+    return {
+        "id": row["id"],
+        "clientId": row["client_id"],
+        "clientName": row["client_name"],
+        "createdAt": row["created_at"],
+        "level": row["level"],
+        "provider": row["provider"],
+        "synthese": synthese,
+        "error": row["error"],
+        "result": json.loads(bytes(row["result"]).decode("utf-8")),
+    }
+
+
 class StatusUpdate(BaseModel):
     status: str
     reason: Optional[str] = None
@@ -211,6 +242,15 @@ class VeilleRequest(BaseModel):
 
 class VeilleResponse(BaseModel):
     synthese: str
+
+
+class VeilleRunIn(BaseModel):
+    clientName: Optional[str] = None
+    level: Optional[str] = None
+    provider: Optional[str] = None
+    synthese: Optional[str] = None
+    error: Optional[str] = None
+    result: dict
 
 
 def _internal_client_to_dict(record: dict) -> dict:
@@ -256,6 +296,7 @@ app = FastAPI(title="Signal Desk API")
 @app.on_event("startup")
 def on_startup():
     init_db()
+    list_bdd_documents()  # pre-loads agents/bdd/*.json into SQLite
 
 
 def _sources_and_clients(conn):
@@ -367,10 +408,10 @@ def list_clients():
             _annotate_other_shareholders(client, conn)
             client["potentialProspectCount"] = _potential_prospect_count(client)
     known_ids = {client["id"] for client in clients}
-    for record in list_internal_records():
+    """for record in list_internal_records():
         if record["client_id"] not in known_ids:
             known_ids.add(record["client_id"])
-            clients.append(_internal_client_to_dict(record))
+            clients.append(_internal_client_to_dict(record))"""
     return clients
 
 
@@ -601,6 +642,47 @@ def run_veille(payload: VeilleRequest):
         raise HTTPException(
             status_code=502, detail=f"VEILLE_API_URL is not set and the local veille pipeline failed: {error}"
         ) from error
+
+
+@app.post("/api/clients/{client_id}/veille-runs")
+def create_veille_run(client_id: str, payload: VeilleRunIn):
+    """Persist one 'Explorer l'opportunité commerciale' / veille result so it
+    can be reviewed later from the history dialog."""
+    now = datetime.now(timezone.utc).isoformat()
+    result_bytes = json.dumps(payload.result, ensure_ascii=False).encode("utf-8")
+    synthese_bytes = payload.synthese.encode("utf-8") if payload.synthese else None
+    with get_conn() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO veille_runs (client_id, client_name, created_at, level, provider, synthese, result, error)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (client_id, payload.clientName, now, payload.level, payload.provider, synthese_bytes, result_bytes, payload.error),
+        )
+        conn.commit()
+        run_id = cur.lastrowid
+    return {"id": run_id, "createdAt": now}
+
+
+@app.get("/api/clients/{client_id}/veille-runs")
+def list_veille_runs(client_id: str):
+    """Veille result history for a client, most recent first."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM veille_runs WHERE client_id = ? ORDER BY created_at DESC", (client_id,)
+        ).fetchall()
+    return [veille_run_row_to_dict(r) for r in rows]
+
+
+@app.get("/api/veille-runs/summary")
+def veille_runs_summary():
+    """Per-client history counts, so the UI can enable/disable the history
+    button in the clients table without fetching every client's full history."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT client_id, COUNT(*) AS cnt, MAX(created_at) AS last_at FROM veille_runs GROUP BY client_id"
+        ).fetchall()
+    return {r["client_id"]: {"count": r["cnt"], "lastCreatedAt": r["last_at"]} for r in rows}
 
 
 @app.get("/api/agent-runs/{run_id}")

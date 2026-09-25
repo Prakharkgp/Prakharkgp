@@ -187,6 +187,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
 
 .btn-outline { background: #fff; color: var(--ink); border: 1px solid #b9bcc2; }
 .btn-outline:hover { background: #f0f0f1; }
+.btn-outline:disabled { opacity: 0.5; cursor: default; background: #fff; }
 
 .btn-navy {
   background: var(--navy);
@@ -202,6 +203,8 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
 .btn-navy:disabled { opacity: 0.6; cursor: default; }
 
 .btn-navy + .btn-navy { margin-left: 6px; }
+
+.client-actions-cell { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
 /* Data table */
 .table-wrap {
@@ -598,6 +601,23 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
 .synthesis-card { border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; }
 .synthesis-card > .synthesis-header h3 { margin: 0; }
 .synthesis-card > .synthesis-headline { font-size: 14px; margin: 10px 0 12px; }
+
+/* Veille history dialog */
+.veille-history-row {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.veille-history-row-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.veille-history-date { font-size: 12px; font-weight: 700; color: var(--text); }
+.veille-history-provider { font-size: 12px; color: var(--muted); }
 .details-section { margin-top: 14px; }
 .details-section h4 {
   margin: 0 0 8px;

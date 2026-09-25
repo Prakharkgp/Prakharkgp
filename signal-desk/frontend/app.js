@@ -149,6 +149,12 @@ const I18N = {
     unidentified_stake: "Unidentified shareholders",
     clients_kpi_opportunity_prospects: "Opportunity prospects identified",
     crm_review_date_prefix: "CRM review:",
+    btn_veille_history: "Veille history",
+    veille_history_title: "Veille history",
+    veille_history_empty: "No veille run recorded yet for this client.",
+    veille_history_level_label: "Level",
+    veille_history_provider_label: "Engine",
+    veille_history_error_prefix: "Error:",
   },
   fr: {
     tagline: "Intelligence des événements clients pour la Banque Privée et les Entreprises",
@@ -300,6 +306,12 @@ const I18N = {
     unidentified_stake: "Actionnaires non identifiés",
     clients_kpi_opportunity_prospects: "Prospects opportunité identifiés",
     crm_review_date_prefix: "Revue CRM :",
+    btn_veille_history: "Historique de veille",
+    veille_history_title: "Historique de veille",
+    veille_history_empty: "Aucune veille enregistrée pour ce client pour le moment.",
+    veille_history_level_label: "Niveau",
+    veille_history_provider_label: "Moteur",
+    veille_history_error_prefix: "Erreur :",
   },
 };
 
@@ -406,9 +418,79 @@ function setupClientModal() {
   document.getElementById("client-modal-overlay").addEventListener("click", (e) => {
     if (e.target.id === "client-modal-overlay") closeClientModal();
   });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeClientModal();
+  document.getElementById("veille-history-close").addEventListener("click", closeVeilleHistory);
+  document.getElementById("veille-history-overlay").addEventListener("click", (e) => {
+    if (e.target.id === "veille-history-overlay") closeVeilleHistory();
   });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeClientModal();
+      closeVeilleHistory();
+    }
+  });
+}
+
+// POST the completed veille/agent-run result so it is kept in the SQLite
+// history for this client — best-effort, never blocks the UI.
+async function saveVeilleRun(client, result) {
+  try {
+    await api(`/api/clients/${client.id}/veille-runs`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        clientName: client.name,
+        level: result.level || null,
+        provider: result.provider || null,
+        synthese: result.veille?.synthese || null,
+        error: result.veille?.error || null,
+        result,
+      }),
+    });
+    const btn = document.querySelector(`.veille-history-btn[data-id="${client.id}"]`);
+    if (btn) btn.disabled = false;
+  } catch (e) {
+    // Non-blocking: the veille result itself already rendered successfully.
+  }
+}
+
+function closeVeilleHistory() {
+  document.getElementById("veille-history-overlay").hidden = true;
+}
+
+async function openVeilleHistory(client) {
+  const overlay = document.getElementById("veille-history-overlay");
+  const content = document.getElementById("veille-history-content");
+  overlay.hidden = false;
+  content.innerHTML = `<h2>${escapeHtml(t("veille_history_title"))}</h2><p>…</p>`;
+  let runs = [];
+  try {
+    runs = await api(`/api/clients/${client.id}/veille-runs`);
+  } catch (e) {
+    content.innerHTML = `<h2>${escapeHtml(t("veille_history_title"))}</h2><p class="ai-error">${escapeHtml(e.message)}</p>`;
+    return;
+  }
+  content.innerHTML = renderVeilleHistory(client, runs);
+}
+
+function renderVeilleHistory(client, runs) {
+  const fmt = (d) =>
+    new Date(d).toLocaleString(state.lang === "fr" ? "fr-FR" : "en-US");
+  const rows = runs.length
+    ? runs
+        .map(
+          (run) => `<div class="veille-history-row">
+            <div class="veille-history-row-header">
+              <span class="veille-history-date">${escapeHtml(fmt(run.createdAt))}</span>
+              ${run.level ? `<span class="pill ${PRIORITY_CLASS[run.level] || ""}">${escapeHtml(t("veille_history_level_label"))} : ${escapeHtml(t(LEVEL_KEY[run.level] || run.level))}</span>` : ""}
+              ${run.provider ? `<span class="veille-history-provider">${escapeHtml(t("veille_history_provider_label"))} : ${escapeHtml(t(PROVIDER_KEY[run.provider] || run.provider))}</span>` : ""}
+            </div>
+            ${run.synthese ? `<div class="veille-result">${renderMarkdown(run.synthese)}</div>` : ""}
+            ${run.error ? `<p class="veille-error">${escapeHtml(t("veille_history_error_prefix"))} ${escapeHtml(run.error)}</p>` : ""}
+          </div>`
+        )
+        .join("")
+    : `<p class="details-empty">${escapeHtml(t("veille_history_empty"))}</p>`;
+  return `<h2>${escapeHtml(t("veille_history_title"))} — ${escapeHtml(client.name)}</h2>${rows}`;
 }
 
 function setupTabs() {
@@ -762,13 +844,35 @@ function renderClients() {
         <td>${escapeHtml(c.segment)}</td>
         <td>${escapeHtml(c.rmOwner)}</td>
         <td>${c.linkedEntities ? c.linkedEntities.length : 0}</td>
-        <td><button class="btn-navy client-view-btn" data-id="${c.id}">${t("btn_dashboard")}</button></td>
+        <td class="client-actions-cell">
+          <button class="btn-navy client-view-btn" data-id="${c.id}">${t("btn_dashboard")}</button>
+          <button class="btn btn-outline btn-small veille-history-btn" data-id="${c.id}" data-name="${escapeHtml(c.name)}" disabled>${t("btn_veille_history")}</button>
+        </td>
       </tr>`
     )
     .join("");
 
   document.querySelectorAll(".client-view-btn").forEach((btn) => {
     btn.addEventListener("click", () => openClientModal(btn.dataset.id));
+  });
+  document.querySelectorAll(".veille-history-btn").forEach((btn) => {
+    btn.addEventListener("click", () => openVeilleHistory({ id: btn.dataset.id, name: btn.dataset.name }));
+  });
+  refreshVeilleHistoryButtons();
+}
+
+// Enables each row's history button only when that client actually has at
+// least one stored veille run, keeping it disabled otherwise.
+async function refreshVeilleHistoryButtons() {
+  let summary = {};
+  try {
+    summary = await api("/api/veille-runs/summary");
+  } catch (e) {
+    return;
+  }
+  document.querySelectorAll(".veille-history-btn").forEach((btn) => {
+    const entry = summary[btn.dataset.id];
+    btn.disabled = !entry || !entry.count;
   });
 }
 
@@ -1167,6 +1271,8 @@ async function exploreCommercialOpportunity(client) {
   const result = run.result;
   result.veille = await veillePromise;
   await sleep(400);
+
+  saveVeilleRun(client, result);
 
   const changed = result.changedEvents || [];
   if (changed.length) {

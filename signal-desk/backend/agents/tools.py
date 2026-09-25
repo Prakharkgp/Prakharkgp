@@ -14,13 +14,17 @@ try:
 except ImportError:
     from kyc.analyzer import analyze_client
 
+try:
+    from .kyc.store import get_internal_record
+except ImportError:
+    from kyc.store import get_internal_record
+
+from .proposition.service import (
+    propose_banking_actions,
+    synthesize_kyc_new_information,
+)
+
 _STATE_RECHERCHES = []
-
-
-# ---------------------------------------------------------------------------
-# Chemin vers le dossier de données locales (bdd/)
-# ---------------------------------------------------------------------------
-BDD_DIR = os.path.join(os.path.dirname(__file__), 'bdd')
 
 
 # ---------------------------------------------------------------------------
@@ -179,6 +183,67 @@ TOOLS = [
         },
         'strict': True,
     },
+    {
+        'type': 'function',
+        'name': 'synthesize_kyc_new_information',
+        'description': (
+            "Synthétise la sortie JSON complète de l'outil KYC : nouvelles "
+            "informations lorsqu'elles existent et changements factuels explicites, "
+            "notamment `analysis.kyc_deltas` dans le format KYC actuel."
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'kyc_delta': {
+                    'type': 'object',
+                    'description': (
+                        "Sortie JSON complète et inchangée retournée par "
+                        "`analyser_conformite_kyc`."
+                    ),
+                    'additionalProperties': True,
+                },
+            },
+            'required': ['kyc_delta'],
+            'additionalProperties': False,
+        },
+        'strict': False,
+    },
+    {
+        'type': 'function',
+        'name': 'propose_banking_actions',
+        'description': (
+            "Produit un plan d'action bancaire détaillé à partir de la sortie KYC, "
+            "de sa synthèse et de la knowledge base SGPB locale."
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'kyc_delta': {
+                    'type': 'object',
+                    'description': "Sortie JSON complète de `analyser_conformite_kyc`.",
+                    'additionalProperties': True,
+                },
+                'new_information_summary': {
+                    'type': 'object',
+                    'description': (
+                        "Sortie JSON de `synthesize_kyc_new_information`."
+                    ),
+                    'additionalProperties': True,
+                },
+                'knowledge_base': {
+                    'type': 'object',
+                    'description': (
+                        "Base optionnelle fournie par l'appelant. Si elle est absente, "
+                        "le tool utilise automatiquement les bases locales."
+                    ),
+                    'additionalProperties': True,
+                },
+            },
+            'required': ['kyc_delta', 'new_information_summary'],
+            'additionalProperties': False,
+        },
+        'strict': False,
+    },
 ]
 
 
@@ -238,101 +303,25 @@ def _business_event_query(company_name: str) -> str:
 # ---------------------------------------------------------------------------
 
 def consulter_base_interne(client_id: str) -> str:
-    """Lit les fichiers JSON locaux du dossier bdd/ et retourne une synthèse
-    formatée de la situation du client."""
+    """Retourne les informations du client depuis la table SQLite clients."""
 
-    if client_id != "1532378":
-        return f"ERREUR : Aucun client trouvé avec l'ID {client_id}."
+    client = get_internal_record(client_id)
+    if client is None:
+        return f"ERREUR : Aucun client trouvé dans la table clients avec l'ID {client_id}."
 
-    # --- Lecture des fichiers JSON ---
-    try:
-        with open(os.path.join(BDD_DIR, 'test_1_bp.json'), 'r', encoding='utf-8') as f:
-            bp_data = json.load(f)
-        with open(os.path.join(BDD_DIR, 'test_2_pm.json'), 'r', encoding='utf-8') as f:
-            pm_data = json.load(f)
-        with open(os.path.join(BDD_DIR, 'test_3_be.json'), 'r', encoding='utf-8') as f:
-            be_data = json.load(f)
-        with open(os.path.join(BDD_DIR, 'test_5_gerant.json'), 'r', encoding='utf-8') as f:
-            gerant_data = json.load(f)
-    except FileNotFoundError as e:
-        return f"ERREUR : Fichier de données introuvable – {e}"
-
-    # --- Extraction des informations clés ---
-    bp = bp_data['result']['bpData']['bpDetails']
-    bp_tax = bp_data['result']['bpData']['bpTax']
-    ownerships = bp_data['result']['bpData']['relations']['ownerships']
-
-    pm_ident = pm_data['result']['personData']['identification']
-    pm_business = pm_data['result']['personData']['businessActivity']
-    pm_commercial = pm_data['result']['personData']['commercial']
-    pm_aml = pm_data['result']['personData']['aml']
-
-    be_ident = be_data['result']['personData']['identification']
-    be_risk = be_data['result']['personData']['riskFactors']
-    be_wealth = be_data['result']['personData']['wealthDetails']
-
-    gerant_ident = gerant_data['result']['personData']['identification']
-
-    # --- Construction de la synthèse ---
-    synthese = (
-        f"=== SYNTHÈSE BASE INTERNE – Client ID: {client_id} ===\n\n"
-
-        f"1. BUSINESS PARTNER (BP)\n"
-        f"   - Nom BP : {bp['bpName']}\n"
-        f"   - Clé BP : {bp['bpKey']}\n"
-        f"   - Date d'ouverture : {bp['openDate']}\n"
-        f"   - Type client : {bp['customerTypeValue']}\n"
-        f"   - BU : {bp['subBuValue']}\n"
-        f"   - Pays de domicile : {bp['countryOfDomicileValue']}\n"
-        f"   - CRM : {bp['crmName']}\n"
-        f"   - Risque AML validé : {bp_tax['amlValidatedRiskLevelValue']}\n"
-        f"   - Statut PEP : {bp_tax['pepAccountValue']}\n\n"
-
-        f"2. PERSONNE MORALE (Registered Owner)\n"
-        f"   - Nom : {pm_ident['fullName']}\n"
-        f"   - Person Key : {pm_ident['personKey']}\n"
-        f"   - Type : {pm_ident['personTypeValue']}\n"
-        f"   - Forme juridique : {pm_ident.get('legalFormValue', 'N/A')}\n"
-        f"   - Pays d'enregistrement : {pm_ident.get('registrationCountryValue', 'N/A')}\n"
-        f"   - Date d'enregistrement : {pm_ident.get('registrationDate', 'N/A')}\n"
-        f"   - Secteur d'activité : {pm_business['businessActivity11Value']}\n"
-        f"   - CA : {pm_business.get('turnover', 'N/A')}\n"
-        f"   - Bilan total : {pm_business.get('totalBalanceSheet', 'N/A')}\n"
-        f"   - Risque AML : {pm_aml['validatedAMLRiskLevelValue']}\n"
-        f"   - Produits bancaires : {', '.join(p['productValue'] for p in pm_commercial.get('bankProducts', []))}\n"
-        f"   - Services bancaires : {', '.join(s['serviceValue'] for s in pm_commercial.get('bankServices', []))}\n\n"
-
-        f"3. BÉNÉFICIAIRE EFFECTIF (Ultimate Beneficial Owner)\n"
-        f"   - Nom : {be_ident['fullName']}\n"
-        f"   - Person Key : {be_ident['personKey']}\n"
-        f"   - Type : {be_ident['personTypeValue']}\n"
-        f"   - Date de naissance : {be_ident.get('birthDate', 'N/A')}\n"
-        f"   - Nationalité : {be_ident.get('nationalityValue', 'N/A')}\n"
-        f"   - Pays de domicile : {be_ident.get('countryOfDomicileValue', 'N/A')}\n"
-        f"   - Qualification PEP : {be_risk['pepQualificationValue']}\n"
-        f"   - Fonction PEP : {be_risk.get('pepFunctionValue', 'N/A')}\n"
-        f"   - Patrimoine estimé : {be_wealth['totalEstimatedWealthValue']}\n"
-        f"   - Source de richesse : {', '.join(s['sourceOfWealthValue'] for s in be_wealth.get('sourceOfWealth', []))}\n\n"
-
-        f"4. GÉRANT\n"
-        f"   - Nom : {gerant_ident['fullName']}\n"
-        f"   - Person Key : {gerant_ident['personKey']}\n"
-        f"   - Type : {gerant_ident['personTypeValue']}\n"
-        f"   - Statut : {gerant_ident['personStatusValue']}\n"
-        f"   - Date de naissance : {gerant_ident.get('birthDate', 'N/A')}\n\n"
-
-        f"5. RELATIONS D'ACTIONNARIAT\n"
+    return json.dumps(
+        {
+            "client_id": client["client_id"],
+            "client_name": client["client_name"],
+            "segment": client["client_type"],
+            "status": client["status"],
+            "relationship_manager": client["relationship_manager"],
+            "is_prospect": client["status"] == "Prospect",
+            "linked_entities": client.get("linked_entities", []),
+        },
+        ensure_ascii=False,
+        indent=2,
     )
-
-    for own in ownerships:
-        synthese += (
-            f"   - {own['ownershipTypeValue']} : {own['personFullName']} "
-            f"(Rôle: {own['ownershipRoleValue']}, "
-            f"Risque AML: {own.get('validatedAmlRiskValue', 'N/A')})\n"
-        )
-
-    return synthese
-
 
 # ---------------------------------------------------------------------------
 # Outil 2 – Recherche Google News / Custom Search
@@ -571,9 +560,49 @@ def analyser_conformite_kyc(client_id: str) -> str:
 # Routeur d'exécution des outils
 # ---------------------------------------------------------------------------
 
-def execute_tool(name: str, arguments: str) -> str:
+def execute_tool(
+    name: str,
+    arguments: str,
+    llm_client: Any = None,
+    deployment_name: str | None = None,
+) -> str:
     """Route l'appel vers la fonction outil appropriée."""
     args = json.loads(arguments)
+
+    if name in {'synthesize_kyc_new_information', 'propose_banking_actions'}:
+        if llm_client is None or not deployment_name:
+            raise ValueError(
+                f'Le tool {name} nécessite un client Foundry et un déploiement.'
+            )
+
+        _validate_kyc_delta(args)
+
+        if name == 'synthesize_kyc_new_information':
+            return synthesize_kyc_new_information(
+                llm_client=llm_client,
+                deployment_name=deployment_name,
+                kyc_delta=args['kyc_delta'],
+            )
+
+        # --- Fallback: le LLM imbrique parfois new_information_summary dans kyc_delta ---
+        if args.get('new_information_summary') is None and isinstance(args.get('kyc_delta'), dict):
+            nested = args['kyc_delta'].pop('new_information_summary', None)
+            if nested is not None:
+                args['new_information_summary'] = nested
+
+        # new_information_summary est Optional dans propose_banking_actions,
+        # on valide seulement s'il est présent.
+        if args.get('new_information_summary') is not None:
+            _validate_required_object(args, 'new_information_summary')
+
+        _validate_optional_object(args, 'knowledge_base')
+        return propose_banking_actions(
+            llm_client=llm_client,
+            deployment_name=deployment_name,
+            kyc_delta=args['kyc_delta'],
+            new_information_summary=args.get('new_information_summary'),
+            knowledge_base=args.get('knowledge_base'),
+        )
 
     if name == 'consulter_base_interne':
         return consulter_base_interne(**args)
@@ -595,3 +624,57 @@ def execute_tool(name: str, arguments: str) -> str:
 
     _STATE_RECHERCHES.append(json.loads(output))
     return output
+
+
+def _validate_kyc_delta(arguments: dict[str, Any]) -> None:
+    kyc_delta = arguments.get('kyc_delta')
+    if isinstance(kyc_delta, str):
+        try:
+            parsed = json.loads(kyc_delta)
+            if isinstance(parsed, dict):
+                arguments['kyc_delta'] = parsed
+                kyc_delta = parsed
+        except (json.JSONDecodeError, TypeError):
+            pass
+    if not isinstance(kyc_delta, dict):
+        raise ValueError('kyc_delta doit être un objet JSON.')
+
+    analysis = kyc_delta.get('analysis')
+    if analysis is not None and not isinstance(analysis, dict):
+        raise ValueError('kyc_delta.analysis doit être un objet JSON.')
+
+    if isinstance(analysis, dict):
+        for field_name in ('new_information', 'kyc_deltas'):
+            value = analysis.get(field_name)
+            if value is not None and not isinstance(value, list):
+                raise ValueError(
+                    f'kyc_delta.analysis.{field_name} doit être un tableau JSON.'
+                )
+
+
+def _validate_required_object(arguments: dict[str, Any], field_name: str) -> None:
+    value = arguments.get(field_name)
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, dict):
+                arguments[field_name] = parsed
+                value = parsed
+        except (json.JSONDecodeError, TypeError):
+            pass
+    if not isinstance(value, dict):
+        raise ValueError(f'{field_name} doit être un objet JSON obligatoire.')
+
+
+def _validate_optional_object(arguments: dict[str, Any], field_name: str) -> None:
+    value = arguments.get(field_name)
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, dict):
+                arguments[field_name] = parsed
+                value = parsed
+        except (json.JSONDecodeError, TypeError):
+            pass
+    if value is not None and not isinstance(value, dict):
+        raise ValueError(f'{field_name} doit être un objet JSON lorsqu\u2019il est fourni.')

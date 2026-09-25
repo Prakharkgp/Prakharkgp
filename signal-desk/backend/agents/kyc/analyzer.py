@@ -1,4 +1,4 @@
-"""Analyse KYC : croise données internes et résultats d'API externes (tools_calling)."""
+"""Analyse KYC : croise données internes et résultats des tools externes."""
 import json
 from typing import Any, Callable
 
@@ -90,7 +90,7 @@ def analyze_client(
 
     Args:
         client_name: nom du client recherché.
-        api_results: résultat retourné par tools_calling (données Google, etc.).
+        api_results: résultat retourné par les tools externes (Google, etc.).
         agent_runner: fonction d'appel à l'agent (injectable pour les tests).
 
     Returns:

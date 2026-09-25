@@ -396,10 +396,10 @@ def get_client(client_id: str):
 
 
 PRIORITY_RANK = {"High": 3, "Medium": 2, "Low": 1}
-# Stand-in for web-search / referential-lookup latency: those two agent steps
-# have no live data source in this demo, so without a pause the checklist
-# would complete before it is ever visible.
-SIMULATED_STEP_SECONDS = 0.8
+# Stand-in for agent latency until the agents backend is connected: each of
+# the three steps takes a few seconds (about 12 s in total) so users can
+# follow the checklist. AGENT_STEP_SECONDS overrides it.
+SIMULATED_STEP_SECONDS = float(os.getenv("AGENT_STEP_SECONDS", "4"))
 
 
 def _set_run(run_id: int, **fields):
@@ -537,6 +537,7 @@ def _run_agents(run_id: int, client_id: str):
                 "changedEvents": changed,
                 "provider": provider.name,
             }
+            time.sleep(SIMULATED_STEP_SECONDS)
         _set_run(run_id, step=3, status="done", result=json.dumps(result))
     except Exception as exc:
         _set_run(run_id, status="error", error=f"{type(exc).__name__}: {exc}")

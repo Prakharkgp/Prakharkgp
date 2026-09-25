@@ -1,14 +1,34 @@
+from fastapi import APIRouter
+from pydantic import BaseModel
+
 from agents.client import FoundryClient
+from agents.tools import _STATE_RECHERCHES
+
+# ---------------------------------------------------------------------------
+# Routeur FastAPI
+# ---------------------------------------------------------------------------
+
+router = APIRouter()
 
 
-def main() -> None:
-    client = FoundryClient()
+# ---------------------------------------------------------------------------
+# Schémas Pydantic
+# ---------------------------------------------------------------------------
 
-    # --- Saisie interactive de l'ID client ---
-    client_id = input("Veuillez entrer l'ID du client à analyser : ")
+class VeilleRequest(BaseModel):
+    client_id: str
 
-    system_prompt = (
-        "Tu es un expert en intelligence économique et veille commerciale bancaire.\n\n"
+
+class VeilleResponse(BaseModel):
+    synthese: str
+
+
+# ---------------------------------------------------------------------------
+# Prompt système (identique à main.py)
+# ---------------------------------------------------------------------------
+
+SYSTEM_PROMPT = (
+    "Tu es un expert en intelligence économique et veille commerciale bancaire.\n\n"
 
         "Pour répondre à la requête de l'utilisateur, tu DOIS OBLIGATOIREMENT "
         "suivre ces étapes de raisonnement (Chain of Thought), l'une après l'autre :\n\n"
@@ -58,19 +78,27 @@ def main() -> None:
         "- Ne produis pas la synthèse finale avant le retour des deux tools propositionnels.\n"
         "- Toute priorité affichée doit être uniquement `Low`, `Medium` ou `High`, sans score.\n"
         "- Rédige TOUJOURS ta réponse finale EN FRANÇAIS.\n"
-    )
+)
+
+
+# ---------------------------------------------------------------------------
+# Route principale
+# ---------------------------------------------------------------------------
+
+@router.post("/api/veille", response_model=VeilleResponse)
+async def run_veille(request: VeilleRequest):
+    """Lance le pipeline complet de veille commerciale + conformité KYC."""
+
+    # Sécurité d'état : vide la mémoire des recherches précédentes
+    _STATE_RECHERCHES.clear()
 
     user_query = (
-        f"Effectue une veille commerciale complète pour le client dont l'ID est {client_id}."
+        f"Effectue une veille commerciale complète pour le client dont l'ID est {request.client_id}."
     )
 
-    print(f"\nQuery: {user_query}\n")
-    answer = client.query(system_prompt, user_query)
-    print(f"\n{'='*60}")
-    print(f"SYNTHÈSE FINALE DE L'ORCHESTRATEUR")
-    print(f"{'='*60}\n")
-    print(answer)
+    foundry = FoundryClient()
+    synthese = foundry.query(SYSTEM_PROMPT, user_query)
+
+    return VeilleResponse(synthese=synthese)
 
 
-if __name__ == '__main__':
-    main()

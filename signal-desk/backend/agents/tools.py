@@ -18,6 +18,10 @@ try:
     from .bdd_store import get_document as _get_bdd_document
 except ImportError:
     from bdd_store import get_document as _get_bdd_document
+from .proposition.service import (
+    propose_banking_actions,
+    synthesize_kyc_new_information,
+)
 
 _STATE_RECHERCHES = []
 
@@ -177,6 +181,67 @@ TOOLS = [
             'additionalProperties': False,
         },
         'strict': True,
+    },
+    {
+        'type': 'function',
+        'name': 'synthesize_kyc_new_information',
+        'description': (
+            "Synthétise la sortie JSON complète de l'outil KYC : nouvelles "
+            "informations lorsqu'elles existent et changements factuels explicites, "
+            "notamment `analysis.kyc_deltas` dans le format KYC actuel."
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'kyc_delta': {
+                    'type': 'object',
+                    'description': (
+                        "Sortie JSON complète et inchangée retournée par "
+                        "`analyser_conformite_kyc`."
+                    ),
+                    'additionalProperties': True,
+                },
+            },
+            'required': ['kyc_delta'],
+            'additionalProperties': False,
+        },
+        'strict': False,
+    },
+    {
+        'type': 'function',
+        'name': 'propose_banking_actions',
+        'description': (
+            "Produit un plan d'action bancaire détaillé à partir de la sortie KYC, "
+            "de sa synthèse et de la knowledge base SGPB locale."
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'kyc_delta': {
+                    'type': 'object',
+                    'description': "Sortie JSON complète de `analyser_conformite_kyc`.",
+                    'additionalProperties': True,
+                },
+                'new_information_summary': {
+                    'type': 'object',
+                    'description': (
+                        "Sortie JSON de `synthesize_kyc_new_information`."
+                    ),
+                    'additionalProperties': True,
+                },
+                'knowledge_base': {
+                    'type': 'object',
+                    'description': (
+                        "Base optionnelle fournie par l'appelant. Si elle est absente, "
+                        "le tool utilise automatiquement les bases locales."
+                    ),
+                    'additionalProperties': True,
+                },
+            },
+            'required': ['kyc_delta', 'new_information_summary'],
+            'additionalProperties': False,
+        },
+        'strict': False,
     },
 ]
 
@@ -566,9 +631,38 @@ def analyser_conformite_kyc(client_id: str) -> str:
 # Routeur d'exécution des outils
 # ---------------------------------------------------------------------------
 
-def execute_tool(name: str, arguments: str) -> str:
+def execute_tool(
+    name: str,
+    arguments: str,
+    llm_client: Any = None,
+    deployment_name: str | None = None,
+) -> str:
     """Route l'appel vers la fonction outil appropriée."""
     args = json.loads(arguments)
+
+    if name in {'synthesize_kyc_new_information', 'propose_banking_actions'}:
+        if llm_client is None or not deployment_name:
+            raise ValueError(
+                f'Le tool {name} nécessite un client Foundry et un déploiement.'
+            )
+        _validate_kyc_delta(args)
+
+        if name == 'synthesize_kyc_new_information':
+            return synthesize_kyc_new_information(
+                llm_client=llm_client,
+                deployment_name=deployment_name,
+                kyc_delta=args['kyc_delta'],
+            )
+
+        _validate_required_object(args, 'new_information_summary')
+        _validate_optional_object(args, 'knowledge_base')
+        return propose_banking_actions(
+            llm_client=llm_client,
+            deployment_name=deployment_name,
+            kyc_delta=args['kyc_delta'],
+            new_information_summary=args['new_information_summary'],
+            knowledge_base=args.get('knowledge_base'),
+        )
 
     if name == 'consulter_base_interne':
         return consulter_base_interne(**args)
@@ -590,3 +684,32 @@ def execute_tool(name: str, arguments: str) -> str:
 
     _STATE_RECHERCHES.append(json.loads(output))
     return output
+
+
+def _validate_kyc_delta(arguments: dict[str, Any]) -> None:
+    kyc_delta = arguments.get('kyc_delta')
+    if not isinstance(kyc_delta, dict):
+        raise ValueError('kyc_delta doit être un objet JSON.')
+
+    analysis = kyc_delta.get('analysis')
+    if analysis is not None and not isinstance(analysis, dict):
+        raise ValueError('kyc_delta.analysis doit être un objet JSON.')
+
+    if isinstance(analysis, dict):
+        for field_name in ('new_information', 'kyc_deltas'):
+            value = analysis.get(field_name)
+            if value is not None and not isinstance(value, list):
+                raise ValueError(
+                    f'kyc_delta.analysis.{field_name} doit être un tableau JSON.'
+                )
+
+
+def _validate_required_object(arguments: dict[str, Any], field_name: str) -> None:
+    if not isinstance(arguments.get(field_name), dict):
+        raise ValueError(f'{field_name} doit être un objet JSON obligatoire.')
+
+
+def _validate_optional_object(arguments: dict[str, Any], field_name: str) -> None:
+    value = arguments.get(field_name)
+    if value is not None and not isinstance(value, dict):
+        raise ValueError(f'{field_name} doit être un objet JSON lorsqu’il est fourni.')

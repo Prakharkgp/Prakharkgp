@@ -23,7 +23,7 @@ from pydantic import BaseModel
 from ai_provider import get_provider
 from agents.kyc.store import get_internal_record, list_internal_records
 from agents.veille import generate_veille
-from seed_data import CATEGORIES, CLIENTS, EVENTS, SOURCES
+from seed_data import CATEGORIES, CLIENTS, DEMO_RM, EVENTS, SOURCES
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "signal_desk.db"
@@ -221,7 +221,7 @@ def _internal_client_to_dict(record: dict) -> dict:
         "id": record["client_id"],
         "name": record["client_name"],
         "segment": segment or "Client",
-        "rmOwner": record.get("relationship_manager") or "—",
+        "rmOwner": DEMO_RM,
         "isProspect": record.get("status") != "Client",
         "linkedEntities": [],
         "potentialProspectCount": 0,

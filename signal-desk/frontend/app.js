@@ -63,9 +63,7 @@ const I18N = {
     sources_title: "Source Registry",
     sources_subtitle:
       "Public registries are simulated in this prototype so the feed and triage workflow can be demoed end to end. Private/commercial sources are mapped to their role in the workflow, ready to be wired in as licensed integrations become available.",
-    clients_title: "Clients & Ownership",
-    clients_subtitle:
-      "Events on indirectly held entities are linked back to the client through the ownership chain — the same “who owns what” role a source like Moody's Orbis would play in production.",
+    clients_title: "Clients and prospects",
     ownership_chain_title: "Ownership chain",
     linked_signals_title: "Linked signals",
     no_linked_entities: "No linked entities recorded.",
@@ -147,7 +145,6 @@ const I18N = {
     convert_already_client: (name) => `${name} is already a tracked client.`,
     this_client_label: "this client",
     unidentified_stake: "Unidentified shareholders",
-    clients_kpi_opportunity_prospects: "Opportunity prospects identified",
     crm_review_date_prefix: "CRM review:",
   },
   fr: {
@@ -214,9 +211,7 @@ const I18N = {
     sources_title: "Registre des sources",
     sources_subtitle:
       "Les registres publics sont simulés dans ce prototype afin de démontrer le flux et le triage de bout en bout. Les sources privées/commerciales sont associées à leur rôle dans le processus, prêtes à être intégrées lorsque les licences seront disponibles.",
-    clients_title: "Clients & actionnariat",
-    clients_subtitle:
-      "Les événements sur des entités détenues indirectement sont rattachés au client via la chaîne d'actionnariat — le même rôle que jouerait une source comme Moody's Orbis en production.",
+    clients_title: "Clients et prospects",
     ownership_chain_title: "Chaîne d'actionnariat",
     linked_signals_title: "Signaux liés",
     no_linked_entities: "Aucune entité liée enregistrée.",
@@ -271,7 +266,7 @@ const I18N = {
     btn_confirm: "Confirmer",
     btn_cancel: "Annuler",
     scan_call_error_prefix: "Échec de la vérification :",
-    btn_dashboard: "Veille",
+    btn_dashboard: "Signaux",
     gap_added_tag: "Ajouté au répertoire des signaux",
     other_shareholders_label: "Autres actionnaires",
     already_client_tag: "Déjà client",
@@ -298,7 +293,6 @@ const I18N = {
     convert_already_client: (name) => `${name} est déjà un client suivi.`,
     this_client_label: "ce client",
     unidentified_stake: "Actionnaires non identifiés",
-    clients_kpi_opportunity_prospects: "Prospects opportunité identifiés",
     crm_review_date_prefix: "Revue CRM :",
   },
 };
@@ -477,12 +471,10 @@ function renderKPIs() {
 function renderClientKPIs() {
   const clients = state.clients.filter((c) => !c.isProspect).length;
   const prospects = state.clients.filter((c) => c.isProspect).length;
-  const opportunityProspects = state.clients.reduce((sum, c) => sum + (c.potentialProspectCount || 0), 0);
 
   const kpis = [
     { value: clients, label: t("clients_kpi_clients") },
     { value: prospects, label: t("clients_kpi_prospects"), accent: true },
-    { value: opportunityProspects, label: t("clients_kpi_opportunity_prospects"), accent: true },
   ];
 
   document.getElementById("client-kpis").innerHTML = kpis

@@ -119,12 +119,15 @@ SOURCES = [
     },
 ]
 
+# For the demo every client and prospect is followed by the same RM.
+DEMO_RM = "Marie-France Rigoroso"
+
 CLIENTS = [
     {
         "id": "lefevre",
         "name": "Antoine Lefevre",
         "segment": "UHNW Individual — Private Banking",
-        "rm_owner": "Marie-France Rigoroso",
+        "rm_owner": DEMO_RM,
         "is_prospect": False,
         "linked_entities": [
             {
@@ -148,7 +151,7 @@ CLIENTS = [
         "id": "whitfield-rowe",
         "name": "Whitfield & Rowe Group plc",
         "segment": "Corporate — Mid-Cap, UK-listed",
-        "rm_owner": "James Okafor",
+        "rm_owner": DEMO_RM,
         "is_prospect": False,
         "linked_entities": [
             {"name": "Whitfield & Rowe Logistics Ltd", "relation": "Wholly-owned subsidiary", "jurisdiction": "United Kingdom", "client_stake_percent": 100},
@@ -158,7 +161,7 @@ CLIENTS = [
         "id": "meridian",
         "name": "Meridian BioTech Inc.",
         "segment": "Corporate — US-listed",
-        "rm_owner": "Sarah Klein",
+        "rm_owner": DEMO_RM,
         "is_prospect": False,
         "linked_entities": [],
     },
@@ -166,7 +169,7 @@ CLIENTS = [
         "id": "aurelie-costa",
         "name": "Aurélie Costa",
         "segment": "UHNW Individual — Prospect",
-        "rm_owner": "Marie-France Rigoroso",
+        "rm_owner": DEMO_RM,
         "is_prospect": True,
         "linked_entities": [
             {"name": "Costa Ventures Holding", "relation": "Sole shareholder", "jurisdiction": "France", "client_stake_percent": 100},
@@ -176,7 +179,7 @@ CLIENTS = [
         "id": "delacroix",
         "name": "Delacroix Capital SAS",
         "segment": "Corporate — Family Office",
-        "rm_owner": "Marie-France Rigoroso",
+        "rm_owner": DEMO_RM,
         "is_prospect": False,
         "linked_entities": [],
     },
@@ -184,7 +187,7 @@ CLIENTS = [
         "id": "meridian-holdings-prospect",
         "name": "Julien Bertrand",
         "segment": "Corporate Entrepreneur — Prospect",
-        "rm_owner": "Marie-France Rigoroso",
+        "rm_owner": DEMO_RM,
         "is_prospect": True,
         "linked_entities": [
             {

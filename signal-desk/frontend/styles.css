@@ -593,6 +593,23 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
 .veille-result h1, .veille-result h2, .veille-result h3 { font-size: 14px; margin: 14px 0 6px; }
 .veille-result ul, .veille-result ol { padding-left: 20px; margin: 4px 0; }
 .veille-result p { margin: 6px 0; }
+.veille-result h3 { font-size: 13px; text-transform: none; color: var(--text); }
+.veille-result code { font-family: inherit; font-size: inherit; font-weight: 600; background: var(--bg); padding: 0 4px; border-radius: 3px; }
+.veille-facts { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+.veille-fact {
+  font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 3px;
+  background: var(--bg); color: var(--text); border: 1px solid var(--border);
+}
+.veille-fact span { font-weight: 400; color: var(--muted); }
+.veille-fact.pri-high { border-color: var(--pill-pri-high); color: var(--pill-pri-high); }
+.veille-fact.pri-medium { border-color: var(--pill-pri-medium); color: var(--pill-pri-medium); }
+.veille-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 12px 0 0; border-bottom: 1px solid var(--border); }
+.veille-tab {
+  background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  padding: 6px 10px; font-size: 12.5px; font-weight: 600; color: var(--muted); cursor: pointer;
+}
+.veille-tab.active { color: var(--text); border-bottom-color: var(--navy); }
+.veille-pane { max-height: 420px; overflow-y: auto; padding-right: 6px; }
 .veille-error { font-size: 12px; color: var(--muted, #6b7280); margin: 0 0 10px; }
 .gap-details { margin-top: 12px; padding-top: 4px; border-top: 1px dashed var(--border); }
 .synthesis-card { border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; }

@@ -63,13 +63,18 @@ const I18N = {
     sources_title: "Source Registry",
     sources_subtitle:
       "Public registries are simulated in this prototype so the feed and triage workflow can be demoed end to end. Private/commercial sources are mapped to their role in the workflow, ready to be wired in as licensed integrations become available.",
-    clients_title: "Clients & Ownership",
-    clients_subtitle:
-      "Events on indirectly held entities are linked back to the client through the ownership chain — the same “who owns what” role a source like Moody's Orbis would play in production.",
+    clients_title: "Clients and prospects",
     ownership_chain_title: "Ownership chain",
-    linked_signals_title: "Linked signals",
+    linked_signals_title: "Previous signals",
+    previous_signals_empty: "No previous signal for this client.",
+    prev_col_name: "Person / denomination",
+    prev_col_date: "Date",
+    prev_col_type: "Type",
+    prev_col_status: "Status",
+    prev_col_reason: "Rejection reason",
+    outcome_success: "Success",
+    outcome_rejected: "Rejected",
     no_linked_entities: "No linked entities recorded.",
-    no_signals_recorded: "No signals recorded for this client yet.",
     signal_line: (priority, source) => `${priority} priority · via ${source}`,
     ai_title: "AI Enrichment Engine",
     ai_subtitle:
@@ -151,8 +156,6 @@ const I18N = {
     convert_already_client: (name) => `${name} is already a tracked client.`,
     this_client_label: "this client",
     unidentified_stake: "Unidentified shareholders",
-    clients_kpi_opportunity_prospects: "Opportunity prospects identified",
-    crm_review_date_prefix: "CRM review:",
   },
   fr: {
     tagline: "Intelligence des événements clients pour la Banque Privée et les Entreprises",
@@ -218,13 +221,18 @@ const I18N = {
     sources_title: "Registre des sources",
     sources_subtitle:
       "Les registres publics sont simulés dans ce prototype afin de démontrer le flux et le triage de bout en bout. Les sources privées/commerciales sont associées à leur rôle dans le processus, prêtes à être intégrées lorsque les licences seront disponibles.",
-    clients_title: "Clients & actionnariat",
-    clients_subtitle:
-      "Les événements sur des entités détenues indirectement sont rattachés au client via la chaîne d'actionnariat — le même rôle que jouerait une source comme Moody's Orbis en production.",
+    clients_title: "Clients et prospects",
     ownership_chain_title: "Chaîne d'actionnariat",
-    linked_signals_title: "Signaux liés",
+    linked_signals_title: "Signaux précédents",
+    previous_signals_empty: "Aucun signal précédent pour ce client.",
+    prev_col_name: "Personne / dénomination",
+    prev_col_date: "Date",
+    prev_col_type: "Type",
+    prev_col_status: "Statut",
+    prev_col_reason: "Motif du rejet",
+    outcome_success: "Succès",
+    outcome_rejected: "Rejeté",
     no_linked_entities: "Aucune entité liée enregistrée.",
-    no_signals_recorded: "Aucun signal enregistré pour ce client.",
     signal_line: (priority, source) => `Priorité ${priority} · via ${source}`,
     ai_title: "Moteur d'enrichissement IA",
     ai_subtitle:
@@ -275,7 +283,7 @@ const I18N = {
     btn_confirm: "Confirmer",
     btn_cancel: "Annuler",
     scan_call_error_prefix: "Échec de la vérification :",
-    btn_dashboard: "Veille",
+    btn_dashboard: "Signaux",
     gap_added_tag: "Ajouté au répertoire des signaux",
     other_shareholders_label: "Autres actionnaires",
     already_client_tag: "Déjà client",
@@ -306,8 +314,6 @@ const I18N = {
     convert_already_client: (name) => `${name} est déjà un client suivi.`,
     this_client_label: "ce client",
     unidentified_stake: "Actionnaires non identifiés",
-    clients_kpi_opportunity_prospects: "Prospects opportunité identifiés",
-    crm_review_date_prefix: "Revue CRM :",
   },
 };
 
@@ -485,12 +491,10 @@ function renderKPIs() {
 function renderClientKPIs() {
   const clients = state.clients.filter((c) => !c.isProspect).length;
   const prospects = state.clients.filter((c) => c.isProspect).length;
-  const opportunityProspects = state.clients.reduce((sum, c) => sum + (c.potentialProspectCount || 0), 0);
 
   const kpis = [
     { value: clients, label: t("clients_kpi_clients") },
     { value: prospects, label: t("clients_kpi_prospects"), accent: true },
-    { value: opportunityProspects, label: t("clients_kpi_opportunity_prospects"), accent: true },
   ];
 
   document.getElementById("client-kpis").innerHTML = kpis
@@ -893,32 +897,37 @@ function renderClientModalContent(client) {
   document.getElementById("explore-opportunity-btn").addEventListener("click", () => exploreCommercialOpportunity(client));
 }
 
+// "Previous signals": only closed signals (Actioned = success, Dismissed =
+// rejected) — pending ones are worked from the Signal Directory.
+const OUTCOME = {
+  Actioned: { key: "outcome_success", cls: "outcome-success" },
+  Dismissed: { key: "outcome_rejected", cls: "outcome-rejected" },
+};
+
 function renderLinkedSignals(client) {
-  const LEGACY_STATUSES = new Set(["Actioned", "Dismissed"]);
-  return client.events && client.events.length
-    ? client.events
-        .map((e) => {
-          const dateStr = new Date(e.detectedAt).toLocaleDateString(state.lang === "fr" ? "fr-FR" : "en-US");
-
-          if (LEGACY_STATUSES.has(e.status)) {
-            const reasonColor = e.status === "Dismissed" ? "var(--red)" : "var(--green)";
-            const reason = e.declineReason
-              ? `<div class="om" style="color:${reasonColor};">${statusCommentPrefix(e.status)} ${escapeHtml(e.declineReason)}</div>`
-              : "";
-            return `<div class="client-event-row client-event-row-legacy">
-              <div class="legacy-review-line">
-                <span class="legacy-review-date">${escapeHtml(t("crm_review_date_prefix"))} ${dateStr}</span>
-                <span class="pill ${STATUS_CLASS[e.status] || ""}">${escapeHtml(t(STATUS_KEY[e.status] || e.status))}</span>
-              </div>
-              ${reason}
-            </div>`;
-          }
-
-          return `<div class="client-event-row"><strong>${escapeHtml(e.eventType)}</strong> — ${escapeHtml(e.entityName)}
-            <div class="ct">${escapeHtml(t(CATEGORY_KEY[e.category] || e.category))} · ${escapeHtml(t("signal_line", t(PRIORITY_KEY[e.priority] || e.priority), e.sourceName))}</div></div>`;
-        })
-        .join("")
-    : `<p style="font-size:13px;color:var(--muted);">${t("no_signals_recorded")}</p>`;
+  const previous = (client.events || []).filter((e) => OUTCOME[e.status]);
+  if (!previous.length) return `<p class="details-empty">${t("previous_signals_empty")}</p>`;
+  const locale = state.lang === "fr" ? "fr-FR" : "en-US";
+  const rows = previous
+    .map((e) => {
+      const outcome = OUTCOME[e.status];
+      const reason = e.status === "Dismissed" && e.declineReason ? escapeHtml(e.declineReason) : "—";
+      return `<tr class="previous-signal-row">
+        <td>${escapeHtml(e.entityName)}</td>
+        <td>${new Date(e.detectedAt).toLocaleDateString(locale)}</td>
+        <td>${escapeHtml(e.eventType)}</td>
+        <td><span class="pill ${outcome.cls}">${escapeHtml(t(outcome.key))}</span></td>
+        <td>${reason}</td>
+      </tr>`;
+    })
+    .join("");
+  return `<table class="previous-signals-table">
+    <thead><tr>
+      <th>${t("prev_col_name")}</th><th>${t("prev_col_date")}</th><th>${t("prev_col_type")}</th>
+      <th>${t("prev_col_status")}</th><th>${t("prev_col_reason")}</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
 }
 
 function wireShareholderConvertButtons(client) {

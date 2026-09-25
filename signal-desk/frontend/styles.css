@@ -439,12 +439,16 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
 .shareholder-convert-status.error { color: var(--red); }
 
 .client-events-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.04em; margin: 10px 0 6px; }
-.client-event-row { font-size: 13px; padding: 6px 0; border-bottom: 1px dashed var(--border); }
-.client-event-row:last-child { border-bottom: none; }
-.client-event-row .ct { color: var(--muted); font-size: 12px; }
-.client-event-row-legacy { color: var(--muted); }
-.legacy-review-line { display: flex; align-items: center; gap: 10px; }
-.legacy-review-date { font-size: 12px; }
+.previous-signals-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.previous-signals-table th {
+  text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;
+  color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--border);
+}
+.previous-signals-table td { padding: 8px; border-bottom: 1px dashed var(--border); vertical-align: top; }
+.previous-signals-table tr:last-child td { border-bottom: none; }
+.previous-signals-table td:nth-child(2) { white-space: nowrap; }
+.pill.outcome-success { background: var(--pill-status-actioned); color: #fff; }
+.pill.outcome-rejected { background: var(--pill-status-dismissed-bg); color: var(--pill-status-dismissed-fg); }
 
 /* AI Engine panel */
 .ai-status-card {

@@ -645,6 +645,7 @@ def execute_tool(
             raise ValueError(
                 f'Le tool {name} nécessite un client Foundry et un déploiement.'
             )
+
         _validate_kyc_delta(args)
 
         if name == 'synthesize_kyc_new_information':
@@ -654,13 +655,23 @@ def execute_tool(
                 kyc_delta=args['kyc_delta'],
             )
 
-        _validate_required_object(args, 'new_information_summary')
+        # --- Fallback: le LLM imbrique parfois new_information_summary dans kyc_delta ---
+        if args.get('new_information_summary') is None and isinstance(args.get('kyc_delta'), dict):
+            nested = args['kyc_delta'].pop('new_information_summary', None)
+            if nested is not None:
+                args['new_information_summary'] = nested
+
+        # new_information_summary est Optional dans propose_banking_actions,
+        # on valide seulement s'il est présent.
+        if args.get('new_information_summary') is not None:
+            _validate_required_object(args, 'new_information_summary')
+
         _validate_optional_object(args, 'knowledge_base')
         return propose_banking_actions(
             llm_client=llm_client,
             deployment_name=deployment_name,
             kyc_delta=args['kyc_delta'],
-            new_information_summary=args['new_information_summary'],
+            new_information_summary=args.get('new_information_summary'),
             knowledge_base=args.get('knowledge_base'),
         )
 
@@ -688,6 +699,14 @@ def execute_tool(
 
 def _validate_kyc_delta(arguments: dict[str, Any]) -> None:
     kyc_delta = arguments.get('kyc_delta')
+    if isinstance(kyc_delta, str):
+        try:
+            parsed = json.loads(kyc_delta)
+            if isinstance(parsed, dict):
+                arguments['kyc_delta'] = parsed
+                kyc_delta = parsed
+        except (json.JSONDecodeError, TypeError):
+            pass
     if not isinstance(kyc_delta, dict):
         raise ValueError('kyc_delta doit être un objet JSON.')
 
@@ -705,11 +724,28 @@ def _validate_kyc_delta(arguments: dict[str, Any]) -> None:
 
 
 def _validate_required_object(arguments: dict[str, Any], field_name: str) -> None:
-    if not isinstance(arguments.get(field_name), dict):
+    value = arguments.get(field_name)
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, dict):
+                arguments[field_name] = parsed
+                value = parsed
+        except (json.JSONDecodeError, TypeError):
+            pass
+    if not isinstance(value, dict):
         raise ValueError(f'{field_name} doit être un objet JSON obligatoire.')
 
 
 def _validate_optional_object(arguments: dict[str, Any], field_name: str) -> None:
     value = arguments.get(field_name)
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, dict):
+                arguments[field_name] = parsed
+                value = parsed
+        except (json.JSONDecodeError, TypeError):
+            pass
     if value is not None and not isinstance(value, dict):
-        raise ValueError(f'{field_name} doit être un objet JSON lorsqu’il est fourni.')
+        raise ValueError(f'{field_name} doit être un objet JSON lorsqu\u2019il est fourni.')

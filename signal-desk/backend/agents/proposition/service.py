@@ -32,6 +32,8 @@ def propose_banking_actions(
     knowledge_base: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Return a validated JSON list of banking actions to qualify."""
+
+
     payload: Dict[str, Any] = {"kyc_delta": kyc_delta}
     if new_information_summary is not None:
         payload["new_information_summary"] = new_information_summary

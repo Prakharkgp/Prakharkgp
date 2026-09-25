@@ -551,7 +551,9 @@ def search_companies_house_company(query: str, max_results: int = 5) -> str:
 
 def analyser_conformite_kyc(client_id: str) -> str:
     """Appelle le module KYC en lui passant les résultats des recherches précédentes."""
-    result = analyze_client(client_id, _STATE_RECHERCHES)
+    commercial_signals = list(_STATE_RECHERCHES)
+    result = analyze_client(client_id, commercial_signals)
+    result["commercial_signals"] = commercial_signals
     _STATE_RECHERCHES.clear()
     return json.dumps(result, ensure_ascii=False)
 
@@ -601,6 +603,7 @@ def execute_tool(
             deployment_name=deployment_name,
             kyc_delta=args['kyc_delta'],
             new_information_summary=args.get('new_information_summary'),
+            commercial_signals=args['kyc_delta'].get('commercial_signals'),
             knowledge_base=args.get('knowledge_base'),
         )
 

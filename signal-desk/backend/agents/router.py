@@ -19,6 +19,7 @@ class VeilleRequest(BaseModel):
 
 
 class VeilleResponse(BaseModel):
+    level: str
     synthese: str
 
 
@@ -94,6 +95,6 @@ async def run_veille(request: VeilleRequest):
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
-    return VeilleResponse(synthese=synthese)
+    return VeilleResponse(level=synthese["level"], synthese=synthese["synthese"])
 
 

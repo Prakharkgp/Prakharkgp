@@ -204,6 +204,81 @@ CLIENTS = [
             },
         ],
     },
+    {
+        "id": "301724490",
+        "name": "BIG Mamma",
+        "segment": "Legal person — Client",
+        "rm_owner": "—",
+        "is_prospect": False,
+        "linked_entities": [
+            {
+                "name": "301724424",
+                "relation": "Manager / partner",
+                "jurisdiction": "France",
+                "client_stake_percent": 100,
+            },
+        ],
+    },
+    {
+        "id": "301724490-ja-holding",
+        "name": "JA HOLDING",
+        "segment": "Legal person — Client",
+        "rm_owner": "—",
+        "is_prospect": False,
+        "linked_entities": [
+            {
+                "name": "301724424",
+                "relation": "Manager / partner",
+                "jurisdiction": "France",
+                "client_stake_percent": 100,
+            },
+        ],
+    },
+    {
+        "id": "301724490-shg-acquisition-uk",
+        "name": "SHG Acquisition (UK) Limited",
+        "segment": "Legal person — Client",
+        "rm_owner": "—",
+        "is_prospect": False,
+        "linked_entities": [
+            {
+                "name": "301724424",
+                "relation": "Manager / partner",
+                "jurisdiction": "United Kingdom",
+                "client_stake_percent": 100,
+            },
+        ],
+    },
+    {
+        "id": "301724490-value-partners",
+        "name": "Value Partners S.A",
+        "segment": "Legal person — Client",
+        "rm_owner": "—",
+        "is_prospect": False,
+        "linked_entities": [
+            {
+                "name": "301724424",
+                "relation": "Manager / partner",
+                "jurisdiction": "France",
+                "client_stake_percent": 100,
+            },
+        ],
+    },
+    {
+        "id": "301724490-zalaris",
+        "name": "ZALARIS",
+        "segment": "Legal person — Client",
+        "rm_owner": "—",
+        "is_prospect": False,
+        "linked_entities": [
+            {
+                "name": "301724424",
+                "relation": "Manager / partner",
+                "jurisdiction": "France",
+                "client_stake_percent": 100,
+            },
+        ],
+    },
 ]
 
 # category, event_type mirror the taxonomy in Req.md section 1.

@@ -417,7 +417,7 @@ async function runVeille(clientId) {
       body: JSON.stringify({ client_id: clientId }),
     });
     const body = await res.json().catch(() => ({}));
-    if (res.ok) return { synthese: body.synthese };
+    if (res.ok) return { level: body.level, synthese: body.synthese };
     if (res.status === 404) return { notFound: true };
     return { error: body.detail || `/api/veille failed: ${res.status}` };
   } catch (e) {
@@ -457,7 +457,7 @@ async function saveVeilleRun(client, result) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         clientName: client.name,
-        level: result.level || null,
+        level: result.veille?.level || null,
         provider: result.provider || null,
         synthese: result.veille?.synthese || null,
         error: result.veille?.error || null,
@@ -1188,7 +1188,7 @@ function renderSynthesis(client, result, detailsOpen) {
   const opps = result.opportunities || [];
   const top = opps[0];
   const veille = result.veille || {};
-  const level = result.level || (veille.synthese ? null : "Low");
+  const level = veille.level || null;
   const headline = top
     ? `${t("synthesis_text", opps.length, top.eventType, top.entityName)} ${top.aiSuggestedAction || ""}`
     : `${t("no_opportunity_title")} — ${t("no_opportunity_body")}`;

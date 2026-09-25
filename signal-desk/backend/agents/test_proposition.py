@@ -68,6 +68,11 @@ class PropositionToolsTest(unittest.TestCase):
         self.assertIn('RETAIL_BANKING', instructions)
         self.assertIn('strictement nécessaire', instructions)
         self.assertIn('au maximum trois éléments', instructions)
+        self.assertIn('HIÉRARCHIE DE RESTITUTION', instructions)
+        self.assertIn('Une identité à confirmer ne', instructions)
+        self.assertIn('PÉRIMÈTRE STRICT DE `business_proposals`', instructions)
+        self.assertIn('Il est', instructions)
+        self.assertIn('strictement interdit', instructions)
 
     def test_action_tool_retrieves_local_knowledge_base(self):
         fake_client = FakeClient('{"business_proposals": [], "vigilance_points": []}')

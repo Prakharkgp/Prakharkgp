@@ -42,11 +42,12 @@ STOP_WORDS = {
 def retrieve_relevant_knowledge(
     kyc_delta: Dict[str, Any],
     new_information_summary: Optional[Dict[str, Any]] = None,
+    commercial_signals: Optional[Any] = None,
     max_entries: int = MAX_RETRIEVED_ENTRIES,
 ) -> Dict[str, Any]:
     """Return a compact subset of KB entries relevant to the supplied KYC delta."""
     entries, weighted_documents, document_frequency = _load_index()
-    query = _build_query(kyc_delta, new_information_summary)
+    query = _build_query(kyc_delta, new_information_summary, commercial_signals)
     if not query:
         return _retrieval_payload([], "available_no_match")
 
@@ -144,6 +145,7 @@ def _weighted_document(entry: Dict[str, Any]) -> Counter:
 def _build_query(
     kyc_delta: Dict[str, Any],
     new_information_summary: Optional[Dict[str, Any]],
+    commercial_signals: Optional[Any] = None,
 ) -> Counter:
     query: Counter = Counter()
 
@@ -153,17 +155,17 @@ def _build_query(
 
     analysis = kyc_delta.get("analysis")
     if isinstance(analysis, dict):
-        add(analysis.get("new_information"), 6)
-        add(analysis.get("opportunities"), 6)
+        add(analysis.get("new_information"), 10)
+        add(analysis.get("opportunities"), 12)
         add(analysis.get("summary"), 4)
-        add(analysis.get("crm_alert"), 3)
+        add(analysis.get("crm_alert"), 2)
         # Current KYC output contract used by agents/kyc. Keep the future
         # new_information contract above, but retrieve useful knowledge for the
         # payload that is produced by the merged orchestrator today as well.
-        add(analysis.get("kyc_deltas"), 6)
-        add(analysis.get("identity_check"), 3)
-        add(analysis.get("aml_assessment"), 2)
-        add(analysis.get("kyc_alert"), 3)
+        add(analysis.get("kyc_deltas"), 2)
+        add(analysis.get("identity_check"), 1)
+        add(analysis.get("aml_assessment"), 1)
+        add(analysis.get("kyc_alert"), 1)
 
     for key, value in kyc_delta.items():
         normalized_key = _normalize(str(key))
@@ -179,7 +181,8 @@ def _build_query(
         for record in internal_records:
             if isinstance(record, dict):
                 add({key: record.get(key) for key in contextual_fields}, 1)
-    add(new_information_summary, 5)
+    add(new_information_summary, 8)
+    add(commercial_signals, 14)
     return query
 
 

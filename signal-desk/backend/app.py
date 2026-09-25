@@ -242,6 +242,7 @@ class VeilleRequest(BaseModel):
 
 
 class VeilleResponse(BaseModel):
+    level: str
     synthese: str
 
 
@@ -607,7 +608,7 @@ def start_agent_run(client_id: str):
 VEILLE_TIMEOUT_SECONDS = 300
 
 
-def _call_veille_api(base_url: str, client_id: str) -> str:
+def _call_veille_api(base_url: str, client_id: str) -> dict:
     request = Request(
         f"{base_url.rstrip('/')}/api/veille",
         data=json.dumps({"client_id": client_id}).encode("utf-8"),
@@ -616,7 +617,7 @@ def _call_veille_api(base_url: str, client_id: str) -> str:
     )
     try:
         with urlopen(request, timeout=VEILLE_TIMEOUT_SECONDS) as response:
-            return json.load(response)["synthese"]
+            return json.load(response)
     except HTTPError as error:
         try:
             detail = json.load(error).get("detail") or error.reason
@@ -637,9 +638,9 @@ def run_veille(payload: VeilleRequest):
         raise HTTPException(status_code=404, detail="Client not found")
     base_url = os.getenv("VEILLE_API_URL", "").strip()
     if base_url:
-        return {"synthese": _call_veille_api(base_url, client_id)}
+        return _call_veille_api(base_url, client_id)
     try:
-        return {"synthese": generate_veille(client_id)}
+        return generate_veille(client_id)
     except Exception as error:
         raise HTTPException(
             status_code=502, detail=f"VEILLE_API_URL is not set and the local veille pipeline failed: {error}"

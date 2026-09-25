@@ -29,18 +29,23 @@ def propose_banking_actions(
     deployment_name: str,
     kyc_delta: Dict[str, Any],
     new_information_summary: Optional[Dict[str, Any]] = None,
+    commercial_signals: Optional[Any] = None,
     knowledge_base: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Return a validated JSON list of banking actions to qualify."""
 
 
-    payload: Dict[str, Any] = {"kyc_delta": kyc_delta}
+    payload: Dict[str, Any] = {
+        "commercial_signals": commercial_signals or [],
+        "kyc_context": kyc_delta,
+    }
     if new_information_summary is not None:
         payload["new_information_summary"] = new_information_summary
     if knowledge_base is None:
         payload["knowledge_base"] = retrieve_relevant_knowledge(
             kyc_delta=kyc_delta,
             new_information_summary=new_information_summary,
+            commercial_signals=commercial_signals,
         )
         payload["knowledge_base_status"] = payload["knowledge_base"]["status"]
     else:

@@ -488,21 +488,22 @@ async function openVeilleHistory(client) {
     return;
   }
   content.innerHTML = renderVeilleHistory(client, runs);
+  content.querySelectorAll(".veille-history-rendered").forEach(wireVeilleTabs);
 }
 
 function renderVeilleHistory(client, runs) {
   const fmt = (d) =>
     new Date(d).toLocaleString(state.lang === "fr" ? "fr-FR" : "en-US");
   const rows = runs.length
-    ? runs
-        .map(
-          (run) => `<div class="veille-history-row">
+          ? runs
+              .map(
+                (run) => `<div class="veille-history-row">
             <div class="veille-history-row-header">
               <span class="veille-history-date">${escapeHtml(fmt(run.createdAt))}</span>
               ${run.level ? `<span class="pill ${PRIORITY_CLASS[run.level] || ""}">${escapeHtml(t("veille_history_level_label"))} : ${escapeHtml(t(LEVEL_KEY[run.level] || run.level))}</span>` : ""}
               ${run.provider ? `<span class="veille-history-provider">${escapeHtml(t("veille_history_provider_label"))} : ${escapeHtml(t(PROVIDER_KEY[run.provider] || run.provider))}</span>` : ""}
             </div>
-            ${run.synthese ? `<div class="veille-result">${renderMarkdown(run.synthese)}</div>` : ""}
+                   ${run.synthese ? `<div class="veille-history-rendered">${renderVeille(run.synthese)}</div>` : ""}
             ${run.error ? `<p class="veille-error">${escapeHtml(t("veille_history_error_prefix"))} ${escapeHtml(run.error)}</p>` : ""}
           </div>`
         )

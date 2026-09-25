@@ -1,9 +1,34 @@
-"""Commercial monitoring orchestration for the client-facing API."""
+from fastapi import APIRouter
+from pydantic import BaseModel
 
-from .client import FoundryClient
+from agents.client import FoundryClient
+from agents.tools import _STATE_RECHERCHES
+
+# ---------------------------------------------------------------------------
+# Routeur FastAPI
+# ---------------------------------------------------------------------------
+
+router = APIRouter()
 
 
-SYSTEM_PROMPT =  """Tu es un expert en intelligence économique et veille commerciale bancaire.\n\n"
+# ---------------------------------------------------------------------------
+# Schémas Pydantic
+# ---------------------------------------------------------------------------
+
+class VeilleRequest(BaseModel):
+    client_id: str
+
+
+class VeilleResponse(BaseModel):
+    synthese: str
+
+
+# ---------------------------------------------------------------------------
+# Prompt système (identique à main.py)
+# ---------------------------------------------------------------------------
+
+SYSTEM_PROMPT = (
+    "Tu es un expert en intelligence économique et veille commerciale bancaire.\n\n"
 
         "Pour répondre à la requête de l'utilisateur, tu DOIS OBLIGATOIREMENT "
         "suivre ces étapes de raisonnement (Chain of Thought), l'une après l'autre :\n\n"
@@ -52,16 +77,28 @@ SYSTEM_PROMPT =  """Tu es un expert en intelligence économique et veille commer
         "synthèse que certaines sources n'ont pas pu être consultées.\n"
         "- Ne produis pas la synthèse finale avant le retour des deux tools propositionnels.\n"
         "- Toute priorité affichée doit être uniquement `Low`, `Medium` ou `High`, sans score.\n"
-        "- Rédige TOUJOURS ta réponse finale EN FRANÇAIS.\n"""
+        "- Rédige TOUJOURS ta réponse finale EN FRANÇAIS.\n"
+)
 
 
-def generate_veille(client_id: str) -> str:
-    client_id = client_id.strip()
-    if not client_id:
-        raise ValueError("client_id est obligatoire.")
+# ---------------------------------------------------------------------------
+# Route principale
+# ---------------------------------------------------------------------------
 
-    client = FoundryClient()
-    return client.query(
-        SYSTEM_PROMPT,
-        f"Effectue une veille commerciale complète pour le client dont l'ID est {client_id}.",
+@router.post("/api/veille", response_model=VeilleResponse)
+async def run_veille(request: VeilleRequest):
+    """Lance le pipeline complet de veille commerciale + conformité KYC."""
+
+    # Sécurité d'état : vide la mémoire des recherches précédentes
+    _STATE_RECHERCHES.clear()
+
+    user_query = (
+        f"Effectue une veille commerciale complète pour le client dont l'ID est {request.client_id}."
     )
+
+    foundry = FoundryClient()
+    synthese = foundry.query(SYSTEM_PROMPT, user_query)
+
+    return VeilleResponse(synthese=synthese)
+
+

@@ -1,10 +1,11 @@
-"""Accès aux données internes (fichiers data/test_*.json aujourd'hui, Containers Azure Blob demain)."""
+"""Accès aux clients stockés dans la base SQLite de l'application."""
 import json
+import sqlite3
 import re
 from pathlib import Path
 from typing import Any
 
-DATA_DIRECTORY = Path(__file__).resolve().parents[3] / "data"
+DB_PATH = Path(__file__).resolve().parents[2] / "signal_desk.db"
 
 # Champs commerciaux autorisés à être transmis au modèle.
 _COMMERCIAL_KEYS = (
@@ -18,12 +19,6 @@ _COMMERCIAL_KEYS = (
 
 # Titres à ignorer lors de la comparaison de nom.
 _TITLES = ("madame", "monsieur", "mr", "mrs", "mme", "m", "ms")
-
-
-def _load_json(path: Path) -> dict[str, Any]:
-    # Certains fichiers de test ont un bloc de commentaire /* ... */ en tête.
-    raw = re.sub(r"^\s*/\*.*?\*/\s*", "", path.read_text(encoding="utf-8"), flags=re.DOTALL)
-    return json.loads(raw)
 
 
 def _normalise(value: str | None) -> str:
@@ -44,86 +39,41 @@ def _name_matches(target: str, candidate_names: list[str | None]) -> bool:
     return False
 
 
-def _extract_person_record(person: dict[str, Any], source: str) -> dict[str, Any] | None:
-    identification = person.get("identification", {}) or {}
-    entity_id = identification.get("personKey")
-    entity_name = identification.get("fullName")
-    if not entity_id or not entity_name:
-        return None
-
-    commercial = person.get("commercial", {}) or {}
-    business_activity = person.get("businessActivity", {}) or {}
-
+def _client_row_to_record(row: sqlite3.Row) -> dict[str, Any]:
     return {
-        "source_file": source,
-        "record_kind": "person",
-        "client_id": entity_id,
-        "client_name": entity_name,
-        "last_name": identification.get("lastName"),
-        "first_name": identification.get("firstName"),
-        "client_type": identification.get("personTypeValue"),
-        "status": identification.get("personStatusValue"),
-        "legal_form": identification.get("legalFormValue"),
-        "country": identification.get("countryOfDomicileValue"),
-        "business_activity": business_activity.get("businessActivity13Value")
-        or business_activity.get("businessActivityDetails"),
-        "commercial": {key: commercial.get(key) for key in _COMMERCIAL_KEYS if commercial.get(key)},
-        "bank_services": [item.get("serviceValue") for item in commercial.get("bankServices", [])],
-        "bank_products": [item.get("productValue") for item in commercial.get("bankProducts", [])],
-    }
-
-
-def _extract_bp_record(bp_data: dict[str, Any], source: str) -> dict[str, Any] | None:
-    details = bp_data.get("bpDetails", {}) or {}
-    entity_id = details.get("bpKey")
-    entity_name = details.get("bpFullName") or details.get("bpName")
-    if not entity_id or not entity_name:
-        return None
-
-    return {
-        "source_file": source,
-        "record_kind": "business_partner",
-        "client_id": entity_id,
-        "client_name": entity_name,
+        "source_file": "clients",
+        "record_kind": "client",
+        "client_id": row["id"],
+        "client_name": row["name"],
         "last_name": None,
         "first_name": None,
-        "client_type": details.get("bpPersonTypeValue"),
-        "status": details.get("clientCommercialStatusValue"),
+        "client_type": row["segment"],
+        "status": "Prospect" if row["is_prospect"] else "Client",
         "legal_form": None,
-        "country": details.get("countryOfDomicileValue"),
+        "country": None,
         "business_activity": None,
         "commercial": {},
         "bank_services": [],
         "bank_products": [],
-        "relationship_manager": details.get("crmName"),
+        "relationship_manager": row["rm_owner"],
+        "linked_entities": json.loads(row["linked_entities"]),
     }
 
 
-def _extract_record(document: dict[str, Any], source: str) -> dict[str, Any] | None:
-    result = document.get("result", {}) or {}
-    if result.get("personData"):
-        return _extract_person_record(result["personData"], source)
-    if result.get("bpData"):
-        return _extract_bp_record(result["bpData"], source)
-    return None
-
-
 def list_internal_records() -> list[dict[str, Any]]:
-    """Return all sanitized client records available to the application."""
-    records = []
-    for path in sorted(DATA_DIRECTORY.glob("test_*.json")):
-        record = _extract_record(_load_json(path), path.name)
-        if record:
-            records.append(record)
-    return records
+    """Return all sanitized clients directly from the application database."""
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("SELECT * FROM clients ORDER BY name").fetchall()
+    return [_client_row_to_record(row) for row in rows]
 
 
 def get_internal_record(client_id: str) -> dict[str, Any] | None:
-    """Return one sanitized client record by its stable identifier."""
-    return next(
-        (record for record in list_internal_records() if record["client_id"] == client_id),
-        None,
-    )
+    """Return one sanitized client directly from the application database."""
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        row = conn.execute("SELECT * FROM clients WHERE id = ?", (client_id,)).fetchone()
+    return _client_row_to_record(row) if row else None
 
 
 def search_internal_records(client_name: str) -> list[dict[str, Any]]:

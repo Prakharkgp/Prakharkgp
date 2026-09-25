@@ -2,9 +2,9 @@ import json
 
 import pytest
 
-from tools_kyc.agent import AgentCallError
-from tools_kyc.analyzer import _strip_sensitive, analyze_client
-from tools_kyc.store import search_internal_records
+from agents.kyc.agent import AgentCallError
+from agents.kyc.analyzer import _strip_sensitive, analyze_client
+from agents.kyc.store import search_internal_records
 
 
 def _fake_agent(_messages):
@@ -34,6 +34,11 @@ def _fake_agent(_messages):
 def test_search_finds_legal_person_by_name():
     records = search_internal_records("DOMAINE DE CHEZELLES")
     assert any(r["client_id"] == "301238697" for r in records)
+
+
+def test_search_finds_business_partner_by_id():
+    records = search_internal_records("1532378")
+    assert any(r["client_id"] == "1532378" for r in records)
 
 
 def test_search_finds_natural_person_by_last_name():

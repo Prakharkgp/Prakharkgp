@@ -1,9 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from agents.client import FoundryClient
-from agents.tools import _STATE_RECHERCHES
-from agents.kyc.store import get_internal_record
+from agents.veille import generate_veille
 
 # ---------------------------------------------------------------------------
 # Routeur FastAPI
@@ -90,21 +88,11 @@ SYSTEM_PROMPT = (
 async def run_veille(request: VeilleRequest):
     """Lance le pipeline complet de veille commerciale + conformité KYC."""
 
-    # Sécurité d'état : vide la mémoire des recherches précédentes
-    _STATE_RECHERCHES.clear()
-
     client_id = request.client_id.strip()
-    client = get_internal_record(client_id)
-    if client is None:
-        raise HTTPException(status_code=404, detail="Client not found")
-
-    user_query = (
-        f"Effectue une veille commerciale complète pour le client {client['client_name']} "
-        f"(ID exact: {client_id}). Utilise ce nom comme cible de toutes les recherches externes."
-    )
-
-    foundry = FoundryClient()
-    synthese = foundry.query(SYSTEM_PROMPT, user_query)
+    try:
+        synthese = generate_veille(client_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
 
     return VeilleResponse(synthese=synthese)
 

@@ -38,8 +38,6 @@ def _ensure_loaded(conn) -> None:
         """
     )
     conn.commit()
-    if conn.execute("SELECT COUNT(*) FROM bdd_documents").fetchone()[0] > 0:
-        return
     if not BDD_DIR.exists():
         return
     now = datetime.now(timezone.utc).isoformat()

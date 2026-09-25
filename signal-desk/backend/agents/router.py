@@ -1,8 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from agents.client import FoundryClient
 from agents.tools import _STATE_RECHERCHES
+from agents.kyc.store import get_internal_record
 
 # ---------------------------------------------------------------------------
 # Routeur FastAPI
@@ -92,8 +93,14 @@ async def run_veille(request: VeilleRequest):
     # Sécurité d'état : vide la mémoire des recherches précédentes
     _STATE_RECHERCHES.clear()
 
+    client_id = request.client_id.strip()
+    client = get_internal_record(client_id)
+    if client is None:
+        raise HTTPException(status_code=404, detail="Client not found")
+
     user_query = (
-        f"Effectue une veille commerciale complète pour le client dont l'ID est {request.client_id}."
+        f"Effectue une veille commerciale complète pour le client {client['client_name']} "
+        f"(ID exact: {client_id}). Utilise ce nom comme cible de toutes les recherches externes."
     )
 
     foundry = FoundryClient()

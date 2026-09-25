@@ -408,10 +408,10 @@ def list_clients():
             _annotate_other_shareholders(client, conn)
             client["potentialProspectCount"] = _potential_prospect_count(client)
     known_ids = {client["id"] for client in clients}
-    for record in list_internal_records():
+    """for record in list_internal_records():
         if record["client_id"] not in known_ids:
             known_ids.add(record["client_id"])
-            clients.append(_internal_client_to_dict(record))
+            clients.append(_internal_client_to_dict(record))"""
     return clients
 
 

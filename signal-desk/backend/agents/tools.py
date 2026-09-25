@@ -15,9 +15,10 @@ except ImportError:
     from kyc.analyzer import analyze_client
 
 try:
-    from .bdd_store import get_document as _get_bdd_document
+    from .kyc.store import get_internal_record
 except ImportError:
-    from bdd_store import get_document as _get_bdd_document
+    from kyc.store import get_internal_record
+
 from .proposition.service import (
     propose_banking_actions,
     synthesize_kyc_new_information,
@@ -302,97 +303,25 @@ def _business_event_query(company_name: str) -> str:
 # ---------------------------------------------------------------------------
 
 def consulter_base_interne(client_id: str) -> str:
-    """Lit les documents bdd/*.json stockés en base SQLite et retourne une
-    synthèse formatée de la situation du client."""
+    """Retourne les informations du client depuis la table SQLite clients."""
 
-    if client_id != "1532378":
-        return f"ERREUR : Aucun client trouvé avec l'ID {client_id}."
+    client = get_internal_record(client_id)
+    if client is None:
+        return f"ERREUR : Aucun client trouvé dans la table clients avec l'ID {client_id}."
 
-    # --- Lecture des documents depuis SQLite (bdd_documents) ---
-    try:
-        bp_data = _get_bdd_document('test_1_bp.json')
-        pm_data = _get_bdd_document('test_2_pm.json')
-        be_data = _get_bdd_document('test_3_be.json')
-        gerant_data = _get_bdd_document('test_5_gerant.json')
-    except FileNotFoundError as e:
-        return f"ERREUR : Document introuvable en base – {e}"
-
-    # --- Extraction des informations clés ---
-    bp = bp_data['result']['bpData']['bpDetails']
-    bp_tax = bp_data['result']['bpData']['bpTax']
-    ownerships = bp_data['result']['bpData']['relations']['ownerships']
-
-    pm_ident = pm_data['result']['personData']['identification']
-    pm_business = pm_data['result']['personData']['businessActivity']
-    pm_commercial = pm_data['result']['personData']['commercial']
-    pm_aml = pm_data['result']['personData']['aml']
-
-    be_ident = be_data['result']['personData']['identification']
-    be_risk = be_data['result']['personData']['riskFactors']
-    be_wealth = be_data['result']['personData']['wealthDetails']
-
-    gerant_ident = gerant_data['result']['personData']['identification']
-
-    # --- Construction de la synthèse ---
-    synthese = (
-        f"=== SYNTHÈSE BASE INTERNE – Client ID: {client_id} ===\n\n"
-
-        f"1. BUSINESS PARTNER (BP)\n"
-        f"   - Nom BP : {bp['bpName']}\n"
-        f"   - Clé BP : {bp['bpKey']}\n"
-        f"   - Date d'ouverture : {bp['openDate']}\n"
-        f"   - Type client : {bp['customerTypeValue']}\n"
-        f"   - BU : {bp['subBuValue']}\n"
-        f"   - Pays de domicile : {bp['countryOfDomicileValue']}\n"
-        f"   - CRM : {bp['crmName']}\n"
-        f"   - Risque AML validé : {bp_tax['amlValidatedRiskLevelValue']}\n"
-        f"   - Statut PEP : {bp_tax['pepAccountValue']}\n\n"
-
-        f"2. PERSONNE MORALE (Registered Owner)\n"
-        f"   - Nom : {pm_ident['fullName']}\n"
-        f"   - Person Key : {pm_ident['personKey']}\n"
-        f"   - Type : {pm_ident['personTypeValue']}\n"
-        f"   - Forme juridique : {pm_ident.get('legalFormValue', 'N/A')}\n"
-        f"   - Pays d'enregistrement : {pm_ident.get('registrationCountryValue', 'N/A')}\n"
-        f"   - Date d'enregistrement : {pm_ident.get('registrationDate', 'N/A')}\n"
-        f"   - Secteur d'activité : {pm_business['businessActivity11Value']}\n"
-        f"   - CA : {pm_business.get('turnover', 'N/A')}\n"
-        f"   - Bilan total : {pm_business.get('totalBalanceSheet', 'N/A')}\n"
-        f"   - Risque AML : {pm_aml['validatedAMLRiskLevelValue']}\n"
-        f"   - Produits bancaires : {', '.join(p['productValue'] for p in pm_commercial.get('bankProducts', []))}\n"
-        f"   - Services bancaires : {', '.join(s['serviceValue'] for s in pm_commercial.get('bankServices', []))}\n\n"
-
-        f"3. BÉNÉFICIAIRE EFFECTIF (Ultimate Beneficial Owner)\n"
-        f"   - Nom : {be_ident['fullName']}\n"
-        f"   - Person Key : {be_ident['personKey']}\n"
-        f"   - Type : {be_ident['personTypeValue']}\n"
-        f"   - Date de naissance : {be_ident.get('birthDate', 'N/A')}\n"
-        f"   - Nationalité : {be_ident.get('nationalityValue', 'N/A')}\n"
-        f"   - Pays de domicile : {be_ident.get('countryOfDomicileValue', 'N/A')}\n"
-        f"   - Qualification PEP : {be_risk['pepQualificationValue']}\n"
-        f"   - Fonction PEP : {be_risk.get('pepFunctionValue', 'N/A')}\n"
-        f"   - Patrimoine estimé : {be_wealth['totalEstimatedWealthValue']}\n"
-        f"   - Source de richesse : {', '.join(s['sourceOfWealthValue'] for s in be_wealth.get('sourceOfWealth', []))}\n\n"
-
-        f"4. GÉRANT\n"
-        f"   - Nom : {gerant_ident['fullName']}\n"
-        f"   - Person Key : {gerant_ident['personKey']}\n"
-        f"   - Type : {gerant_ident['personTypeValue']}\n"
-        f"   - Statut : {gerant_ident['personStatusValue']}\n"
-        f"   - Date de naissance : {gerant_ident.get('birthDate', 'N/A')}\n\n"
-
-        f"5. RELATIONS D'ACTIONNARIAT\n"
+    return json.dumps(
+        {
+            "client_id": client["client_id"],
+            "client_name": client["client_name"],
+            "segment": client["client_type"],
+            "status": client["status"],
+            "relationship_manager": client["relationship_manager"],
+            "is_prospect": client["status"] == "Prospect",
+            "linked_entities": client.get("linked_entities", []),
+        },
+        ensure_ascii=False,
+        indent=2,
     )
-
-    for own in ownerships:
-        synthese += (
-            f"   - {own['ownershipTypeValue']} : {own['personFullName']} "
-            f"(Rôle: {own['ownershipRoleValue']}, "
-            f"Risque AML: {own.get('validatedAmlRiskValue', 'N/A')})\n"
-        )
-
-    return synthese
-
 
 # ---------------------------------------------------------------------------
 # Outil 2 – Recherche Google News / Custom Search

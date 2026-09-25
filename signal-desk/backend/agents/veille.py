@@ -1,6 +1,7 @@
 """Commercial monitoring orchestration for the client-facing API."""
 
 from .client import FoundryClient
+from .kyc.store import get_internal_record
 
 
 SYSTEM_PROMPT =  """Tu es un expert en intelligence économique et veille commerciale bancaire.\n\n"
@@ -59,9 +60,13 @@ def generate_veille(client_id: str) -> str:
     client_id = client_id.strip()
     if not client_id:
         raise ValueError("client_id est obligatoire.")
+    client = get_internal_record(client_id)
+    if client is None:
+        raise ValueError(f"Client introuvable dans la table clients: {client_id}")
 
-    client = FoundryClient()
-    return client.query(
+    foundry = FoundryClient()
+    return foundry.query(
         SYSTEM_PROMPT,
-        f"Effectue une veille commerciale complète pour le client dont l'ID est {client_id}.",
+        f"Effectue une veille commerciale complète pour le client {client['client_name']} "
+        f"(ID exact: {client_id}). Utilise ce nom comme cible de toutes les recherches externes.",
     )

@@ -128,7 +128,8 @@ def seed(conn):
         )
     now = datetime.now(timezone.utc)
     for i, e in enumerate(EVENTS):
-        detected_at = (now - timedelta(hours=i * 7)).isoformat()
+        age = timedelta(days=e["days_ago"]) if "days_ago" in e else timedelta(hours=i * 7)
+        detected_at = (now - age).isoformat()
         conn.execute(
             """
             INSERT INTO events (

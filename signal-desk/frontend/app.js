@@ -63,13 +63,18 @@ const I18N = {
     sources_title: "Source Registry",
     sources_subtitle:
       "Public registries are simulated in this prototype so the feed and triage workflow can be demoed end to end. Private/commercial sources are mapped to their role in the workflow, ready to be wired in as licensed integrations become available.",
-    clients_title: "Clients & Ownership",
-    clients_subtitle:
-      "Events on indirectly held entities are linked back to the client through the ownership chain — the same “who owns what” role a source like Moody's Orbis would play in production.",
+    clients_title: "Clients and prospects",
     ownership_chain_title: "Ownership chain",
-    linked_signals_title: "Linked signals",
+    linked_signals_title: "Previous signals",
+    previous_signals_empty: "No previous signal for this client.",
+    prev_col_name: "Person / denomination",
+    prev_col_date: "Date",
+    prev_col_type: "Type",
+    prev_col_status: "Status",
+    prev_col_reason: "Rejection reason",
+    outcome_success: "Success",
+    outcome_rejected: "Rejected",
     no_linked_entities: "No linked entities recorded.",
-    no_signals_recorded: "No signals recorded for this client yet.",
     signal_line: (priority, source) => `${priority} priority · via ${source}`,
     ai_title: "AI Enrichment Engine",
     ai_subtitle:
@@ -140,6 +145,10 @@ const I18N = {
     update_applied: (name) => `Referential updated — ${name} added to the shareholder structure.`,
     no_sources: "No source identified.",
     veille_unavailable: "AI monitoring synthesis unavailable:",
+    veille_fact_aml: "AML risk",
+    veille_fact_pep: "PEP status",
+    veille_fact_kyc: "KYC assessment",
+    veille_fact_priority: "Review priority",
     convert_to_client_btn: "Make this shareholder a client",
     converting_label: "Converting…",
     convert_success: (name) => `${name} was added as a new prospect — a commercial opportunity signal was created and analyzed. See the Clients tab.`,
@@ -220,13 +229,18 @@ const I18N = {
     sources_title: "Registre des sources",
     sources_subtitle:
       "Les registres publics sont simulés dans ce prototype afin de démontrer le flux et le triage de bout en bout. Les sources privées/commerciales sont associées à leur rôle dans le processus, prêtes à être intégrées lorsque les licences seront disponibles.",
-    clients_title: "Clients & actionnariat",
-    clients_subtitle:
-      "Les événements sur des entités détenues indirectement sont rattachés au client via la chaîne d'actionnariat — le même rôle que jouerait une source comme Moody's Orbis en production.",
+    clients_title: "Clients et prospects",
     ownership_chain_title: "Chaîne d'actionnariat",
-    linked_signals_title: "Signaux liés",
+    linked_signals_title: "Signaux précédents",
+    previous_signals_empty: "Aucun signal précédent pour ce client.",
+    prev_col_name: "Personne / dénomination",
+    prev_col_date: "Date",
+    prev_col_type: "Type",
+    prev_col_status: "Statut",
+    prev_col_reason: "Motif du rejet",
+    outcome_success: "Succès",
+    outcome_rejected: "Rejeté",
     no_linked_entities: "Aucune entité liée enregistrée.",
-    no_signals_recorded: "Aucun signal enregistré pour ce client.",
     signal_line: (priority, source) => `Priorité ${priority} · via ${source}`,
     ai_title: "Moteur d'enrichissement IA",
     ai_subtitle:
@@ -277,7 +291,7 @@ const I18N = {
     btn_confirm: "Confirmer",
     btn_cancel: "Annuler",
     scan_call_error_prefix: "Échec de la vérification :",
-    btn_dashboard: "Veille",
+    btn_dashboard: "Signaux",
     gap_added_tag: "Ajouté au répertoire des signaux",
     other_shareholders_label: "Autres actionnaires",
     already_client_tag: "Déjà client",
@@ -297,6 +311,10 @@ const I18N = {
     update_applied: (name) => `Référentiel mis à jour — ${name} ajouté à la structure actionnariale.`,
     no_sources: "Aucune source identifiée.",
     veille_unavailable: "Synthèse de veille IA indisponible :",
+    veille_fact_aml: "Risque AML",
+    veille_fact_pep: "Statut PEP",
+    veille_fact_kyc: "Évaluation KYC",
+    veille_fact_priority: "Priorité de revue",
     convert_to_client_btn: "Faire de cet actionnaire un client",
     converting_label: "Conversion en cours…",
     convert_success: (name) => `${name} a été ajouté comme nouveau prospect — un signal d'opportunité commerciale a été créé et analysé. Voir l'onglet Clients.`,
@@ -559,12 +577,10 @@ function renderKPIs() {
 function renderClientKPIs() {
   const clients = state.clients.filter((c) => !c.isProspect).length;
   const prospects = state.clients.filter((c) => c.isProspect).length;
-  const opportunityProspects = state.clients.reduce((sum, c) => sum + (c.potentialProspectCount || 0), 0);
 
   const kpis = [
     { value: clients, label: t("clients_kpi_clients") },
     { value: prospects, label: t("clients_kpi_prospects"), accent: true },
-    { value: opportunityProspects, label: t("clients_kpi_opportunity_prospects"), accent: true },
   ];
 
   document.getElementById("client-kpis").innerHTML = kpis
@@ -989,32 +1005,37 @@ function renderClientModalContent(client) {
   document.getElementById("explore-opportunity-btn").addEventListener("click", () => exploreCommercialOpportunity(client));
 }
 
+// "Previous signals": only closed signals (Actioned = success, Dismissed =
+// rejected) — pending ones are worked from the Signal Directory.
+const OUTCOME = {
+  Actioned: { key: "outcome_success", cls: "outcome-success" },
+  Dismissed: { key: "outcome_rejected", cls: "outcome-rejected" },
+};
+
 function renderLinkedSignals(client) {
-  const LEGACY_STATUSES = new Set(["Actioned", "Dismissed"]);
-  return client.events && client.events.length
-    ? client.events
-        .map((e) => {
-          const dateStr = new Date(e.detectedAt).toLocaleDateString(state.lang === "fr" ? "fr-FR" : "en-US");
-
-          if (LEGACY_STATUSES.has(e.status)) {
-            const reasonColor = e.status === "Dismissed" ? "var(--red)" : "var(--green)";
-            const reason = e.declineReason
-              ? `<div class="om" style="color:${reasonColor};">${statusCommentPrefix(e.status)} ${escapeHtml(e.declineReason)}</div>`
-              : "";
-            return `<div class="client-event-row client-event-row-legacy">
-              <div class="legacy-review-line">
-                <span class="legacy-review-date">${escapeHtml(t("crm_review_date_prefix"))} ${dateStr}</span>
-                <span class="pill ${STATUS_CLASS[e.status] || ""}">${escapeHtml(t(STATUS_KEY[e.status] || e.status))}</span>
-              </div>
-              ${reason}
-            </div>`;
-          }
-
-          return `<div class="client-event-row"><strong>${escapeHtml(e.eventType)}</strong> — ${escapeHtml(e.entityName)}
-            <div class="ct">${escapeHtml(t(CATEGORY_KEY[e.category] || e.category))} · ${escapeHtml(t("signal_line", t(PRIORITY_KEY[e.priority] || e.priority), e.sourceName))}</div></div>`;
-        })
-        .join("")
-    : `<p style="font-size:13px;color:var(--muted);">${t("no_signals_recorded")}</p>`;
+  const previous = (client.events || []).filter((e) => OUTCOME[e.status]);
+  if (!previous.length) return `<p class="details-empty">${t("previous_signals_empty")}</p>`;
+  const locale = state.lang === "fr" ? "fr-FR" : "en-US";
+  const rows = previous
+    .map((e) => {
+      const outcome = OUTCOME[e.status];
+      const reason = e.status === "Dismissed" && e.declineReason ? escapeHtml(e.declineReason) : "—";
+      return `<tr class="previous-signal-row">
+        <td>${escapeHtml(e.entityName)}</td>
+        <td>${new Date(e.detectedAt).toLocaleDateString(locale)}</td>
+        <td>${escapeHtml(e.eventType)}</td>
+        <td><span class="pill ${outcome.cls}">${escapeHtml(t(outcome.key))}</span></td>
+        <td>${reason}</td>
+      </tr>`;
+    })
+    .join("");
+  return `<table class="previous-signals-table">
+    <thead><tr>
+      <th>${t("prev_col_name")}</th><th>${t("prev_col_date")}</th><th>${t("prev_col_type")}</th>
+      <th>${t("prev_col_status")}</th><th>${t("prev_col_reason")}</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
 }
 
 function wireShareholderConvertButtons(client) {
@@ -1082,6 +1103,70 @@ async function refreshClients() {
 
 const AGENT_PROGRESS_STEPS = ["progress_step_search", "progress_step_kyc", "progress_step_synthesis"];
 const LEVEL_KEY = { High: "level_high", Medium: "level_medium", Low: "level_low" };
+
+// The veille agent answers in Markdown: "## 1) Constat & Signaux Business",
+// "## 2) Impacts KYC", "## 3) Recommandations Commerciales", with the key KYC
+// facts written as "**Risque AML interne** : `High`".
+const VEILLE_FACTS = [
+  { key: "veille_fact_aml", re: /Risque AML[^:\n]*:\s*[`*]*([^`*\n]+)/i },
+  { key: "veille_fact_pep", re: /Statut PEP[^:\n]*:\s*[`*]*([^`*\n]+)/i },
+  { key: "veille_fact_kyc", re: /[ÉE]valuation KYC[^:\n]*:\s*[`*]*([^`*\n]+)/i },
+  { key: "veille_fact_priority", re: /Priorit[ée] de revue[^:\n]*:\s*[`*]*([^`*\n]+)/i },
+];
+
+function parseVeille(markdown) {
+  const text = (markdown || "")
+    .replace(/^\s*-{3,}\s*$/gm, "")
+    // drop the chatbot-style closing offer ("Si vous le souhaitez, je peux…")
+    .replace(/\n+\s*(Si vous le souhaitez|Souhaitez-vous|Voulez-vous|If you want|Would you like)[^\n]*\s*$/i, "")
+    .trim();
+  const [intro, ...chunks] = text.split(/^##\s+/m);
+  const sections = chunks.map((chunk) => {
+    const nl = chunk.indexOf("\n");
+    const title = (nl === -1 ? chunk : chunk.slice(0, nl)).replace(/^\d+\s*[).:-]\s*/, "").trim();
+    return { title, body: nl === -1 ? "" : chunk.slice(nl + 1).trim() };
+  });
+  const facts = VEILLE_FACTS.map((f) => {
+    const m = text.match(f.re);
+    return m ? { key: f.key, value: m[1].trim() } : null;
+  }).filter(Boolean);
+  return { intro: intro.trim(), sections, facts };
+}
+
+function renderVeille(markdown) {
+  const { intro, sections, facts } = parseVeille(markdown);
+  if (!sections.length) return `<div class="veille-result">${renderMarkdown(markdown)}</div>`;
+  const factsHtml = facts.length
+    ? `<div class="veille-facts">${facts
+        .map((f) => {
+          const cls = PRIORITY_CLASS[f.value] || "";
+          const value = LEVEL_KEY[f.value] ? t(LEVEL_KEY[f.value]) : f.value;
+          return `<span class="veille-fact ${cls}"><span>${escapeHtml(t(f.key))}</span> ${escapeHtml(value)}</span>`;
+        })
+        .join("")}</div>`
+    : "";
+  const tabs = sections
+    .map((sec, i) => `<button class="veille-tab${i === 0 ? " active" : ""}" data-index="${i}">${i + 1}. ${escapeHtml(sec.title)}</button>`)
+    .join("");
+  const panes = sections
+    .map((sec, i) => `<div class="veille-result veille-pane" data-index="${i}"${i === 0 ? "" : " hidden"}>${renderMarkdown(sec.body)}</div>`)
+    .join("");
+  return `${factsHtml}
+    ${intro ? `<div class="veille-result">${renderMarkdown(intro)}</div>` : ""}
+    <div class="veille-tabs">${tabs}</div>
+    ${panes}`;
+}
+
+function wireVeilleTabs(panel) {
+  panel.querySelectorAll(".veille-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      panel.querySelectorAll(".veille-tab").forEach((x) => x.classList.toggle("active", x === tab));
+      panel.querySelectorAll(".veille-pane").forEach((pane) => {
+        pane.hidden = pane.dataset.index !== tab.dataset.index;
+      });
+    });
+  });
+}
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function renderAgentProgress(panel, completedCount) {
@@ -1160,23 +1245,29 @@ function renderSynthesis(client, result, detailsOpen) {
       </div>`
     : "";
 
+  // With a veille synthesis and nothing structured to add (KYC referential
+  // clients), the Details block would only hold empty sections.
+  const showDetails = !veille.synthese || opps.length || updates.length || holderEntities.length;
+
   return `<div class="client-modal-section synthesis-card">
     <div class="synthesis-header">
       <h3>${t("synthesis_title")}</h3>
       ${level ? `<span class="pill ${PRIORITY_CLASS[level] || ""}">${escapeHtml(t("rating_label"))} : ${escapeHtml(t(LEVEL_KEY[level]))}</span>` : ""}
     </div>
     ${veille.synthese
-      ? `<div class="veille-result">${renderMarkdown(veille.synthese)}</div>`
+      ? renderVeille(veille.synthese)
       : `<p class="synthesis-headline">${escapeHtml(headline)}</p>`}
     ${veille.error ? `<p class="veille-error">${t("veille_unavailable")} ${escapeHtml(veille.error)}</p>` : ""}
-    <button class="btn btn-outline btn-small gap-details-toggle">${detailsOpen ? t("btn_hide_details") : t("btn_details")}</button>
+    ${showDetails
+      ? `<button class="btn btn-outline btn-small gap-details-toggle">${detailsOpen ? t("btn_hide_details") : t("btn_details")}</button>
     <div class="gap-details"${detailsOpen ? "" : " hidden"}>
       <div class="details-section"><h4>${t("details_sources_title")}</h4>${sourcesHtml}</div>
       <div class="details-section"><h4>${t("details_opportunities_title")}</h4>${oppsHtml}</div>
       ${updatesHtml}
       ${holdersHtml}
       <p class="shareholder-convert-status" id="shareholder-convert-status"></p>
-    </div>
+    </div>`
+      : ""}
   </div>`;
 }
 
@@ -1186,12 +1277,15 @@ function showExploreResult(client, result, detailsOpen) {
   panel.innerHTML = renderSynthesis(client, result, detailsOpen);
   panel.dataset.loaded = "true";
 
+  wireVeilleTabs(panel);
   const toggle = panel.querySelector(".gap-details-toggle");
-  toggle.addEventListener("click", () => {
-    const details = panel.querySelector(".gap-details");
-    details.hidden = !details.hidden;
-    toggle.textContent = details.hidden ? t("btn_details") : t("btn_hide_details");
-  });
+  if (toggle) {
+    toggle.addEventListener("click", () => {
+      const details = panel.querySelector(".gap-details");
+      details.hidden = !details.hidden;
+      toggle.textContent = details.hidden ? t("btn_details") : t("btn_hide_details");
+    });
+  }
   wireShareholderConvertButtons(client);
   panel.querySelectorAll(".apply-update-btn").forEach((btn) => {
     btn.addEventListener("click", () => applyReferentialUpdate(client, result, btn));

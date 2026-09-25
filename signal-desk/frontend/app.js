@@ -145,10 +145,6 @@ const I18N = {
     update_applied: (name) => `Referential updated — ${name} added to the shareholder structure.`,
     no_sources: "No source identified.",
     veille_unavailable: "AI monitoring synthesis unavailable:",
-    veille_fact_aml: "AML risk",
-    veille_fact_pep: "PEP status",
-    veille_fact_kyc: "KYC assessment",
-    veille_fact_priority: "Review priority",
     convert_to_client_btn: "Make this shareholder a client",
     converting_label: "Converting…",
     convert_success: (name) => `${name} was added as a new prospect — a commercial opportunity signal was created and analyzed. See the Clients tab.`,
@@ -303,10 +299,6 @@ const I18N = {
     update_applied: (name) => `Référentiel mis à jour — ${name} ajouté à la structure actionnariale.`,
     no_sources: "Aucune source identifiée.",
     veille_unavailable: "Synthèse de veille IA indisponible :",
-    veille_fact_aml: "Risque AML",
-    veille_fact_pep: "Statut PEP",
-    veille_fact_kyc: "Évaluation KYC",
-    veille_fact_priority: "Priorité de revue",
     convert_to_client_btn: "Faire de cet actionnaire un client",
     converting_label: "Conversion en cours…",
     convert_success: (name) => `${name} a été ajouté comme nouveau prospect — un signal d'opportunité commerciale a été créé et analysé. Voir l'onglet Clients.`,
@@ -995,70 +987,6 @@ async function refreshClients() {
 
 const AGENT_PROGRESS_STEPS = ["progress_step_search", "progress_step_kyc", "progress_step_synthesis"];
 const LEVEL_KEY = { High: "level_high", Medium: "level_medium", Low: "level_low" };
-
-// The veille agent answers in Markdown: "## 1) Constat & Signaux Business",
-// "## 2) Impacts KYC", "## 3) Recommandations Commerciales", with the key KYC
-// facts written as "**Risque AML interne** : `High`".
-const VEILLE_FACTS = [
-  { key: "veille_fact_aml", re: /Risque AML[^:\n]*:\s*[`*]*([^`*\n]+)/i },
-  { key: "veille_fact_pep", re: /Statut PEP[^:\n]*:\s*[`*]*([^`*\n]+)/i },
-  { key: "veille_fact_kyc", re: /[ÉE]valuation KYC[^:\n]*:\s*[`*]*([^`*\n]+)/i },
-  { key: "veille_fact_priority", re: /Priorit[ée] de revue[^:\n]*:\s*[`*]*([^`*\n]+)/i },
-];
-
-function parseVeille(markdown) {
-  const text = (markdown || "")
-    .replace(/^\s*-{3,}\s*$/gm, "")
-    // drop the chatbot-style closing offer ("Si vous le souhaitez, je peux…")
-    .replace(/\n+\s*(Si vous le souhaitez|Souhaitez-vous|Voulez-vous|If you want|Would you like)[^\n]*\s*$/i, "")
-    .trim();
-  const [intro, ...chunks] = text.split(/^##\s+/m);
-  const sections = chunks.map((chunk) => {
-    const nl = chunk.indexOf("\n");
-    const title = (nl === -1 ? chunk : chunk.slice(0, nl)).replace(/^\d+\s*[).:-]\s*/, "").trim();
-    return { title, body: nl === -1 ? "" : chunk.slice(nl + 1).trim() };
-  });
-  const facts = VEILLE_FACTS.map((f) => {
-    const m = text.match(f.re);
-    return m ? { key: f.key, value: m[1].trim() } : null;
-  }).filter(Boolean);
-  return { intro: intro.trim(), sections, facts };
-}
-
-function renderVeille(markdown) {
-  const { intro, sections, facts } = parseVeille(markdown);
-  if (!sections.length) return `<div class="veille-result">${renderMarkdown(markdown)}</div>`;
-  const factsHtml = facts.length
-    ? `<div class="veille-facts">${facts
-        .map((f) => {
-          const cls = PRIORITY_CLASS[f.value] || "";
-          const value = LEVEL_KEY[f.value] ? t(LEVEL_KEY[f.value]) : f.value;
-          return `<span class="veille-fact ${cls}"><span>${escapeHtml(t(f.key))}</span> ${escapeHtml(value)}</span>`;
-        })
-        .join("")}</div>`
-    : "";
-  const tabs = sections
-    .map((sec, i) => `<button class="veille-tab${i === 0 ? " active" : ""}" data-index="${i}">${i + 1}. ${escapeHtml(sec.title)}</button>`)
-    .join("");
-  const panes = sections
-    .map((sec, i) => `<div class="veille-result veille-pane" data-index="${i}"${i === 0 ? "" : " hidden"}>${renderMarkdown(sec.body)}</div>`)
-    .join("");
-  return `${factsHtml}
-    ${intro ? `<div class="veille-result">${renderMarkdown(intro)}</div>` : ""}
-    <div class="veille-tabs">${tabs}</div>
-    ${panes}`;
-}
-
-function wireVeilleTabs(panel) {
-  panel.querySelectorAll(".veille-tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      panel.querySelectorAll(".veille-tab").forEach((x) => x.classList.toggle("active", x === tab));
-      panel.querySelectorAll(".veille-pane").forEach((pane) => {
-        pane.hidden = pane.dataset.index !== tab.dataset.index;
-      });
-    });
-  });
-}
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function renderAgentProgress(panel, completedCount) {
@@ -1137,29 +1065,23 @@ function renderSynthesis(client, result, detailsOpen) {
       </div>`
     : "";
 
-  // With a veille synthesis and nothing structured to add (KYC referential
-  // clients), the Details block would only hold empty sections.
-  const showDetails = !veille.synthese || opps.length || updates.length || holderEntities.length;
-
   return `<div class="client-modal-section synthesis-card">
     <div class="synthesis-header">
       <h3>${t("synthesis_title")}</h3>
       ${level ? `<span class="pill ${PRIORITY_CLASS[level] || ""}">${escapeHtml(t("rating_label"))} : ${escapeHtml(t(LEVEL_KEY[level]))}</span>` : ""}
     </div>
     ${veille.synthese
-      ? renderVeille(veille.synthese)
+      ? `<div class="veille-result">${renderMarkdown(veille.synthese)}</div>`
       : `<p class="synthesis-headline">${escapeHtml(headline)}</p>`}
     ${veille.error ? `<p class="veille-error">${t("veille_unavailable")} ${escapeHtml(veille.error)}</p>` : ""}
-    ${showDetails
-      ? `<button class="btn btn-outline btn-small gap-details-toggle">${detailsOpen ? t("btn_hide_details") : t("btn_details")}</button>
+    <button class="btn btn-outline btn-small gap-details-toggle">${detailsOpen ? t("btn_hide_details") : t("btn_details")}</button>
     <div class="gap-details"${detailsOpen ? "" : " hidden"}>
       <div class="details-section"><h4>${t("details_sources_title")}</h4>${sourcesHtml}</div>
       <div class="details-section"><h4>${t("details_opportunities_title")}</h4>${oppsHtml}</div>
       ${updatesHtml}
       ${holdersHtml}
       <p class="shareholder-convert-status" id="shareholder-convert-status"></p>
-    </div>`
-      : ""}
+    </div>
   </div>`;
 }
 
@@ -1169,15 +1091,12 @@ function showExploreResult(client, result, detailsOpen) {
   panel.innerHTML = renderSynthesis(client, result, detailsOpen);
   panel.dataset.loaded = "true";
 
-  wireVeilleTabs(panel);
   const toggle = panel.querySelector(".gap-details-toggle");
-  if (toggle) {
-    toggle.addEventListener("click", () => {
-      const details = panel.querySelector(".gap-details");
-      details.hidden = !details.hidden;
-      toggle.textContent = details.hidden ? t("btn_details") : t("btn_hide_details");
-    });
-  }
+  toggle.addEventListener("click", () => {
+    const details = panel.querySelector(".gap-details");
+    details.hidden = !details.hidden;
+    toggle.textContent = details.hidden ? t("btn_details") : t("btn_hide_details");
+  });
   wireShareholderConvertButtons(client);
   panel.querySelectorAll(".apply-update-btn").forEach((btn) => {
     btn.addEventListener("click", () => applyReferentialUpdate(client, result, btn));

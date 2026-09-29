@@ -1,0 +1,21 @@
+                     EMPLOYEE MASTER LISTING
+--------------------------------------------------------------------------------
+ID     NAME                 DEPARTMENT       SALARY   HIRE DATE   AGE
+--------------------------------------------------------------------------------
+10009  IRENE CLARK          IT           110,500.00   2005-02-25  52
+10002  BOB SMITH            IT            78,000.50   2012-07-01  41
+10014  NOAH TAYLOR          IT            65,000.00   2018-11-03  33
+10004  DAVID BROWN          IT            92,000.00   2008-10-20  48
+10012  LIAM MARTIN          SALES         61,000.00   2013-09-30  40
+10006  FRANK MILLER         SALES         39,000.00   2022-03-01  26
+10001  ALICE JOHNSON        SALES         52,500.00   2015-03-12  34
+10015  OLIVIA KING          OPERATIONS    27,000.00   2025-06-01  21
+10007  GRACE LEE            FINANCE       81,000.00   2010-09-18  45
+10010  JACK DAVIS           HR            28,500.00   2024-01-15  23
+10003  CAROL WHITE          HR            48,000.00   2019-01-15  29
+10013  MONA PATEL           FINANCE       42,500.50   2021-07-12  28
+10005  EVA GREEN            FINANCE       68,750.25   2017-06-05  38
+10011  KAREN LOPEZ          OPERATIONS    56,000.00   2016-04-20  36
+10008  HENRY WILSON         OPERATIONS    45,000.75   2020-08-10  31
+--------------------------------------------------------------------------------
+TOTAL EMPLOYEES:     15

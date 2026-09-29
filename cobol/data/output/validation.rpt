@@ -1,0 +1,8 @@
+EMPLOYEE DATA VALIDATION REPORT
+----------------------------------------------------------------------
+10015  OLIVIA KING          SALARY BELOW 30,000 POLICY MINIMUM
+10010  JACK DAVIS           SALARY BELOW 30,000 POLICY MINIMUM
+----------------------------------------------------------------------
+RECORDS READ:            15
+RECORDS CLEAN:           13
+RECORDS FLAGGED:          2

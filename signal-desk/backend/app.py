@@ -23,6 +23,7 @@ from pydantic import BaseModel
 from ai_provider import get_provider
 from agents.kyc.store import get_internal_record, list_internal_records
 from agents.veille import generate_veille
+from agents.bdd_store import list_documents as list_bdd_documents
 from seed_data import CATEGORIES, CLIENTS, EVENTS, SOURCES
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -110,6 +111,21 @@ def init_db():
             )
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS veille_runs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                client_id TEXT NOT NULL,
+                client_name TEXT,
+                created_at TEXT NOT NULL,
+                level TEXT,
+                provider TEXT,
+                synthese BLOB,
+                result BLOB NOT NULL,
+                error TEXT
+            )
+            """
+        )
         conn.commit()
         if conn.execute("SELECT COUNT(*) FROM sources").fetchone()[0] == 0:
             seed(conn)
@@ -128,7 +144,8 @@ def seed(conn):
         )
     now = datetime.now(timezone.utc)
     for i, e in enumerate(EVENTS):
-        detected_at = (now - timedelta(hours=i * 7)).isoformat()
+        age = timedelta(days=e["days_ago"]) if "days_ago" in e else timedelta(hours=i * 7)
+        detected_at = (now - age).isoformat()
         conn.execute(
             """
             INSERT INTO events (
@@ -186,6 +203,21 @@ def client_row_to_dict(row: sqlite3.Row) -> dict:
     }
 
 
+def veille_run_row_to_dict(row: sqlite3.Row) -> dict:
+    synthese = bytes(row["synthese"]).decode("utf-8") if row["synthese"] is not None else None
+    return {
+        "id": row["id"],
+        "clientId": row["client_id"],
+        "clientName": row["client_name"],
+        "createdAt": row["created_at"],
+        "level": row["level"],
+        "provider": row["provider"],
+        "synthese": synthese,
+        "error": row["error"],
+        "result": json.loads(bytes(row["result"]).decode("utf-8")),
+    }
+
+
 class StatusUpdate(BaseModel):
     status: str
     reason: Optional[str] = None
@@ -210,7 +242,17 @@ class VeilleRequest(BaseModel):
 
 
 class VeilleResponse(BaseModel):
+    level: str
     synthese: str
+
+
+class VeilleRunIn(BaseModel):
+    clientName: Optional[str] = None
+    level: Optional[str] = None
+    provider: Optional[str] = None
+    synthese: Optional[str] = None
+    error: Optional[str] = None
+    result: dict
 
 
 def _internal_client_to_dict(record: dict) -> dict:
@@ -256,6 +298,7 @@ app = FastAPI(title="Signal Desk API")
 @app.on_event("startup")
 def on_startup():
     init_db()
+    list_bdd_documents()  # pre-loads agents/bdd/*.json into SQLite
 
 
 def _sources_and_clients(conn):
@@ -367,10 +410,10 @@ def list_clients():
             _annotate_other_shareholders(client, conn)
             client["potentialProspectCount"] = _potential_prospect_count(client)
     known_ids = {client["id"] for client in clients}
-    for record in list_internal_records():
+    """for record in list_internal_records():
         if record["client_id"] not in known_ids:
             known_ids.add(record["client_id"])
-            clients.append(_internal_client_to_dict(record))
+            clients.append(_internal_client_to_dict(record))"""
     return clients
 
 
@@ -395,10 +438,10 @@ def get_client(client_id: str):
 
 
 PRIORITY_RANK = {"High": 3, "Medium": 2, "Low": 1}
-# Stand-in for web-search / referential-lookup latency: those two agent steps
-# have no live data source in this demo, so without a pause the checklist
-# would complete before it is ever visible.
-SIMULATED_STEP_SECONDS = 0.8
+# Stand-in for agent latency until the agents backend is connected: each of
+# the three steps takes a few seconds (about 12 s in total) so users can
+# follow the checklist. AGENT_STEP_SECONDS overrides it.
+SIMULATED_STEP_SECONDS = float(os.getenv("AGENT_STEP_SECONDS", "4"))
 
 
 def _set_run(run_id: int, **fields):
@@ -536,6 +579,7 @@ def _run_agents(run_id: int, client_id: str):
                 "changedEvents": changed,
                 "provider": provider.name,
             }
+            time.sleep(SIMULATED_STEP_SECONDS)
         _set_run(run_id, step=3, status="done", result=json.dumps(result))
     except Exception as exc:
         _set_run(run_id, status="error", error=f"{type(exc).__name__}: {exc}")
@@ -564,7 +608,7 @@ def start_agent_run(client_id: str):
 VEILLE_TIMEOUT_SECONDS = 300
 
 
-def _call_veille_api(base_url: str, client_id: str) -> str:
+def _call_veille_api(base_url: str, client_id: str) -> dict:
     request = Request(
         f"{base_url.rstrip('/')}/api/veille",
         data=json.dumps({"client_id": client_id}).encode("utf-8"),
@@ -573,7 +617,7 @@ def _call_veille_api(base_url: str, client_id: str) -> str:
     )
     try:
         with urlopen(request, timeout=VEILLE_TIMEOUT_SECONDS) as response:
-            return json.load(response)["synthese"]
+            return json.load(response)
     except HTTPError as error:
         try:
             detail = json.load(error).get("detail") or error.reason
@@ -594,13 +638,54 @@ def run_veille(payload: VeilleRequest):
         raise HTTPException(status_code=404, detail="Client not found")
     base_url = os.getenv("VEILLE_API_URL", "").strip()
     if base_url:
-        return {"synthese": _call_veille_api(base_url, client_id)}
+        return _call_veille_api(base_url, client_id)
     try:
-        return {"synthese": generate_veille(client_id)}
+        return generate_veille(client_id)
     except Exception as error:
         raise HTTPException(
             status_code=502, detail=f"VEILLE_API_URL is not set and the local veille pipeline failed: {error}"
         ) from error
+
+
+@app.post("/api/clients/{client_id}/veille-runs")
+def create_veille_run(client_id: str, payload: VeilleRunIn):
+    """Persist one 'Explorer l'opportunité commerciale' / veille result so it
+    can be reviewed later from the history dialog."""
+    now = datetime.now(timezone.utc).isoformat()
+    result_bytes = json.dumps(payload.result, ensure_ascii=False).encode("utf-8")
+    synthese_bytes = payload.synthese.encode("utf-8") if payload.synthese else None
+    with get_conn() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO veille_runs (client_id, client_name, created_at, level, provider, synthese, result, error)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (client_id, payload.clientName, now, payload.level, payload.provider, synthese_bytes, result_bytes, payload.error),
+        )
+        conn.commit()
+        run_id = cur.lastrowid
+    return {"id": run_id, "createdAt": now}
+
+
+@app.get("/api/clients/{client_id}/veille-runs")
+def list_veille_runs(client_id: str):
+    """Veille result history for a client, most recent first."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM veille_runs WHERE client_id = ? ORDER BY created_at DESC", (client_id,)
+        ).fetchall()
+    return [veille_run_row_to_dict(r) for r in rows]
+
+
+@app.get("/api/veille-runs/summary")
+def veille_runs_summary():
+    """Per-client history counts, so the UI can enable/disable the history
+    button in the clients table without fetching every client's full history."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT client_id, COUNT(*) AS cnt, MAX(created_at) AS last_at FROM veille_runs GROUP BY client_id"
+        ).fetchall()
+    return {r["client_id"]: {"count": r["cnt"], "lastCreatedAt": r["last_at"]} for r in rows}
 
 
 @app.get("/api/agent-runs/{run_id}")

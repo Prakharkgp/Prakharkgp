@@ -119,12 +119,15 @@ SOURCES = [
     },
 ]
 
+# For the demo every client and prospect is followed by the same RM.
+DEMO_RM = "Marie-France Rigoroso"
+
 CLIENTS = [
     {
         "id": "lefevre",
         "name": "Antoine Lefevre",
         "segment": "UHNW Individual — Private Banking",
-        "rm_owner": "Marie-France Rigoroso",
+        "rm_owner": DEMO_RM,
         "is_prospect": False,
         "linked_entities": [
             {
@@ -148,7 +151,7 @@ CLIENTS = [
         "id": "whitfield-rowe",
         "name": "Whitfield & Rowe Group plc",
         "segment": "Corporate — Mid-Cap, UK-listed",
-        "rm_owner": "James Okafor",
+        "rm_owner": DEMO_RM,
         "is_prospect": False,
         "linked_entities": [
             {"name": "Whitfield & Rowe Logistics Ltd", "relation": "Wholly-owned subsidiary", "jurisdiction": "United Kingdom", "client_stake_percent": 100},
@@ -158,7 +161,7 @@ CLIENTS = [
         "id": "meridian",
         "name": "Meridian BioTech Inc.",
         "segment": "Corporate — US-listed",
-        "rm_owner": "Sarah Klein",
+        "rm_owner": DEMO_RM,
         "is_prospect": False,
         "linked_entities": [],
     },
@@ -166,7 +169,7 @@ CLIENTS = [
         "id": "aurelie-costa",
         "name": "Aurélie Costa",
         "segment": "UHNW Individual — Prospect",
-        "rm_owner": "Marie-France Rigoroso",
+        "rm_owner": DEMO_RM,
         "is_prospect": True,
         "linked_entities": [
             {"name": "Costa Ventures Holding", "relation": "Sole shareholder", "jurisdiction": "France", "client_stake_percent": 100},
@@ -176,7 +179,7 @@ CLIENTS = [
         "id": "delacroix",
         "name": "Delacroix Capital SAS",
         "segment": "Corporate — Family Office",
-        "rm_owner": "Marie-France Rigoroso",
+        "rm_owner": DEMO_RM,
         "is_prospect": False,
         "linked_entities": [],
     },
@@ -184,7 +187,7 @@ CLIENTS = [
         "id": "meridian-holdings-prospect",
         "name": "Julien Bertrand",
         "segment": "Corporate Entrepreneur — Prospect",
-        "rm_owner": "Marie-France Rigoroso",
+        "rm_owner": DEMO_RM,
         "is_prospect": True,
         "linked_entities": [
             {
@@ -198,6 +201,81 @@ CLIENTS = [
                 "web_shareholders": [
                     {"name": "Atlas Growth Fund", "stake": "15%", "type": "entity", "source_id": "fin-media"},
                 ],
+            },
+        ],
+    },
+    {
+        "id": "301724490",
+        "name": "BIG Mamma",
+        "segment": "Legal person — Client",
+        "rm_owner": "—",
+        "is_prospect": False,
+        "linked_entities": [
+            {
+                "name": "301724424",
+                "relation": "Manager / partner",
+                "jurisdiction": "France",
+                "client_stake_percent": 100,
+            },
+        ],
+    },
+    {
+        "id": "301724490-ja-holding",
+        "name": "JA HOLDING",
+        "segment": "Legal person — Client",
+        "rm_owner": "—",
+        "is_prospect": False,
+        "linked_entities": [
+            {
+                "name": "301724424",
+                "relation": "Manager / partner",
+                "jurisdiction": "France",
+                "client_stake_percent": 100,
+            },
+        ],
+    },
+    {
+        "id": "301724490-shg-acquisition-uk",
+        "name": "SHG Acquisition (UK) Limited",
+        "segment": "Legal person — Client",
+        "rm_owner": "—",
+        "is_prospect": False,
+        "linked_entities": [
+            {
+                "name": "301724424",
+                "relation": "Manager / partner",
+                "jurisdiction": "United Kingdom",
+                "client_stake_percent": 100,
+            },
+        ],
+    },
+    {
+        "id": "301724490-value-partners",
+        "name": "Value Partners S.A",
+        "segment": "Legal person — Client",
+        "rm_owner": "—",
+        "is_prospect": False,
+        "linked_entities": [
+            {
+                "name": "301724424",
+                "relation": "Manager / partner",
+                "jurisdiction": "France",
+                "client_stake_percent": 100,
+            },
+        ],
+    },
+    {
+        "id": "301724490-zalaris",
+        "name": "ZALARIS",
+        "segment": "Legal person — Client",
+        "rm_owner": "—",
+        "is_prospect": False,
+        "linked_entities": [
+            {
+                "name": "301724424",
+                "relation": "Manager / partner",
+                "jurisdiction": "France",
+                "client_stake_percent": 100,
             },
         ],
     },
@@ -251,6 +329,7 @@ EVENTS = [
         "priority": "Medium",
         "description": "Board announces a special dividend following the disposal of a non-core division.",
         "status": "Actioned",
+        "days_ago": 95,
     },
     {
         "category": "Commercial Opportunity",
@@ -262,6 +341,7 @@ EVENTS = [
         "description": "Financial press reports the founder's appointment to the board of a listed peer.",
         "status": "Dismissed",
         "decline_reason": "RM assessed limited near-term relevance for the private banking offer — no follow-up planned.",
+        "days_ago": 150,
     },
     {
         "category": "KYC Update",
@@ -272,6 +352,7 @@ EVENTS = [
         "priority": "High",
         "description": "Ownership mapping shows a change in the UBO chain following the NovaTech stake sale — KYC file needs refresh.",
         "status": "Actioned",
+        "days_ago": 60,
     },
     {
         "category": "KYC Update",
@@ -347,5 +428,52 @@ EVENTS = [
         "source_id": "fin-media",
         "priority": "Low",
         "description": "Bob Iger returned as CEO of Disney in November 2022, succeeding Bob Chapek.",
+    },
+    # --- Closed signals from previous months: the clients' signal history ---
+    {
+        "category": "Commercial Opportunity",
+        "event_type": "Business or shareholding sale",
+        "entity_name": "Lefevre Family Holding SAS",
+        "client_id": "lefevre",
+        "source_id": "bodacc",
+        "priority": "High",
+        "description": "Partial sale of the holding's stake in a logistics subsidiary.",
+        "status": "Actioned",
+        "days_ago": 410,
+    },
+    {
+        "category": "Commercial Opportunity",
+        "event_type": "Fundraising / capital increase",
+        "entity_name": "Costa Ventures Holding",
+        "client_id": "aurelie-costa",
+        "source_id": "pitchbook",
+        "priority": "Medium",
+        "description": "Series A round closed by a portfolio company of Costa Ventures Holding.",
+        "status": "Dismissed",
+        "decline_reason": "Prospect declined: the proceeds were placed with her existing bank.",
+        "days_ago": 290,
+    },
+    {
+        "category": "Commercial Opportunity",
+        "event_type": "Appointment to a key position (CEO, CFO, Board member, etc.)",
+        "entity_name": "Julien Bertrand",
+        "client_id": "meridian-holdings-prospect",
+        "source_id": "fin-media",
+        "priority": "Low",
+        "description": "Julien Bertrand appointed to the board of a regional industry federation.",
+        "status": "Dismissed",
+        "decline_reason": "Lead abandoned: no liquidity event attached to the appointment.",
+        "days_ago": 540,
+    },
+    {
+        "category": "Commercial Opportunity",
+        "event_type": "Special dividend or significant distribution",
+        "entity_name": "Meridian BioTech Inc.",
+        "client_id": "meridian",
+        "source_id": "sec-edgar",
+        "priority": "Medium",
+        "description": "One-off distribution to shareholders after a licensing deal.",
+        "status": "Actioned",
+        "days_ago": 220,
     },
 ]

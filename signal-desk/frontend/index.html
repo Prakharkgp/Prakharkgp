@@ -29,12 +29,7 @@
     <main>
       <!-- CLIENTS -->
       <section id="panel-clients" class="panel active">
-        <h2 class="page-title" data-i18n="clients_title">Clients &amp; actionnariat</h2>
-        <p class="page-subtitle" data-i18n="clients_subtitle">
-          Les événements sur des entités détenues indirectement sont rattachés au
-          client via la chaîne d'actionnariat — le même rôle que jouerait une
-          source comme Moody's Orbis en production.
-        </p>
+        <h2 class="page-title" data-i18n="clients_title">Clients et prospects</h2>
 
         <div class="kpis" id="client-kpis"></div>
 
@@ -206,6 +201,13 @@
     <div class="modal-panel">
       <button class="modal-close" id="client-modal-close" aria-label="Close">&times;</button>
       <div id="client-modal-content"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="veille-history-overlay" hidden>
+    <div class="modal-panel">
+      <button class="modal-close" id="veille-history-close" aria-label="Close">&times;</button>
+      <div id="veille-history-content"></div>
     </div>
   </div>
 

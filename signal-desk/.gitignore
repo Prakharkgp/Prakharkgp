@@ -1,6 +1,8 @@
 signal_desk.db
 __pycache__/
 *.pyc
+backend/venture_bridge.db
+.venv/
 
 
 .env

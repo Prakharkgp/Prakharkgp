@@ -1,0 +1,787 @@
+[
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000001",
+    "title": "Eiffel Infrastructures Vertes – Fonds ELTIF infrastructures énergie",
+    "summary": "Fonds ELTIF investissant en dette, capital ou quasi-equity dans des sociétés de projet contribuant à la transition énergétique (énergies renouvelables notamment) avec objectif de génération de flux réguliers et plus-values.",
+    "product_type": "offre",
+    "target_client_types": [
+      "Clients professionnels",
+      "Assureurs"
+    ],
+    "relevant_context": [
+      "Investissement infrastructures",
+      "Transition énergétique",
+      "Dette privée"
+    ],
+    "detection_signals": [
+      "Sensible à ESG",
+      "Exposition infrastructures",
+      "Recherche rendement long terme"
+    ],
+    "triggers": [
+      "Allocation actifs réels",
+      "Investissement durable"
+    ],
+    "constraints": [
+      "Horizon ≥ 5 ans",
+      "Risque perte en capital"
+    ],
+    "blockers": [
+      "Liquidité limitée"
+    ],
+    "questions_to_qualify": [
+      "Horizon de placement ?",
+      "Tolérance au risque ?"
+    ],
+    "required_data": [
+      "Profil investisseur"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000002",
+    "title": "FCPR Idinvest Strategic Opportunities",
+    "summary": "Fonds visant à constituer un portefeuille diversifié de sociétés de moyenne capitalisation européennes avec réinvestissement des flux pour optimisation de la performance.",
+    "product_type": "offre",
+    "target_client_types": [
+      "Investisseurs Private Equity"
+    ],
+    "relevant_context": [
+      "Private markets",
+      "Mid-market Europe"
+    ],
+    "detection_signals": [
+      "Recherche exposition PME européennes",
+      "Volonté optimiser performance long terme"
+    ],
+    "triggers": [
+      "Allocation private equity"
+    ],
+    "constraints": [],
+    "blockers": [
+      "Risque de perte en capital"
+    ],
+    "questions_to_qualify": [
+      "Expérience investissements non cotés ?"
+    ],
+    "required_data": []
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000003",
+    "title": "Blackstone European Property Income Fund S.L.P. (Blackstone Bepimmo)",
+    "summary": "Fonds professionnel spécialisé investi principalement dans l’immobilier européen stabilisé, notamment en logistique et bureaux prime, visant la stabilité des flux de trésorerie et une croissance long terme via gestion active des actifs.",
+    "product_type": "offre",
+    "target_client_types": [
+      "Investisseurs professionnels",
+      "Investisseurs privés éligibles"
+    ],
+    "relevant_context": [
+      "Diversification patrimoniale",
+      "Investissement immobilier indirect européen",
+      "Recherche de revenus réguliers"
+    ],
+    "detection_signals": [
+      "Immobilier non coté",
+      "Logistique",
+      "Private Real Estate",
+      "Revenus locatifs"
+    ],
+    "triggers": [
+      "Volonté d'accès à des actifs immobiliers européens",
+      "Diversification hors marchés cotés"
+    ],
+    "constraints": [
+      "Risque de perte en capital",
+      "Liquidité limitée"
+    ],
+    "blockers": [
+      "Besoin de liquidité à court terme"
+    ],
+    "questions_to_qualify": [
+      "Horizon d’investissement ?",
+      "Tolérance au risque immobilier ?"
+    ],
+    "required_data": [
+      "Montant à investir",
+      "Horizon de placement"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000004",
+    "title": "Sogelife Personal Multisupports – Contrat d’assurance-vie / capitalisation luxembourgeois multidevises",
+    "summary": "Contrat d’assurance-vie ou de capitalisation multi-devises (EUR/USD) permettant la constitution, diversification et transmission du patrimoine avec accès à des supports garantis et en unités de compte dans un cadre réglementaire luxembourgeois.",
+    "product_type": "offre",
+    "target_client_types": [
+      "Personnes physiques",
+      "Personnes morales"
+    ],
+    "relevant_context": [
+      "Diversification patrimoniale",
+      "Planification successorale",
+      "Allocation multi-devises",
+      "Investissement long terme"
+    ],
+    "detection_signals": [
+      "Assurance vie luxembourgeoise",
+      "Multi-supports",
+      "Gestion libre",
+      "Contrat de capitalisation"
+    ],
+    "triggers": [
+      "Volonté de structurer un patrimoine financier",
+      "Recherche d’un cadre assurantiel pour transmission",
+      "Besoin de diversification géographique et monétaire"
+    ],
+    "constraints": [
+      "Seuil d’accès de 150000€",
+      "Versement minimum par support 15000€",
+      "Risque de perte en capital sur UC"
+    ],
+    "blockers": [
+      "Non-respect du seuil minimum d’investissement"
+    ],
+    "questions_to_qualify": [
+      "Quel est l’objectif principal : transmission ou capitalisation ?",
+      "Quel est le profil de risque ?",
+      "Souhaitez-vous une exposition multi-devises ?"
+    ],
+    "required_data": [
+      "Montant à investir",
+      "Résidence fiscale",
+      "Profil investisseur"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000005",
+    "title": "Triangle de sécurité luxembourgeois",
+    "summary": "Dispositif réglementaire impliquant assureur, banque dépositaire indépendante et régulateur garantissant la séparation des actifs et une sécurité renforcée des avoirs d’assurance-vie.",
+    "product_type": "avantage",
+    "target_client_types": [
+      "Personnes physiques",
+      "Personnes morales"
+    ],
+    "relevant_context": [
+      "Protection des actifs",
+      "Diversification internationale"
+    ],
+    "detection_signals": [
+      "Triangle de sécurité",
+      "Banque dépositaire indépendante"
+    ],
+    "triggers": [
+      "Préoccupation quant à la sécurité des avoirs",
+      "Volatilité des marchés financiers"
+    ],
+    "constraints": [],
+    "blockers": [],
+    "questions_to_qualify": [
+      "Souhaitez-vous une meilleure protection des actifs financiers ?"
+    ],
+    "required_data": []
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000006",
+    "title": "Super Privilège de l’assurance-vie luxembourgeoise",
+    "summary": "Statut de créancier de premier rang accordé au souscripteur permettant une priorité sur les autres créanciers en cas de faillite de la compagnie d’assurance.",
+    "product_type": "avantage",
+    "target_client_types": [
+      "Personnes physiques",
+      "Personnes morales"
+    ],
+    "relevant_context": [
+      "Protection des avoirs"
+    ],
+    "detection_signals": [
+      "Super privilège",
+      "Créancier de premier rang"
+    ],
+    "triggers": [
+      "Recherche d’une juridiction protectrice",
+      "Clients sensibles au risque assureur"
+    ],
+    "constraints": [],
+    "blockers": [],
+    "questions_to_qualify": [
+      "Importance accordée à la protection juridique des actifs ?"
+    ],
+    "required_data": []
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000007",
+    "title": "SOGELIFE Private Selection – Contrat d’assurance vie multisupport",
+    "summary": "Contrat d’assurance vie multisupport, multidevise et multigestion destiné à la constitution et à la transmission du patrimoine avec accès à des fonds externes et internes collectifs.",
+    "product_type": "offre",
+    "target_client_types": [
+      "Personne physique résidente en France"
+    ],
+    "relevant_context": [
+      "Transmission patrimoniale",
+      "Diversification financière"
+    ],
+    "detection_signals": [
+      "Contrat assurance vie",
+      "Multisupport",
+      "Fonds internes collectifs"
+    ],
+    "triggers": [
+      "Objectif de transmission",
+      "Besoin de diversification",
+      "Structuration patrimoniale"
+    ],
+    "constraints": [
+      "Seuil d’accès minimum 150 000€",
+      "Durée minimale 8 ans"
+    ],
+    "blockers": [],
+    "questions_to_qualify": [
+      "Objectif patrimonial ?",
+      "Horizon d’investissement ?",
+      "Montant disponible ?"
+    ],
+    "required_data": [
+      "Montant à investir",
+      "Objectif de gestion",
+      "Profil de risque"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000008",
+    "title": "Luxembourg Life Insurance",
+    "summary": "Contrat d'assurance vie luxembourgeois permettant la protection du patrimoine, l'accès à une large gamme d'investissements et une planification successorale fiscalement optimisée.",
+    "product_type": "offre",
+    "target_client_types": [
+      "Client mobile international",
+      "Résident espagnol"
+    ],
+    "relevant_context": [
+      "Transmission patrimoniale",
+      "Optimisation fiscale"
+    ],
+    "detection_signals": [
+      "Assurance vie luxembourgeoise",
+      "Clause bénéficiaire"
+    ],
+    "triggers": [
+      "Objectif transmission"
+    ],
+    "constraints": [
+      "Rachat taxable"
+    ],
+    "blockers": [],
+    "questions_to_qualify": [
+      "Pays de résidence ?",
+      "Objectif succession ?"
+    ],
+    "required_data": [
+      "Données fiscales",
+      "Bénéficiaires"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000009",
+    "title": "Capital Transmission (LBO)",
+    "summary": "Acquisition d’une entreprise mature via effet de levier financier combinant fonds propres et dette avec remboursement par les flux futurs.",
+    "product_type": "montage",
+    "target_client_types": [
+      "Entrepreneurs",
+      "Family Office"
+    ],
+    "relevant_context": [
+      "Transmission",
+      "Investissement non coté"
+    ],
+    "detection_signals": [
+      "LBO",
+      "rachat d'entreprise"
+    ],
+    "triggers": [
+      "Transmission entreprise"
+    ],
+    "constraints": [
+      "Risque financier"
+    ],
+    "blockers": [],
+    "questions_to_qualify": [
+      "Structure cible ?",
+      "Effet de levier acceptable ?"
+    ],
+    "required_data": [
+      "Cashflows cible"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000010",
+    "title": "Signature électronique assurance-vie multi assureurs",
+    "summary": "Solution de signature électronique permettant la souscription et gestion des contrats d’assurance vie luxembourgeois avec assureurs partenaires.",
+    "product_type": "offre",
+    "target_client_types": [
+      "Personne physique",
+      "Personne morale"
+    ],
+    "relevant_context": [
+      "Assurance vie",
+      "Vente à distance"
+    ],
+    "detection_signals": [
+      "signature électronique",
+      "eSignAnywhere"
+    ],
+    "triggers": [
+      "Souscription AV"
+    ],
+    "constraints": [
+      "Eligibilité assureur"
+    ],
+    "blockers": [],
+    "questions_to_qualify": [
+      "Type de contrat ?",
+      "Résidence client ?"
+    ],
+    "required_data": [
+      "Documents contractuels"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000011",
+    "title": "SLP Flex Equity 2020",
+    "summary": "Société de Libre Partenariat investissant dans des opérations de LBO via les fonds CAPZA 5 Equity et CAPZA 5 Bond afin de financer des PME avec flux récurrents et potentiel de croissance.",
+    "product_type": "montage",
+    "target_client_types": [
+      "Investisseurs avertis"
+    ],
+    "relevant_context": [
+      "Private Equity",
+      "Investissement non coté"
+    ],
+    "detection_signals": [
+      "SLP",
+      "LBO primaire"
+    ],
+    "triggers": [
+      "Recherche performance long terme"
+    ],
+    "constraints": [
+      "Durée 8 ans prorogeable"
+    ],
+    "blockers": [],
+    "questions_to_qualify": [
+      "Connaissance du PE ?",
+      "Horizon long terme ?"
+    ],
+    "required_data": [
+      "Montant engagé"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000012",
+    "title": "Contrat SOGELIFE Private Selection",
+    "summary": "Contrat d’assurance vie multisupport permettant la répartition des versements sur un large éventail de fonds monétaires, obligataires, actions ou diversifiés selon le profil de risque.",
+    "product_type": "offre",
+    "target_client_types": [
+      "Personnes physiques"
+    ],
+    "relevant_context": [
+      "Allocation multi-actifs"
+    ],
+    "detection_signals": [
+      "Supports d'investissement éligibles"
+    ],
+    "triggers": [
+      "Structuration patrimoniale via assurance vie"
+    ],
+    "constraints": [],
+    "blockers": [],
+    "questions_to_qualify": [
+      "Devise souhaitée ?",
+      "Niveau de risque cible ?"
+    ],
+    "required_data": [
+      "Profil investisseur",
+      "Montant du versement"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000050",
+    "title": "Fonds interne collectif Valence Rendement",
+    "summary": "Fonds interne collectif adossé au produit structuré Valence Rendement accessible sous conditions de patrimoine minimum.",
+    "product_type": "montage",
+    "target_client_types": [
+      "Clients avec fortune mobilière ≥ 250 000 €"
+    ],
+    "relevant_context": [
+      "Structuration UC via FIC"
+    ],
+    "detection_signals": [
+      "VALENCE RENDEMENT",
+      "Fonds Interne Collectif"
+    ],
+    "triggers": [
+      "Structuration assurance vie"
+    ],
+    "constraints": [
+      "Investissement minimum 125 000 €"
+    ],
+    "blockers": [
+      "Fluctuation de la valeur UC"
+    ],
+    "questions_to_qualify": [
+      "Niveau des avoirs ?",
+      "Solution structurée recherchée ?"
+    ],
+    "required_data": [
+      "Fortune financière",
+      "Montant d’investissement"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000076",
+    "title": "Structuration patrimoniale via co-souscription avec dénouement au 1er ou 2nd décès",
+    "summary": "Possibilité de co-souscription dans le cadre du contrat permettant une structuration patrimoniale du dénouement en fonction du décès du premier ou du second souscripteur.",
+    "product_type": "montage",
+    "target_client_types": [
+      "Personnes physiques"
+    ],
+    "relevant_context": [
+      "Transmission du patrimoine",
+      "Protection du conjoint"
+    ],
+    "detection_signals": [
+      "Co-souscription",
+      "Dénouement au 1er ou 2ème décès"
+    ],
+    "triggers": [
+      "Préparation de la succession",
+      "Optimisation de la transmission entre conjoints"
+    ],
+    "constraints": [],
+    "blockers": [],
+    "questions_to_qualify": [
+      "Situation matrimoniale ?",
+      "Objectif de protection du conjoint survivant ?"
+    ],
+    "required_data": [
+      "Etat civil",
+      "Clause bénéficiaire souhaitée"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000082",
+    "title": "Ebène Capitalisation Private Banking",
+    "summary": "Contrat de capitalisation multisupport offrant accès à fonds euros, unités de compte, supports immobiliers et produits structurés.",
+    "product_type": "offre",
+    "target_client_types": [
+      "Personnes physiques",
+      "Personnes morales"
+    ],
+    "relevant_context": [
+      "Optimisation patrimoniale",
+      "Capitalisation long terme"
+    ],
+    "detection_signals": [
+      "besoin de contrat capitalisation",
+      "diversification"
+    ],
+    "triggers": [
+      "gestion long terme"
+    ],
+    "constraints": [],
+    "blockers": [
+      "risque de perte en capital sur UC"
+    ],
+    "questions_to_qualify": [
+      "recherchez-vous une enveloppe de capitalisation ?"
+    ],
+    "required_data": []
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000083",
+    "title": "Ebène – Co-souscription en démembrement",
+    "summary": "Possibilité de co-souscrire le contrat en démembrement de propriété.",
+    "product_type": "montage",
+    "target_client_types": [
+      "Familles patrimoniales"
+    ],
+    "relevant_context": [
+      "Transmission",
+      "Structuration patrimoniale"
+    ],
+    "detection_signals": [
+      "usufruit",
+      "nue propriété"
+    ],
+    "triggers": [
+      "anticipation de transmission"
+    ],
+    "constraints": [
+      "sous conditions"
+    ],
+    "blockers": [],
+    "questions_to_qualify": [
+      "souhaitez-vous mettre en place un démembrement ?"
+    ],
+    "required_data": []
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000115",
+    "title": "SG IS Fund – SG Crédit Millésime 2033",
+    "summary": "Fonds obligataire millésimé reposant sur une stratégie de portage permettant de construire un portefeuille obligataire détenu jusqu’à maturité, offrant une visibilité sur le rendement cible du portefeuille.",
+    "product_type": "offre",
+    "target_client_types": [
+      "Personne physique"
+    ],
+    "relevant_context": [
+      "Transition monétaire vers obligataire"
+    ],
+    "detection_signals": [
+      "Position monétaire"
+    ],
+    "triggers": [
+      "Recherche rendement cible"
+    ],
+    "constraints": [],
+    "blockers": [
+      "Risque de défaut"
+    ],
+    "questions_to_qualify": [
+      "Client investi en monétaire ?"
+    ],
+    "required_data": [
+      "Encours monétaire"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000268",
+    "title": "SG IS Fund – Euro Crédit",
+    "summary": "Fonds obligataire à gestion active benchmarkée avec au moins 70% d’obligations Investment Grade et intégration de critères ESG.",
+    "product_type": "offre",
+    "target_client_types": [
+      "Investisseurs privés"
+    ],
+    "relevant_context": [
+      "Diversification obligataire"
+    ],
+    "detection_signals": [
+      "Investment Grade",
+      "High Yield"
+    ],
+    "triggers": [
+      "Recherche rendement obligataire"
+    ],
+    "constraints": [
+      "Max 10% High Yield"
+    ],
+    "blockers": [
+      "Risque crédit"
+    ],
+    "questions_to_qualify": [
+      "Allocation obligataire actuelle ?"
+    ],
+    "required_data": [
+      "Profil de risque"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000269",
+    "title": "SG IS Fund – Optimal Income",
+    "summary": "Fonds à stratégie total return combinant obligations Investment Grade, High Yield, convertibles et produits structurés avec objectif de rendement sur 3-5 ans.",
+    "product_type": "offre",
+    "target_client_types": [
+      "Investisseurs privés"
+    ],
+    "relevant_context": [
+      "Diversification multi-actifs"
+    ],
+    "detection_signals": [
+      "produits structurés",
+      "convertibles"
+    ],
+    "triggers": [
+      "Recherche gestion flexible"
+    ],
+    "constraints": [],
+    "blockers": [
+      "Risque de marché"
+    ],
+    "questions_to_qualify": [
+      "Tolérance à la volatilité ?"
+    ],
+    "required_data": [
+      "Horizon d’investissement"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000270",
+    "title": "SG IS Fund – SG Crédit Millesime 2033",
+    "summary": "Fonds obligataire à échéance visant des rendements réguliers jusqu’à maturité 2033 via investissements en obligations Investment Grade et High Yield intégrant des projets favorables à l’environnement.",
+    "product_type": "offre",
+    "target_client_types": [
+      "Investisseurs privés",
+      "Institutionnels"
+    ],
+    "relevant_context": [
+      "Portage obligataire",
+      "Gestion à maturité"
+    ],
+    "detection_signals": [
+      "Recherche visibilité rendement",
+      "Stratégie buy & hold obligataire"
+    ],
+    "triggers": [
+      "Besoin de revenus obligataires",
+      "Allocation crédit long terme"
+    ],
+    "constraints": [
+      "Horizon jusqu’à 2033"
+    ],
+    "blockers": [
+      "Besoin de liquidité avant maturité"
+    ],
+    "questions_to_qualify": [
+      "Horizon jusqu’en 2033 ?",
+      "Tolérance High Yield ?"
+    ],
+    "required_data": [
+      "Horizon placement",
+      "Appétence risque crédit"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000271",
+    "title": "SG IS Fund – SG Crédit Millesime 2031 USD",
+    "summary": "Fonds obligataire à échéance permettant une exposition au crédit américain avec rendement régulier jusqu’à maturité 2031, intégrant minimum 30% d’investissements durables.",
+    "product_type": "offre",
+    "target_client_types": [
+      "Investisseurs privés"
+    ],
+    "relevant_context": [
+      "Diversification USD",
+      "Allocation crédit"
+    ],
+    "detection_signals": [
+      "Exposition USD souhaitée",
+      "Stratégie obligataire long terme"
+    ],
+    "triggers": [
+      "Diversification devise USD",
+      "Recherche rendement crédit US"
+    ],
+    "constraints": [
+      "Horizon jusqu’à 2031"
+    ],
+    "blockers": [
+      "Besoin liquidité court terme"
+    ],
+    "questions_to_qualify": [
+      "Tolérance risque devise ?",
+      "Horizon placement ?"
+    ],
+    "required_data": [
+      "Devise de référence",
+      "Horizon placement"
+    ]
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000286",
+    "title": "Villandry Fréquence – Titre structuré indexé fonds",
+    "summary": "Obligation structurée indexée sur le fonds SG Premium Selection Europe avec remboursement conditionnel.",
+    "product_type": "offre",
+    "target_client_types": [],
+    "relevant_context": [
+      "Structuré UC"
+    ],
+    "detection_signals": [
+      "Premium Selection Europe"
+    ],
+    "triggers": [
+      "Diversification marchés"
+    ],
+    "constraints": [],
+    "blockers": [],
+    "questions_to_qualify": [],
+    "required_data": []
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000288",
+    "title": "PICTOR Horizon – Titres structurés indexés fonds",
+    "summary": "Titres structurés sécurisés adossés au fonds Europe Evolution Class I avec remboursement conditionnel.",
+    "product_type": "offre",
+    "target_client_types": [],
+    "relevant_context": [
+      "Allocation fonds flexible"
+    ],
+    "detection_signals": [
+      "Titres indexés sur Fonds"
+    ],
+    "triggers": [
+      "Diversification UC"
+    ],
+    "constraints": [],
+    "blockers": [],
+    "questions_to_qualify": [],
+    "required_data": []
+  },
+  {
+    "bank_entity": "SGPB_Luxembourg",
+    "kb_entry_id": "LUX_DOC_000289",
+    "title": "TIMOR RENDEMENT – Titre structuré indexé sur fonds",
+    "summary": "Produit structuré obligataire indexé sur le fonds Perspective Transatlantic (LU2667748268) permettant le versement de coupons conditionnels (jusqu’à 6% par an cumulatif) selon la performance moyenne du fonds, avec remboursement anticipé automatique si la performance moyenne atteint 100%. Exposition au risque de perte en capital à maturité si la performance est inférieure à 50%.",
+    "product_type": "offre",
+    "target_client_types": [
+      "Investisseurs qualifiés"
+    ],
+    "relevant_context": [
+      "Diversification alternative",
+      "Recherche de rendement",
+      "Exposition à fonds actions transatlantiques"
+    ],
+    "detection_signals": [
+      "Positionnement opportuniste sur fonds",
+      "Acceptation perte en capital",
+      "Horizon >10 ans"
+    ],
+    "triggers": [
+      "Recherche de rendement conditionnel",
+      "Volonté d’exposition à fonds via produit structuré"
+    ],
+    "constraints": [
+      "Minimum investissement 100 000 EUR",
+      "Blocage jusqu’à maturité possible"
+    ],
+    "blockers": [
+      "Profil prudent",
+      "Besoin de liquidité"
+    ],
+    "questions_to_qualify": [
+      "Horizon d’investissement ?",
+      "Acceptation perte en capital ?",
+      "Tolérance à illiquidité ?"
+    ],
+    "required_data": [
+      "Montant à investir",
+      "Profil de risque",
+      "Objectif de rendement"
+    ]
+  }
+]

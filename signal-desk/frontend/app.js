@@ -63,13 +63,18 @@ const I18N = {
     sources_title: "Source Registry",
     sources_subtitle:
       "Public registries are simulated in this prototype so the feed and triage workflow can be demoed end to end. Private/commercial sources are mapped to their role in the workflow, ready to be wired in as licensed integrations become available.",
-    clients_title: "Clients & Ownership",
-    clients_subtitle:
-      "Events on indirectly held entities are linked back to the client through the ownership chain — the same “who owns what” role a source like Moody's Orbis would play in production.",
+    clients_title: "Clients and prospects",
     ownership_chain_title: "Ownership chain",
-    linked_signals_title: "Linked signals",
+    linked_signals_title: "Previous signals",
+    previous_signals_empty: "No previous signal for this client.",
+    prev_col_name: "Person / denomination",
+    prev_col_date: "Date",
+    prev_col_type: "Type",
+    prev_col_status: "Status",
+    prev_col_reason: "Rejection reason",
+    outcome_success: "Success",
+    outcome_rejected: "Rejected",
     no_linked_entities: "No linked entities recorded.",
-    no_signals_recorded: "No signals recorded for this client yet.",
     signal_line: (priority, source) => `${priority} priority · via ${source}`,
     ai_title: "AI Enrichment Engine",
     ai_subtitle:
@@ -149,6 +154,12 @@ const I18N = {
     unidentified_stake: "Unidentified shareholders",
     clients_kpi_opportunity_prospects: "Opportunity prospects identified",
     crm_review_date_prefix: "CRM review:",
+    btn_veille_history: "Veille history",
+    veille_history_title: "Veille history",
+    veille_history_empty: "No veille run recorded yet for this client.",
+    veille_history_level_label: "Level",
+    veille_history_provider_label: "Engine",
+    veille_history_error_prefix: "Error:",
   },
   fr: {
     tagline: "Intelligence des événements clients pour la Banque Privée et les Entreprises",
@@ -214,13 +225,18 @@ const I18N = {
     sources_title: "Registre des sources",
     sources_subtitle:
       "Les registres publics sont simulés dans ce prototype afin de démontrer le flux et le triage de bout en bout. Les sources privées/commerciales sont associées à leur rôle dans le processus, prêtes à être intégrées lorsque les licences seront disponibles.",
-    clients_title: "Clients & actionnariat",
-    clients_subtitle:
-      "Les événements sur des entités détenues indirectement sont rattachés au client via la chaîne d'actionnariat — le même rôle que jouerait une source comme Moody's Orbis en production.",
+    clients_title: "Clients et prospects",
     ownership_chain_title: "Chaîne d'actionnariat",
-    linked_signals_title: "Signaux liés",
+    linked_signals_title: "Signaux précédents",
+    previous_signals_empty: "Aucun signal précédent pour ce client.",
+    prev_col_name: "Personne / dénomination",
+    prev_col_date: "Date",
+    prev_col_type: "Type",
+    prev_col_status: "Statut",
+    prev_col_reason: "Motif du rejet",
+    outcome_success: "Succès",
+    outcome_rejected: "Rejeté",
     no_linked_entities: "Aucune entité liée enregistrée.",
-    no_signals_recorded: "Aucun signal enregistré pour ce client.",
     signal_line: (priority, source) => `Priorité ${priority} · via ${source}`,
     ai_title: "Moteur d'enrichissement IA",
     ai_subtitle:
@@ -271,7 +287,7 @@ const I18N = {
     btn_confirm: "Confirmer",
     btn_cancel: "Annuler",
     scan_call_error_prefix: "Échec de la vérification :",
-    btn_dashboard: "Veille",
+    btn_dashboard: "Signaux",
     gap_added_tag: "Ajouté au répertoire des signaux",
     other_shareholders_label: "Autres actionnaires",
     already_client_tag: "Déjà client",
@@ -300,6 +316,12 @@ const I18N = {
     unidentified_stake: "Actionnaires non identifiés",
     clients_kpi_opportunity_prospects: "Prospects opportunité identifiés",
     crm_review_date_prefix: "Revue CRM :",
+    btn_veille_history: "Historique de veille",
+    veille_history_title: "Historique de veille",
+    veille_history_empty: "Aucune veille enregistrée pour ce client pour le moment.",
+    veille_history_level_label: "Niveau",
+    veille_history_provider_label: "Moteur",
+    veille_history_error_prefix: "Erreur :",
   },
 };
 
@@ -387,7 +409,7 @@ async function runVeille(clientId) {
       body: JSON.stringify({ client_id: clientId }),
     });
     const body = await res.json().catch(() => ({}));
-    if (res.ok) return { synthese: body.synthese };
+    if (res.ok) return { level: body.level, synthese: body.synthese };
     if (res.status === 404) return { notFound: true };
     return { error: body.detail || `/api/veille failed: ${res.status}` };
   } catch (e) {
@@ -406,9 +428,80 @@ function setupClientModal() {
   document.getElementById("client-modal-overlay").addEventListener("click", (e) => {
     if (e.target.id === "client-modal-overlay") closeClientModal();
   });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeClientModal();
+  document.getElementById("veille-history-close").addEventListener("click", closeVeilleHistory);
+  document.getElementById("veille-history-overlay").addEventListener("click", (e) => {
+    if (e.target.id === "veille-history-overlay") closeVeilleHistory();
   });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeClientModal();
+      closeVeilleHistory();
+    }
+  });
+}
+
+// POST the completed veille/agent-run result so it is kept in the SQLite
+// history for this client — best-effort, never blocks the UI.
+async function saveVeilleRun(client, result) {
+  try {
+    await api(`/api/clients/${client.id}/veille-runs`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        clientName: client.name,
+        level: result.veille?.level || null,
+        provider: result.provider || null,
+        synthese: result.veille?.synthese || null,
+        error: result.veille?.error || null,
+        result,
+      }),
+    });
+    const btn = document.querySelector(`.veille-history-btn[data-id="${client.id}"]`);
+    if (btn) btn.disabled = false;
+  } catch (e) {
+    // Non-blocking: the veille result itself already rendered successfully.
+  }
+}
+
+function closeVeilleHistory() {
+  document.getElementById("veille-history-overlay").hidden = true;
+}
+
+async function openVeilleHistory(client) {
+  const overlay = document.getElementById("veille-history-overlay");
+  const content = document.getElementById("veille-history-content");
+  overlay.hidden = false;
+  content.innerHTML = `<h2>${escapeHtml(t("veille_history_title"))}</h2><p>…</p>`;
+  let runs = [];
+  try {
+    runs = await api(`/api/clients/${client.id}/veille-runs`);
+  } catch (e) {
+    content.innerHTML = `<h2>${escapeHtml(t("veille_history_title"))}</h2><p class="ai-error">${escapeHtml(e.message)}</p>`;
+    return;
+  }
+  content.innerHTML = renderVeilleHistory(client, runs);
+  content.querySelectorAll(".veille-history-rendered").forEach(wireVeilleTabs);
+}
+
+function renderVeilleHistory(client, runs) {
+  const fmt = (d) =>
+    new Date(d).toLocaleString(state.lang === "fr" ? "fr-FR" : "en-US");
+  const rows = runs.length
+          ? runs
+              .map(
+                (run) => `<div class="veille-history-row">
+            <div class="veille-history-row-header">
+              <span class="veille-history-date">${escapeHtml(fmt(run.createdAt))}</span>
+              ${run.level ? `<span class="pill ${PRIORITY_CLASS[run.level] || ""}">${escapeHtml(t("veille_history_level_label"))} : ${escapeHtml(t(LEVEL_KEY[run.level] || run.level))}</span>` : ""}
+              ${run.provider ? `<span class="veille-history-provider">${escapeHtml(t("veille_history_provider_label"))} : ${escapeHtml(t(PROVIDER_KEY[run.provider] || run.provider))}</span>` : ""}
+            </div>
+                   ${run.synthese ? `<div class="veille-history-rendered">${renderVeille(run.synthese)}</div>` : ""}
+            ${run.error ? `<p class="veille-error">${escapeHtml(t("veille_history_error_prefix"))} ${escapeHtml(run.error)}</p>` : ""}
+          </div>`
+        )
+        .join("")
+    : `<p class="details-empty">${escapeHtml(t("veille_history_empty"))}</p>`;
+  return `<h2>${escapeHtml(t("veille_history_title"))} — ${escapeHtml(client.name)}</h2>${rows}`;
 }
 
 function setupTabs() {
@@ -477,12 +570,10 @@ function renderKPIs() {
 function renderClientKPIs() {
   const clients = state.clients.filter((c) => !c.isProspect).length;
   const prospects = state.clients.filter((c) => c.isProspect).length;
-  const opportunityProspects = state.clients.reduce((sum, c) => sum + (c.potentialProspectCount || 0), 0);
 
   const kpis = [
     { value: clients, label: t("clients_kpi_clients") },
     { value: prospects, label: t("clients_kpi_prospects"), accent: true },
-    { value: opportunityProspects, label: t("clients_kpi_opportunity_prospects"), accent: true },
   ];
 
   document.getElementById("client-kpis").innerHTML = kpis
@@ -762,13 +853,35 @@ function renderClients() {
         <td>${escapeHtml(c.segment)}</td>
         <td>${escapeHtml(c.rmOwner)}</td>
         <td>${c.linkedEntities ? c.linkedEntities.length : 0}</td>
-        <td><button class="btn-navy client-view-btn" data-id="${c.id}">${t("btn_dashboard")}</button></td>
+        <td class="client-actions-cell">
+          <button class="btn-navy client-view-btn" data-id="${c.id}">${t("btn_dashboard")}</button>
+          <button class="btn btn-outline btn-small veille-history-btn" data-id="${c.id}" data-name="${escapeHtml(c.name)}" disabled>${t("btn_veille_history")}</button>
+        </td>
       </tr>`
     )
     .join("");
 
   document.querySelectorAll(".client-view-btn").forEach((btn) => {
     btn.addEventListener("click", () => openClientModal(btn.dataset.id));
+  });
+  document.querySelectorAll(".veille-history-btn").forEach((btn) => {
+    btn.addEventListener("click", () => openVeilleHistory({ id: btn.dataset.id, name: btn.dataset.name }));
+  });
+  refreshVeilleHistoryButtons();
+}
+
+// Enables each row's history button only when that client actually has at
+// least one stored veille run, keeping it disabled otherwise.
+async function refreshVeilleHistoryButtons() {
+  let summary = {};
+  try {
+    summary = await api("/api/veille-runs/summary");
+  } catch (e) {
+    return;
+  }
+  document.querySelectorAll(".veille-history-btn").forEach((btn) => {
+    const entry = summary[btn.dataset.id];
+    btn.disabled = !entry || !entry.count;
   });
 }
 
@@ -885,32 +998,37 @@ function renderClientModalContent(client) {
   document.getElementById("explore-opportunity-btn").addEventListener("click", () => exploreCommercialOpportunity(client));
 }
 
+// "Previous signals": only closed signals (Actioned = success, Dismissed =
+// rejected) — pending ones are worked from the Signal Directory.
+const OUTCOME = {
+  Actioned: { key: "outcome_success", cls: "outcome-success" },
+  Dismissed: { key: "outcome_rejected", cls: "outcome-rejected" },
+};
+
 function renderLinkedSignals(client) {
-  const LEGACY_STATUSES = new Set(["Actioned", "Dismissed"]);
-  return client.events && client.events.length
-    ? client.events
-        .map((e) => {
-          const dateStr = new Date(e.detectedAt).toLocaleDateString(state.lang === "fr" ? "fr-FR" : "en-US");
-
-          if (LEGACY_STATUSES.has(e.status)) {
-            const reasonColor = e.status === "Dismissed" ? "var(--red)" : "var(--green)";
-            const reason = e.declineReason
-              ? `<div class="om" style="color:${reasonColor};">${statusCommentPrefix(e.status)} ${escapeHtml(e.declineReason)}</div>`
-              : "";
-            return `<div class="client-event-row client-event-row-legacy">
-              <div class="legacy-review-line">
-                <span class="legacy-review-date">${escapeHtml(t("crm_review_date_prefix"))} ${dateStr}</span>
-                <span class="pill ${STATUS_CLASS[e.status] || ""}">${escapeHtml(t(STATUS_KEY[e.status] || e.status))}</span>
-              </div>
-              ${reason}
-            </div>`;
-          }
-
-          return `<div class="client-event-row"><strong>${escapeHtml(e.eventType)}</strong> — ${escapeHtml(e.entityName)}
-            <div class="ct">${escapeHtml(t(CATEGORY_KEY[e.category] || e.category))} · ${escapeHtml(t("signal_line", t(PRIORITY_KEY[e.priority] || e.priority), e.sourceName))}</div></div>`;
-        })
-        .join("")
-    : `<p style="font-size:13px;color:var(--muted);">${t("no_signals_recorded")}</p>`;
+  const previous = (client.events || []).filter((e) => OUTCOME[e.status]);
+  if (!previous.length) return `<p class="details-empty">${t("previous_signals_empty")}</p>`;
+  const locale = state.lang === "fr" ? "fr-FR" : "en-US";
+  const rows = previous
+    .map((e) => {
+      const outcome = OUTCOME[e.status];
+      const reason = e.status === "Dismissed" && e.declineReason ? escapeHtml(e.declineReason) : "—";
+      return `<tr class="previous-signal-row">
+        <td>${escapeHtml(e.entityName)}</td>
+        <td>${new Date(e.detectedAt).toLocaleDateString(locale)}</td>
+        <td>${escapeHtml(e.eventType)}</td>
+        <td><span class="pill ${outcome.cls}">${escapeHtml(t(outcome.key))}</span></td>
+        <td>${reason}</td>
+      </tr>`;
+    })
+    .join("");
+  return `<table class="previous-signals-table">
+    <thead><tr>
+      <th>${t("prev_col_name")}</th><th>${t("prev_col_date")}</th><th>${t("prev_col_type")}</th>
+      <th>${t("prev_col_status")}</th><th>${t("prev_col_reason")}</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
 }
 
 function wireShareholderConvertButtons(client) {
@@ -998,7 +1116,7 @@ function renderSynthesis(client, result, detailsOpen) {
   const opps = result.opportunities || [];
   const top = opps[0];
   const veille = result.veille || {};
-  const level = result.level || (veille.synthese ? null : "Low");
+  const level = veille.level || null;
   const headline = top
     ? `${t("synthesis_text", opps.length, top.eventType, top.entityName)} ${top.aiSuggestedAction || ""}`
     : `${t("no_opportunity_title")} — ${t("no_opportunity_body")}`;
@@ -1167,6 +1285,8 @@ async function exploreCommercialOpportunity(client) {
   const result = run.result;
   result.veille = await veillePromise;
   await sleep(400);
+
+  saveVeilleRun(client, result);
 
   const changed = result.changedEvents || [];
   if (changed.length) {

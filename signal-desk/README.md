@@ -43,9 +43,75 @@ pip install -r requirements.txt
 python -m uvicorn app:app --reload
 ```
 
-Open http://127.0.0.1:8001 — demo sources and events are seeded automatically
+Open http://127.0.0.1:8000 — demo sources and events are seeded automatically
 on first run into `backend/signal_desk.db` (SQLite, git-ignored). The Clients
 screen loads live client/prospect records and KYC services from the same API.
+
+## Environment variables (.env)
+
+Create `backend/.env` (git-ignored, never commit it) to configure the
+optional integrations. Nothing here is required to run the demo — every
+feature falls back to a rule-based/mock implementation when a variable is
+missing.
+
+```env
+# Veille agent pipeline (POST /api/veille, "Explorer l'opportunité commerciale")
+AZURE_OPENAI_ENDPOINT=
+AZURE_OPENAI_API_KEY=
+AZURE_OPENAI_DEPLOYMENT_NAME=
+
+# Analyze-with-AI enrichment layer (AI Engine tab) — alternative to setting
+# these from the UI itself
+AZURE_AI_FOUNDRY_ENDPOINT=
+AZURE_AI_FOUNDRY_API_KEY=
+AZURE_AI_FOUNDRY_DEPLOYMENT=
+
+# Optional: run the veille pipeline against a separate hosted API instead of
+# in-process (see "Deploy" below)
+VEILLE_API_URL=
+
+# Optional: real web/registry lookups used by the veille agent's tools
+# (backend/agents/tools.py) — each is independent and safe to leave unset
+GOOGLE_SEARCH_PROVIDER=
+GOOGLE_SEARCH_API_KEY=
+GOOGLE_SEARCH_ENGINE_ID=
+PAPPERS_API_TOKEN=
+COMPANIES_HOUSE_API_KEY=
+```
+
+`.env` is loaded from `backend/.env` first, then `signal-desk/.env` and
+`backend/agents/.env` as fallbacks (see `load_dotenv(...)` calls in
+`backend/agents/client.py` and `backend/agents/kyc/agent.py`). To add a new
+variable: add the line to `backend/.env`, read it with `os.getenv("NAME")`
+(or `os.environ["NAME"]` if it's required) wherever it's needed, and restart
+the server — `uvicorn --reload` does not reload `.env` changes on its own.
+
+## Adding data to the SQLite database
+
+Everything the app reads is stored in `backend/signal_desk.db` (SQLite,
+git-ignored, recreated automatically). There is no separate "data" step to
+run — restart the backend and it re-seeds anything missing:
+
+- **Demo sources / clients / events** — edit `backend/seed_data.py`
+  (`SOURCES`, `CLIENTS`, `EVENTS` lists) and add new entries following the
+  existing shape. They're only inserted once, when the `sources` table is
+  empty, so delete `backend/signal_desk.db` and restart the server to force
+  a full re-seed with your changes.
+- **KYC BDD fixtures** (`backend/agents/bdd/*.json`) — drop a new file in
+  that folder; it's picked up by `backend/agents/bdd_store.py` the same way,
+  but only loaded into the `bdd_documents` table once (when it's empty).
+  Delete `signal_desk.db` (or just clear that table) and restart to pick up
+  new/changed files. The JSON files themselves are never deleted or
+  modified by the app.
+- **Internal KYC referential** (`data/test_*.json`, at the repo root) — read
+  live from disk on every request by `backend/agents/kyc/store.py`, so
+  adding a new `test_*.json` file there is picked up immediately, no
+  restart needed.
+- **Veille run history** — every "Explorer l'opportunité commerciale" run is
+  saved automatically to the `veille_runs` table (`POST
+  /api/clients/{id}/veille-runs`); no manual step needed. View it from the
+  "Historique de veille" button next to a client's "Veille" button in the
+  Clients tab.
 
 ## Connecting Azure AI Foundry later
 
@@ -81,6 +147,9 @@ the Foundry endpoint via `base_url`.
 | POST | `/api/veille` | Run commercial monitoring for an internal client |
 | POST | `/api/clients/{id}/agent-runs` | Start the explore-opportunity agent run |
 | GET | `/api/agent-runs/{run_id}` | Agent run progress and result |
+| POST | `/api/clients/{id}/veille-runs` | Save a completed veille/agent-run result to history |
+| GET | `/api/clients/{id}/veille-runs` | Veille history for a client, most recent first |
+| GET | `/api/veille-runs/summary` | Per-client veille history counts |
 | GET | `/api/ai/status` | Which AI engine is currently active |
 
 ## Deploy (Render)

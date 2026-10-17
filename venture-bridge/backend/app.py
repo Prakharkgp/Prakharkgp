@@ -21,6 +21,7 @@ SEED = [
         "id": "yumesorai", "order": 1, "name": "Yumesorai", "category": "Anime IP",
         "summary": "Original anime IP — world, characters, and pilot concept.",
         "milestone": "Define core IP & pilot concept",
+        "live_url": "https://yumesorai.com",
     },
     {
         "id": "agent-arena", "order": 2, "name": "Agent Arena", "category": "AI · Gaming",
@@ -121,7 +122,7 @@ def seed(conn):
             """,
             (
                 p["id"], p["order"], p["name"], p["category"], "Ideation", "on-track", 10,
-                p["milestone"], p["summary"], json.dumps([]), "", "", "", p.get("ppt_url", ""), "",
+                p["milestone"], p["summary"], json.dumps([]), "", p.get("live_url", ""), "", p.get("ppt_url", ""), "",
                 now, starter_log,
             ),
         )
